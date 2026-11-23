@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ELEMENT_META } from "@/lib/content";
+import { ELEMENT_META, FORTUNE_TABS, FORTUNE_TOPIC_LABEL, type FortuneTopic } from "@/lib/content";
 import type { DailyView } from "@/lib/engine";
 import { formatKoreanDate } from "@/lib/utils";
 import { ElementIcon, Sparkle, StarMascot } from "./illustrations";
@@ -64,6 +64,9 @@ function Gauge({ value, label }: { value: number; label: string }) {
 
 export function FortuneCard({ daily, mbti }: { daily: DailyView; mbti: string }) {
   const todayMeta = ELEMENT_META[daily.today.element];
+  const [tab, setTab] = useState<"all" | FortuneTopic>("all");
+  const topic = tab === "all" ? null : daily.topics[tab];
+  const readingLines = topic ? topic.lines : daily.reading;
 
   return (
     <section className="card card-pop overflow-hidden">
@@ -117,34 +120,52 @@ export function FortuneCard({ daily, mbti }: { daily: DailyView; mbti: string })
           })}
         </div>
 
-        <div className="mt-3 space-y-1.5">
-          {daily.balance.map((item) => (
-            <div key={item.element} className="flex items-center gap-2">
-              <span className="w-3 text-[10px] font-bold text-ink-faint">{item.element}</span>
-              <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-cream-3/70">
-                <div
-                  className="h-full rounded-full transition-[width] duration-700"
-                  style={{
-                    width: `${Math.max(item.percent, 3)}%`,
-                    background: ELEMENT_META[item.element].color,
-                    opacity: item.count === 0 ? 0.35 : 0.85,
-                  }}
-                />
-              </div>
-              <span className="w-8 text-right text-[10px] tabular-nums text-ink-faint">{item.percent}%</span>
-            </div>
-          ))}
-        </div>
       </div>
 
-      <div className="relative mx-4 mb-4 rounded-[22px] border border-[#F1E5C4] bg-[#FFF9E8] px-4 pb-4 pt-3.5">
-        <div className="space-y-1.5 text-[13px] leading-[1.7] text-[#4B4433]">
-          {daily.reading.map((line, i) => (
-            <p key={i} className={i === 0 ? "font-semibold" : ""}>{line}</p>
-          ))}
+      <div className="mx-4 mb-4">
+        <div role="tablist" aria-label="운세 주제" className="mb-2.5 flex gap-1 rounded-full bg-cream-2/80 p-1">
+          {FORTUNE_TABS.map((t) => {
+            const active = tab === t.key;
+            return (
+              <button
+                key={t.key}
+                type="button"
+                role="tab"
+                aria-selected={active}
+                onClick={() => setTab(t.key)}
+                className={`flex-1 rounded-full px-1 py-1.5 text-[11.5px] font-bold transition-all duration-150 active:scale-[0.97] ${
+                  active
+                    ? "bg-white text-leaf-strong shadow-[0_6px_14px_-10px_rgba(18,128,92,0.85)]"
+                    : "text-ink-faint hover:text-ink-soft"
+                }`}
+              >
+                {t.label}
+              </button>
+            );
+          })}
         </div>
-        <div className="absolute -bottom-3 right-2">
-          <StarMascot size={46} mood="idle" />
+
+        <div
+          key={tab}
+          className="anim-fade-up relative rounded-[22px] border border-[#F1E5C4] bg-[#FFF9E8] px-4 pb-4 pt-3.5"
+        >
+          <p className="mb-1.5 text-[10px] font-bold tracking-[0.16em] text-[#B09355]">
+            {topic ? `${FORTUNE_TOPIC_LABEL[tab as FortuneTopic]} 한마디` : "오늘의 한마디"}
+          </p>
+          <div className="space-y-1.5 pr-5 text-[13px] leading-[1.7] text-[#4B4433]">
+            {readingLines.map((line, i) => (
+              <p key={i} className={i === 0 ? "font-semibold" : ""}>{line}</p>
+            ))}
+          </div>
+          {topic && (
+            <p className="mt-2.5 flex items-start gap-1.5 rounded-xl bg-white/75 px-2.5 py-2 pr-7 text-[11.5px] leading-relaxed text-ink-soft">
+              <span aria-hidden="true">💡</span>
+              <span>{topic.tip}</span>
+            </p>
+          )}
+          <div className="pointer-events-none absolute -bottom-3 right-2">
+            <StarMascot size={46} mood="idle" />
+          </div>
         </div>
       </div>
     </section>

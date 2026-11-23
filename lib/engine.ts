@@ -3,9 +3,14 @@ import {
   ELEMENT_QUESTS,
   ELEMENT_WHY,
   MBTI_QUESTS,
+  MBTI_STYLE,
   MBTI_WHY,
   RELATION_PHRASE,
   TODAY_MOOD,
+  TOPIC_ELEMENT_LINES,
+  TOPIC_MBTI_ACTIONS,
+  TOPIC_TIPS,
+  type FortuneTopic,
   type Quest,
 } from "./content";
 import {
@@ -38,6 +43,13 @@ export interface BalanceItem {
   status: "좋음" | "보통" | "부족";
 }
 
+export interface TopicFortune {
+  /** 주제별 1~2줄 풀이 — 오행 기운 + MBTI 성향 */
+  lines: string[];
+  /** 오늘 바로 해볼 한 줄 팁 */
+  tip: string;
+}
+
 export interface CharmView {
   id: string;
   element: Element;
@@ -57,6 +69,8 @@ export interface DailyView {
   scoreCaption: string;
   balance: BalanceItem[];
   reading: string[];
+  /** 재물 · 연애·대인 · 일·학업 한마디 */
+  topics: Record<FortuneTopic, TopicFortune>;
   quests: [ResolvedQuest, ResolvedQuest];
   charm: CharmView;
 }
@@ -78,6 +92,28 @@ function scoreLabel(score: number): string {
   if (score >= 75) return "좋은 기운이 가득해요";
   if (score >= 69) return "차분히 좋은 날이에요";
   return "잔잔히 빛나는 하루예요";
+}
+
+const TOPIC_KEYS: FortuneTopic[] = ["money", "love", "work"];
+
+function buildTopicFortunes(mbti: Mbti, element: Element, seed: string): Record<FortuneTopic, TopicFortune> {
+  const result = {} as Record<FortuneTopic, TopicFortune>;
+
+  for (const topic of TOPIC_KEYS) {
+    // 앞 두 글자(E/I·S/N) 중 하나, 뒤 두 글자(T/F·J/P) 중 하나를 골라 성향 문장을 만든다.
+    const styleLetter = (hash(`${seed}-${topic}-style`) % 2 === 0 ? mbti[0] : mbti[1]) as keyof typeof MBTI_STYLE;
+    const actionLetter = (hash(`${seed}-${topic}-action`) % 2 === 0 ? mbti[2] : mbti[3]) as keyof (typeof TOPIC_MBTI_ACTIONS)[FortuneTopic];
+
+    result[topic] = {
+      lines: [
+        pick(TOPIC_ELEMENT_LINES[topic][element], `${seed}-${topic}-element`),
+        `${MBTI_STYLE[styleLetter]}, ${TOPIC_MBTI_ACTIONS[topic][actionLetter]}`,
+      ],
+      tip: TOPIC_TIPS[topic][element],
+    };
+  }
+
+  return result;
 }
 
 function resolveQuest(quest: Quest, badge: ResolvedQuest["badge"], why: string, element: Element, mbti: Mbti, tone: "leaf" | "gold"): ResolvedQuest {
@@ -134,6 +170,7 @@ export function buildDaily(profile: Profile, now: Date = new Date()): DailyView 
     scoreCaption: scoreLabel(score),
     balance,
     reading,
+    topics: buildTopicFortunes(profile.mbti, today.element, `${key}-${profile.mbti}`),
     quests: [
       resolveQuest(q1, "Quest 1", `${weak} 기운을 채우는 1분이에요. ${ELEMENT_WHY[weak]}`, weak, profile.mbti, "leaf"),
       resolveQuest(q2, "Quest 2", MBTI_WHY[profile.mbti], weak, profile.mbti, "gold"),

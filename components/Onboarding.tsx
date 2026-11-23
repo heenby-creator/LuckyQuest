@@ -3,7 +3,33 @@
 import { useMemo, useState } from "react";
 import { JIN, computeChart } from "@/lib/saju";
 import type { Birth, BirthTime, Mbti, Profile } from "@/lib/types";
-import { Clover, Sparkle, StarMascot } from "./illustrations";
+import { CheckMark, Clover, Sparkle, StarMascot } from "./illustrations";
+
+/** 태어난 시간 선택값 — 아직 아무것도 고르지 않은 상태를 null로 둔다. */
+type TimeChoice = { kind: "unknown" } | { kind: "jin"; index: number };
+
+function nearestJinIndex(hour: number): number {
+  const h = ((hour % 24) + 24) % 24;
+  return Math.min(11, Math.max(0, Math.floor(((h + 1) % 24) / 2)));
+}
+
+/** 받침 유무에 맞는 목적격 조사를 붙인다. (MBTI처럼 영문으로 끝나면 '를') */
+function withObjectParticle(word: string): string {
+  const last = word.trim().slice(-1);
+  const code = last.charCodeAt(0);
+  const isHangul = code >= 0xac00 && code <= 0xd7a3;
+  const hasFinal = isHangul ? (code - 0xac00) % 28 !== 0 : false;
+  return `${word}${hasFinal ? "을" : "를"}`;
+}
+
+/** 저장된 프로필을 편집할 때는 저장된 선택을 그대로 되살린다. */
+function initialTimeChoice(initial?: Profile | null): TimeChoice | null {
+  const saved = initial?.time;
+  if (!saved) return null;
+  if (saved.kind === "jin") return { kind: "jin", index: Math.min(11, Math.max(0, saved.index)) };
+  if (saved.kind === "exact") return { kind: "jin", index: nearestJinIndex(saved.hour) };
+  return { kind: "unknown" };
+}
 
 const MBTI_LIST: Mbti[] = [
   "INTJ", "INTP", "ENTJ", "ENTP",
@@ -64,10 +90,7 @@ export function Onboarding({
   const [year, setYear] = useState<number | "">(initial?.birth.year ?? "");
   const [month, setMonth] = useState<number | "">(initial?.birth.month ?? "");
   const [day, setDay] = useState<number | "">(initial?.birth.day ?? "");
-  const [timeUnknown, setTimeUnknown] = useState(initial ? initial.time.kind === "unknown" : true);
-  const [jinIndex, setJinIndex] = useState<number | null>(
-    initial?.time.kind === "jin" ? initial.time.index : null,
-  );
+  const [timeChoice, setTimeChoice] = useState<TimeChoice | null>(() => initialTimeChoice(initial));
   const [mbti, setMbti] = useState<Mbti | null>(initial?.mbti ?? null);
   const [quizOpen, setQuizOpen] = useState(false);
   const [quizAnswers, setQuizAnswers] = useState<Record<number, string>>({});
@@ -85,15 +108,18 @@ export function Onboarding({
     return `${quizAnswers[0]}${quizAnswers[1]}${quizAnswers[2]}${quizAnswers[3]}` as Mbti;
   }, [quizAnswers]);
 
-  const ready = Boolean(year && month && day && mbti);
+  const ready = Boolean(year && month && day && mbti && timeChoice);
 
-  function pickJin(index: number) {
-    setJinIndex(index);
-    setTimeUnknown(false);
-  }
+  const missing = useMemo(() => {
+    const items: string[] = [];
+    if (!year || !month || !day) items.push("생년월일");
+    if (!timeChoice) items.push("태어난 시간");
+    if (!mbti) items.push("MBTI");
+    return items;
+  }, [year, month, day, timeChoice, mbti]);
 
   function submit() {
-    if (!year || !month || !day || !mbti) return;
+    if (!year || !month || !day || !mbti || !timeChoice) return;
     const birth: Birth = {
       year: Number(year),
       month: Number(month),
@@ -101,11 +127,8 @@ export function Onboarding({
       isLunar,
       isLeapMonth: isLunar ? isLeapMonth : false,
     };
-    const time: BirthTime = timeUnknown
-      ? { kind: "unknown" }
-      : jinIndex === null
-        ? { kind: "unknown" }
-        : { kind: "jin", index: jinIndex };
+    const time: BirthTime =
+      timeChoice.kind === "unknown" ? { kind: "unknown" } : { kind: "jin", index: timeChoice.index };
 
     try {
       computeChart(birth, time);
@@ -130,7 +153,7 @@ export function Onboarding({
         <div>
           <p className="text-[15px] font-bold text-ink">안녕하세요, 오늘의 별이에요</p>
           <p className="mt-0.5 text-[12.5px] leading-relaxed text-ink-soft">
-            생년월일과 MBTI만 알려주시면 <br />오늘의 운세와 퀘스트를 준비할게요.
+            생년월일과 MBTI, 태어난 시간을 알려주시면 <br />오늘의 운세와 퀘스트를 준비할게요.
           </p>
         </div>
       </div>
@@ -206,43 +229,84 @@ export function Onboarding({
       <section className="card p-4">
         <div className="mb-1 flex items-center justify-between">
           <h2 className="text-[14px] font-bold text-ink">태어난 시간</h2>
-          <button
-            type="button"
-            onClick={() => {
-              setTimeUnknown(true);
-              setJinIndex(null);
-            }}
-            className={`rounded-full px-3 py-1 text-[12px] font-bold transition ${
-              timeUnknown ? "bg-leaf text-white" : "bg-cream-2 text-ink-faint"
+          <span
+            className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-bold transition-colors ${
+              timeChoice ? "bg-leaf-soft text-leaf-strong" : "bg-cream-2 text-ink-faint"
             }`}
           >
-            시간 모름
-          </button>
+            {timeChoice ? (
+              <>
+                <CheckMark size={10} /> 선택 완료
+              </>
+            ) : (
+              "골라주세요"
+            )}
+          </span>
         </div>
-        <p className="mb-3 text-[12px] text-ink-faint">
-          {timeUnknown ? "세 기둥(연·월·일)으로 계산해요. 시간을 알면 더 정확해져요." : "12시진 중 가까운 시간을 골라주세요."}
+        <p className="mb-3 text-[12px] text-ink-faint" aria-live="polite">
+          {timeChoice === null
+            ? "태어난 시간을 몰라도 괜찮아요. 12시진 중에서 고르거나 아래 ‘시간 모름’을 눌러주세요."
+            : timeChoice.kind === "unknown"
+              ? "시간을 알면 사주가 더 정확해져요. 나중에 언제든 바꿀 수 있어요."
+              : `${JIN[timeChoice.index].name}(${JIN[timeChoice.index].range}) 기준으로 계산할게요.`}
         </p>
 
         <div className="grid grid-cols-4 gap-1.5">
           {JIN.map((jin, index) => {
-            const active = !timeUnknown && jinIndex === index;
+            const active = timeChoice?.kind === "jin" && timeChoice.index === index;
             return (
               <button
                 key={jin.name}
                 type="button"
-                onClick={() => pickJin(index)}
-                className={`flex flex-col items-center rounded-2xl border px-1 py-2 transition ${
+                aria-pressed={active}
+                onClick={() => setTimeChoice({ kind: "jin", index })}
+                className={`relative flex flex-col items-center rounded-2xl border px-1 py-2 transition-all duration-150 active:scale-[0.96] ${
                   active
-                    ? "border-leaf bg-leaf-soft text-leaf-strong shadow-[0_6px_16px_-12px_rgba(18,128,92,0.9)]"
-                    : "border-line bg-white/60 text-ink-soft hover:border-[#cddcc9]"
+                    ? "border-leaf bg-leaf text-white shadow-[0_10px_20px_-14px_rgba(18,128,92,0.95)]"
+                    : "border-line bg-white/60 text-ink-soft hover:border-[#cddcc9] hover:bg-white"
                 }`}
               >
+                {active && (
+                  <span className="anim-fade-up absolute right-1 top-1 text-white/90">
+                    <CheckMark size={9} />
+                  </span>
+                )}
                 <span className="text-[13px] font-bold">{jin.name}</span>
-                <span className="text-[10px] tracking-tight text-ink-faint">{jin.range}</span>
+                <span className={`text-[10px] tracking-tight ${active ? "text-white/75" : "text-ink-faint"}`}>
+                  {jin.range}
+                </span>
               </button>
             );
           })}
         </div>
+
+        <button
+          type="button"
+          aria-pressed={timeChoice?.kind === "unknown"}
+          onClick={() => setTimeChoice({ kind: "unknown" })}
+          className={`mt-1.5 flex w-full items-center justify-center gap-1.5 rounded-2xl border px-3 py-2.5 transition-all duration-150 active:scale-[0.98] ${
+            timeChoice?.kind === "unknown"
+              ? "border-leaf bg-leaf text-white shadow-[0_10px_20px_-14px_rgba(18,128,92,0.95)]"
+              : "border-dashed border-[#dccfb0] bg-white/50 text-ink-soft hover:border-[#cddcc9] hover:bg-white"
+          }`}
+        >
+          {timeChoice?.kind === "unknown" && <CheckMark size={12} />}
+          <span className="text-[12.5px] font-bold">시간 모름</span>
+          <span
+            className={`text-[11px] ${
+              timeChoice?.kind === "unknown" ? "text-white/80" : "text-ink-faint"
+            }`}
+          >
+            · 태어난 시각을 몰라도 괜찮아요
+          </span>
+        </button>
+
+        {timeChoice?.kind === "unknown" && (
+          <p className="anim-fade-up mt-2.5 flex items-center gap-1.5 rounded-2xl bg-leaf-soft px-3 py-2 text-[12px] font-semibold text-leaf-strong">
+            <Sparkle size={11} color="#12805C" className="shrink-0" />
+            태어난 시간 없이 연·월·일 세 기둥으로 계산해요
+          </p>
+        )}
       </section>
 
       {/* MBTI */}
@@ -333,6 +397,11 @@ export function Onboarding({
 
       {/* CTA */}
       <div className="sticky bottom-0 z-30 -mx-5 mt-auto border-t border-line/70 bg-cream/95 px-5 pb-5 pt-3 backdrop-blur">
+        {!ready && missing.length > 0 && (
+          <p className="mb-2 text-center text-[11.5px] font-semibold text-ink-faint">
+            {withObjectParticle(missing.join(" · "))} 고르면 시작할 수 있어요
+          </p>
+        )}
         <div className="flex gap-2">
           {onCancel && (
             <button
