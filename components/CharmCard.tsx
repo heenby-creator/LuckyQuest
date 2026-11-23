@@ -31,8 +31,8 @@ export function CharmCard({
 
         <div className="flex items-center gap-4 px-4 pb-4 pt-3">
           <div className="relative shrink-0">
-            <div className="pointer-events-none opacity-40 blur-[3px]">
-              <CharmIllustration className="h-[112px] w-[82px]" />
+            <div className="pointer-events-none opacity-70 blur-[1.6px]">
+              <CharmIllustration className="h-[124px] w-[91px]" />
             </div>
             <div className="absolute inset-0 flex items-center justify-center">
               <div className="flex size-11 items-center justify-center rounded-full bg-white/90 text-[#B9A87F] shadow-[0_10px_22px_-16px_rgba(120,100,50,0.9)]">
