@@ -1,0 +1,256 @@
+@import "tailwindcss";
+
+@theme {
+  --color-cream: #fffbf0;
+  --color-cream-2: #fdf4df;
+  --color-cream-3: #f8ebd2;
+  --color-ink: #2e2a22;
+  --color-ink-soft: #736c5b;
+  --color-ink-faint: #a29a86;
+  --color-leaf: #12805c;
+  --color-leaf-strong: #0a6749;
+  --color-leaf-soft: #e6f4eb;
+  --color-gold: #dfae3f;
+  --color-gold-soft: #fbf1d8;
+  --color-line: #efe4c9;
+  --color-line-soft: #f6eeda;
+
+  --font-sans: "Pretendard Variable", Pretendard, "Noto Sans KR", "Apple SD Gothic Neo",
+    "Malgun Gothic", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+
+  --radius-card: 26px;
+}
+
+:root {
+  color-scheme: light;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  color: var(--color-ink);
+  background: #f7e8cd;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+button {
+  font-family: inherit;
+}
+
+/* ── 데스크톱 배경 ─────────────────────────────── */
+.lq-backdrop {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  background:
+    radial-gradient(120% 80% at 85% 0%, #fdf9e6 0%, rgba(253, 249, 230, 0) 55%),
+    radial-gradient(90% 70% at 10% 100%, #f3e2c1 0%, rgba(243, 226, 193, 0) 60%),
+    linear-gradient(160deg, #fbf2dc 0%, #f7e8cd 55%, #f4e2c2 100%);
+}
+
+.lq-backdrop::before,
+.lq-backdrop::after {
+  content: "";
+  position: absolute;
+  border-radius: 999px;
+  filter: blur(60px);
+  opacity: 0.55;
+}
+
+.lq-backdrop::before {
+  width: 420px;
+  height: 420px;
+  top: -140px;
+  right: 4vw;
+  background: radial-gradient(circle, rgba(178, 226, 197, 0.75), transparent 70%);
+}
+
+.lq-backdrop::after {
+  width: 480px;
+  height: 480px;
+  bottom: -180px;
+  left: 2vw;
+  background: radial-gradient(circle, rgba(255, 226, 122, 0.65), transparent 70%);
+}
+
+.lq-phone-shell {
+  pointer-events: auto;
+  background: linear-gradient(180deg, #fffef9 0%, #fffdf6 100%);
+  box-shadow:
+    0 50px 90px -50px rgba(88, 66, 18, 0.45),
+    0 2px 0 rgba(255, 255, 255, 0.8) inset,
+    0 0 0 1px rgba(255, 255, 255, 0.7);
+}
+
+@media (min-width: 768px) {
+  .lq-phone-shell {
+    border-radius: 44px;
+  }
+}
+
+/* ── 카드 ─────────────────────────────────────── */
+.card {
+  background: #fffdf7;
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-card);
+  box-shadow: 0 18px 34px -30px rgba(86, 68, 24, 0.55);
+}
+
+.card-pop {
+  animation: card-pop 0.5s cubic-bezier(0.2, 0.9, 0.3, 1.2) both;
+}
+
+/* ── 애니메이션 ───────────────────────────────── */
+@keyframes float-y {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+
+@keyframes bob {
+  0%, 100% { transform: translateY(0) rotate(-1.5deg); }
+  50% { transform: translateY(-4px) rotate(1.5deg); }
+}
+
+@keyframes cheer {
+  0% { transform: translateY(0) scale(1) rotate(0deg); }
+  30% { transform: translateY(-12px) scale(1.08) rotate(-6deg); }
+  60% { transform: translateY(-2px) scale(0.98) rotate(5deg); }
+  100% { transform: translateY(0) scale(1) rotate(0deg); }
+}
+
+@keyframes twinkle {
+  0%, 100% { opacity: 0.25; transform: scale(0.7); }
+  50% { opacity: 1; transform: scale(1.1); }
+}
+
+@keyframes sparkle-out {
+  0% { opacity: 0; transform: translate(0, 0) scale(0.2); }
+  25% { opacity: 1; transform: translate(calc(var(--dx) * 0.45), calc(var(--dy) * 0.45)) scale(1); }
+  100% { opacity: 0; transform: translate(var(--dx), var(--dy)) scale(0.2); }
+}
+
+@keyframes pop-check {
+  0% { transform: scale(0.6); }
+  55% { transform: scale(1.18); }
+  100% { transform: scale(1); }
+}
+
+@keyframes reveal {
+  0% { opacity: 0; transform: translateY(14px) scale(0.96); }
+  60% { opacity: 1; transform: translateY(-2px) scale(1.01); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes shimmer {
+  0% { transform: translateX(-120%) skewX(-18deg); }
+  100% { transform: translateX(240%) skewX(-18deg); }
+}
+
+@keyframes glow-pulse {
+  0%, 100% { opacity: 0.5; transform: scale(1); }
+  50% { opacity: 0.9; transform: scale(1.04); }
+}
+
+@keyframes card-pop {
+  0% { opacity: 0; transform: translateY(16px) scale(0.97); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes fade-up {
+  0% { opacity: 0; transform: translateY(10px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes blink {
+  0%, 92%, 100% { transform: scaleY(1); }
+  95% { transform: scaleY(0.1); }
+}
+
+.anim-bob { animation: bob 4s ease-in-out infinite; }
+.anim-cheer { animation: cheer 0.9s cubic-bezier(0.2, 0.9, 0.3, 1.2) both; }
+.anim-float { animation: float-y 6s ease-in-out infinite; }
+.anim-twinkle { animation: twinkle 2.6s ease-in-out infinite; }
+.anim-fade-up { animation: fade-up 0.5s ease both; }
+.anim-reveal { animation: reveal 0.7s cubic-bezier(0.2, 0.9, 0.3, 1.2) both; }
+.anim-glow { animation: glow-pulse 3.4s ease-in-out infinite; }
+.anim-blink { animation: blink 5.5s ease-in-out infinite; transform-origin: center; }
+
+.spark {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  pointer-events: none;
+  animation: sparkle-out 0.75s ease-out forwards;
+}
+
+.shimmer-track {
+  position: relative;
+  overflow: hidden;
+}
+
+.shimmer-track::after {
+  content: "";
+  position: absolute;
+  top: -40%;
+  left: 0;
+  width: 45%;
+  height: 180%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.75), transparent);
+  animation: shimmer 2.8s ease-in-out infinite;
+}
+
+/* ── 스크롤바 ─────────────────────────────────── */
+.lq-scroll::-webkit-scrollbar { width: 0; height: 0; }
+.lq-scroll { scrollbar-width: none; }
+
+/* ── 게이지 ───────────────────────────────────── */
+.gauge-progress {
+  transition: stroke-dashoffset 1.1s cubic-bezier(0.25, 0.9, 0.3, 1);
+}
+
+/* ── 입력 요소 ────────────────────────────────── */
+.field {
+  width: 100%;
+  border-radius: 16px;
+  border: 1px solid var(--color-line);
+  background: #fffdf7;
+  padding: 12px 14px;
+  font-size: 15px;
+  color: var(--color-ink);
+  transition: border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.field:focus {
+  outline: none;
+  border-color: #7cc3a3;
+  box-shadow: 0 0 0 4px rgba(18, 128, 92, 0.1);
+}
+
+select.field {
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23736c5b' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  padding-right: 38px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .anim-bob, .anim-float, .anim-twinkle, .anim-glow, .anim-blink, .shimmer-track::after {
+    animation: none;
+  }
+  .anim-reveal, .anim-cheer, .card-pop, .anim-fade-up {
+    animation-duration: 0.01s;
+  }
+}
