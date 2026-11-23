@@ -105,7 +105,7 @@ export function LuckyQuestApp() {
   const onShare = useCallback(async () => {
     if (!daily) return;
     const text = `오늘의 카드 — ${daily.charm.title}\n"${daily.charm.message}"`;
-    const url = "https://luckyquest.kr";
+    const url = "https://luckyquest.app";
     const nav = typeof navigator !== "undefined" ? navigator : undefined;
     if (nav?.share) {
       try {
@@ -119,7 +119,7 @@ export function LuckyQuestApp() {
       await nav?.clipboard?.writeText(`${text}\n${url}`);
       setToast("카드 링크를 복사했어요");
     } catch {
-      setToast("luckyquest.kr 에서 만나요");
+      setToast("luckyquest.app 에서 만나요");
     }
   }, [daily]);
 
@@ -291,7 +291,7 @@ export function LuckyQuestApp() {
                     <StarMascot size={38} />
                     <div>
                       <p className="text-[15px] font-extrabold text-ink">Lucky Quest</p>
-                      <p className="text-[10.5px] text-ink-faint">luckyquest.kr</p>
+                      <p className="text-[10.5px] text-ink-faint">luckyquest.app</p>
                     </div>
                   </div>
                   <p className="text-[12.5px] leading-[1.8] text-ink-soft">

@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://luckyquest.kr"),
+  metadataBase: new URL("https://luckyquest.app"),
   title: {
     default: "Lucky Quest — 오늘의 운세와 럭키 퀘스트",
     template: "%s · Lucky Quest",
@@ -12,11 +12,11 @@ export const metadata: Metadata = {
   applicationName: "Lucky Quest",
   manifest: "/manifest.webmanifest",
   keywords: ["운세", "사주", "오행", "MBTI", "행운", "럭키 카드", "퀘스트", "Lucky Quest"],
-  authors: [{ name: "Lucky Quest", url: "https://luckyquest.kr" }],
+  authors: [{ name: "Lucky Quest", url: "https://luckyquest.app" }],
   openGraph: {
     type: "website",
     locale: "ko_KR",
-    url: "https://luckyquest.kr",
+    url: "https://luckyquest.app",
     siteName: "Lucky Quest",
     title: "Lucky Quest — 오늘의 운세와 럭키 퀘스트",
     description:
