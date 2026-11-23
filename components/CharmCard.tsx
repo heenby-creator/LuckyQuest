@@ -1,7 +1,7 @@
 "use client";
 
 import type { DailyView } from "@/lib/engine";
-import { CharmIllustration, Clover, LockIcon, ShareIcon, Sparkle } from "./illustrations";
+import { CardEmblem, Clover, LockIcon, ShareIcon, Sparkle } from "./illustrations";
 
 export function CharmCard({
   daily,
@@ -18,44 +18,46 @@ export function CharmCard({
 }) {
   if (!unlocked) {
     return (
-      <section className="relative overflow-hidden rounded-[26px] border border-line bg-[#FAF4E4]">
-        <div className="flex items-center justify-between px-4 pt-4">
-          <div className="flex items-center gap-1.5">
-            <Sparkle size={13} color="#C9B98C" />
-            <h2 className="text-[15px] font-extrabold tracking-tight text-[#8C8368]">오늘의 럭키 부적 카드</h2>
-          </div>
-          <span className="inline-flex items-center gap-1 rounded-full bg-white/70 px-2.5 py-1 text-[10.5px] font-bold text-[#A09272]">
-            <LockIcon size={11} /> 잠김
-          </span>
-        </div>
-
-        <div className="flex items-center gap-4 px-4 pb-4 pt-3">
-          <div className="relative shrink-0">
-            <div className="pointer-events-none opacity-70 blur-[1.6px]">
-              <CharmIllustration className="h-[124px] w-[91px]" />
+      <section className="lq-card lq-card--muted">
+        <span aria-hidden className="lq-card-inner" />
+        <div className="relative px-[18px] pb-[18px] pt-4">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <p className="lq-overline">Today&apos;s Card</p>
+              <h2 className="mt-1 font-serif text-[15.5px] font-medium leading-none tracking-[-0.01em] text-[#3D4136]">
+                오늘의 카드
+              </h2>
             </div>
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="flex size-11 items-center justify-center rounded-full bg-white/90 text-[#B9A87F] shadow-[0_10px_22px_-16px_rgba(120,100,50,0.9)]">
-                <LockIcon size={19} />
+            <span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-gold-line/60 bg-white/60 px-2 py-[3px] text-[9.5px] font-semibold tracking-[0.04em] text-[#9A834F]">
+              <LockIcon size={10} /> 잠김
+            </span>
+          </div>
+
+          <div className="mt-3 flex items-center gap-4">
+            <div className="shrink-0">
+              <CardEmblem size={96} muted />
+            </div>
+
+            <div className="min-w-0 flex-1">
+              <p className="text-[12.5px] leading-[1.7] text-[#5C5646]">
+                두 퀘스트를 모두 마치면
+                <br />
+                오늘의 카드가 열려요
+              </p>
+              <div className="mt-2.5 flex items-center gap-2">
+                <span className="flex items-center gap-1">
+                  {[0, 1].map((i) => (
+                    <span
+                      key={i}
+                      className="h-[3px] w-7 rounded-full transition-colors"
+                      style={{ background: i < done ? "#BFA469" : "#E3DAC4" }}
+                    />
+                  ))}
+                </span>
+                <span className="text-[10px] tracking-[0.01em] text-[#8E8368]">
+                  {done === 1 ? "하나 더 남았어요" : "차곡차곡 채워볼까요"}
+                </span>
               </div>
-            </div>
-          </div>
-
-          <div className="min-w-0 flex-1">
-            <p className="text-[13.5px] font-bold leading-relaxed text-[#6F6754]">
-              두 퀘스트를 모두 마치면<br />오늘의 부적이 열려요
-            </p>
-            <div className="mt-2.5 flex items-center gap-1.5">
-              {[0, 1].map((i) => (
-                <span
-                  key={i}
-                  className="h-1.5 w-9 rounded-full transition-colors"
-                  style={{ background: i < done ? "#7CC3A3" : "#E7DCC0" }}
-                />
-              ))}
-              <span className="ml-1 text-[10.5px] text-[#A99D80]">
-                {done === 1 ? "하나 더 남았어요!" : "하나씩 채워볼까요?"}
-              </span>
             </div>
           </div>
         </div>
@@ -64,68 +66,68 @@ export function CharmCard({
   }
 
   return (
-    <section
-      className={`relative overflow-hidden rounded-[26px] border border-[#E7D9B4] bg-[#FFFCF2] ${
-        justUnlocked ? "anim-reveal" : ""
-      }`}
-      style={{ boxShadow: "0 26px 44px -36px rgba(140,112,40,0.75)" }}
-    >
+    <section className={`lq-card ${justUnlocked ? "anim-reveal" : ""}`}>
+      <span aria-hidden className="lq-card-inner" />
+
       {justUnlocked && (
         <div className="pointer-events-none absolute inset-0 z-10 overflow-hidden">
           <div className="shimmer-track absolute inset-0" />
         </div>
       )}
 
-      <div className="relative flex items-center justify-between px-4 pt-4">
-        <div className="flex items-center gap-1.5">
-          <Sparkle size={13} color="#D3A93E" className="anim-twinkle" />
-          <h2 className="text-[15px] font-extrabold tracking-tight text-[#3F3A2C]">오늘의 럭키 부적 카드</h2>
-        </div>
-        <span className="inline-flex items-center gap-1 rounded-full bg-leaf px-2.5 py-1 text-[10.5px] font-extrabold text-white">
-          <Clover size={11} tone="ivory" /> 열렸어요
-        </span>
-      </div>
-
-      <div className="relative flex items-center gap-3.5 px-4 pb-3 pt-3">
-        <div className="shrink-0 rounded-lg">
-          <CharmIllustration className="h-[150px] w-[110px] drop-shadow-[0_10px_18px_rgba(150,120,50,0.18)]" />
-        </div>
-
-        <div className="min-w-0 flex-1">
-          <span className="text-[9.5px] font-extrabold tracking-[0.16em] text-[#B99A44]">LUCKY CHARM</span>
-          <h3 className="mt-0.5 text-[20px] font-extrabold leading-tight tracking-tight text-[#1D6B4D]">
-            {daily.charm.title}
-          </h3>
-          <div className="mt-1 flex items-center gap-1">
-            <span className="h-px w-5 bg-[#D8C89C]" />
-            <Sparkle size={9} color="#C9A227" />
-            <span className="h-px w-5 bg-[#D8C89C]" />
+      <div className="relative px-[18px] pb-[18px] pt-4">
+        {/* 머리글 */}
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <p className="lq-overline">Today&apos;s Card</p>
+            <h2 className="mt-1 font-serif text-[16px] font-medium leading-none tracking-[-0.01em] text-[#3D4136]">
+              오늘의 카드
+            </h2>
           </div>
-
-          <p className="mt-1.5 text-[12px] leading-[1.65] text-[#5D5644]">{daily.charm.message}</p>
-
-          <div className="mt-2 flex flex-wrap gap-1">
-            {[
-              { label: "행운의 색", value: daily.charm.colorName },
-              { label: "숫자", value: daily.charm.number },
-              { label: "키워드", value: daily.charm.keyword },
-            ].map((chip) => (
-              <span key={chip.label} className="rounded-full bg-[#F6EFD9] px-2 py-0.5 text-[10px] font-semibold text-[#8A7A4E]">
-                {chip.label} <b className="font-bold text-[#5F5533]">{chip.value}</b>
-              </span>
-            ))}
-          </div>
+          <span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-gold-line/65 bg-[#FBF6E7]/85 px-2 py-[3px] text-[9.5px] font-semibold tracking-[0.04em] text-[#8E7234]">
+            <Clover size={9} tone="gold" /> 열렸어요
+          </span>
         </div>
-      </div>
 
-      <div className="relative px-4 pb-4">
+        {/* 문양 */}
+        <div className="mt-2.5 flex justify-center">
+          <CardEmblem size={112} />
+        </div>
+
+        {/* 카드 내용 */}
+        <h3 className="mt-1 text-center font-serif text-[21.5px] font-medium leading-snug tracking-[-0.015em] text-[#2F4A3B]">
+          {daily.charm.title}
+        </h3>
+        <div className="mt-2 flex items-center justify-center gap-2 text-gold-line">
+          <span className="h-px w-10 bg-current opacity-70" />
+          <Sparkle size={7} color="#C7A862" />
+          <span className="h-px w-10 bg-current opacity-70" />
+        </div>
+        <p className="mx-auto mt-2.5 max-w-[19rem] text-center text-[12px] leading-[1.8] text-[#6E6757]">
+          {daily.charm.message}
+        </p>
+
+        {/* 행운의 결 */}
+        <dl className="mt-4 grid grid-cols-3 divide-x divide-[#E6DCC1] border-y border-[#E6DCC1] py-2.5">
+          {[
+            { label: "행운의 색", value: daily.charm.colorName },
+            { label: "숫자", value: daily.charm.number },
+            { label: "키워드", value: daily.charm.keyword },
+          ].map((item) => (
+            <div key={item.label} className="px-1 text-center">
+              <dt className="text-[9px] font-semibold tracking-[0.16em] text-[#94804F]">{item.label}</dt>
+              <dd className="mt-1 font-serif text-[13.5px] font-medium leading-none text-[#3E3A2C]">{item.value}</dd>
+            </div>
+          ))}
+        </dl>
+
         <button
           type="button"
           onClick={onShare}
-          className="flex w-full items-center justify-center gap-1.5 rounded-2xl bg-leaf py-3 text-[13.5px] font-extrabold text-white shadow-[0_16px_26px_-18px_rgba(18,128,92,1)] transition active:scale-[0.99]"
+          className="mt-4 flex w-full items-center justify-center gap-1.5 rounded-[13px] bg-forest py-[13px] text-[13px] font-semibold tracking-[0.02em] text-[#FBF7EA] shadow-[inset_0_0_0_1px_rgba(212,184,118,0.32),0_16px_26px_-20px_rgba(18,80,60,1)] transition active:scale-[0.99]"
         >
-          <ShareIcon size={15} />
-          오늘의 부적 공유하기
+          <ShareIcon size={14} />
+          오늘의 카드 공유하기
         </button>
       </div>
     </section>

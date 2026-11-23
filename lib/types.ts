@@ -30,7 +30,7 @@ export interface DayRecord {
   /** 오늘 배정된 퀘스트 id (Quest1, Quest2) */
   quests: [string, string];
   checks: [boolean, boolean];
-  /** 두 퀘스트를 모두 체크한 순간의 타임스탬프. 한 번 열린 부적은 그날 유지된다. */
+  /** 두 퀘스트를 모두 체크한 순간의 타임스탬프. 한 번 열린 카드는 그날 유지된다. */
   unlockedAt: string | null;
 }
 
@@ -39,6 +39,6 @@ export interface AppState {
   days: Record<string, DayRecord>;
   streak: number;
   lastCompleteDate: string | null;
-  /** 모은 부적 (날짜 → 부적 id) */
+  /** 모은 카드 (날짜 → 카드 id) */
   charms: Record<string, string>;
 }

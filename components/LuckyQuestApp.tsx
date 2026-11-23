@@ -14,7 +14,7 @@ import type { AppState, Profile } from "@/lib/types";
 const TABS: { key: NavKey; label: string }[] = [
   { key: "today", label: "오늘" },
   { key: "calendar", label: "달력" },
-  { key: "charms", label: "부적 카드" },
+  { key: "charms", label: "보관함" },
   { key: "me", label: "마이" },
 ];
 
@@ -95,7 +95,7 @@ export function LuckyQuestApp() {
       setMood("cheer");
       if (willUnlock) {
         setJustUnlocked(true);
-        setToast("부적 카드가 열렸어요! 🍀");
+        setToast("오늘의 카드가 열렸어요! 🍀");
         window.setTimeout(() => setJustUnlocked(false), 3200);
       }
     },
@@ -104,7 +104,7 @@ export function LuckyQuestApp() {
 
   const onShare = useCallback(async () => {
     if (!daily) return;
-    const text = `오늘의 럭키 부적 — ${daily.charm.title}\n"${daily.charm.message}"`;
+    const text = `오늘의 카드 — ${daily.charm.title}\n"${daily.charm.message}"`;
     const url = "https://luckyquest.kr";
     const nav = typeof navigator !== "undefined" ? navigator : undefined;
     if (nav?.share) {
@@ -117,7 +117,7 @@ export function LuckyQuestApp() {
     }
     try {
       await nav?.clipboard?.writeText(`${text}\n${url}`);
-      setToast("부적 링크를 복사했어요");
+      setToast("카드 링크를 복사했어요");
     } catch {
       setToast("luckyquest.kr 에서 만나요");
     }
@@ -125,7 +125,7 @@ export function LuckyQuestApp() {
 
   const onReset = useCallback(() => {
     if (typeof window === "undefined") return;
-    const ok = window.confirm("지금까지의 기록(연속일수·부적)을 지우고 처음부터 시작할까요?");
+    const ok = window.confirm("지금까지의 기록(연속일수·카드)을 지우고 처음부터 시작할까요?");
     if (!ok) return;
     clearState();
     setState(null);
@@ -296,7 +296,7 @@ export function LuckyQuestApp() {
                   </div>
                   <p className="text-[12.5px] leading-[1.8] text-ink-soft">
                     오늘의 날씨가 되는 사주 오행과, 나다운 행동을 알려주는 MBTI를 담았어요.
-                    하루 한두 걸음의 작은 퀘스트로 기운을 채우면 럭키 부적 카드가 열립니다.
+                    하루 한두 걸음의 작은 퀘스트로 기운을 채우면 오늘의 카드가 열립니다.
                   </p>
                   <p className="mt-2 text-[11px] text-ink-faint">
                     입력한 생년월일과 MBTI는 이 기기에만 저장되고 어디에도 보내지 않아요.

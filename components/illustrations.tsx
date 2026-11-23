@@ -203,8 +203,9 @@ export function NavIcon({ name, active, size = 22 }: { name: NavKey; active: boo
       )}
       {name === "charms" && (
         <g {...p}>
-          <rect x="4.4" y="3.6" width="15.2" height="16.8" rx="3" />
-          <path d="M8 8.2h8M8 12h8M8 15.8h4.5" />
+          <rect x="4.2" y="3.8" width="12.6" height="16.4" rx="2.6" />
+          <path d="M17 7.4h1.4a1.8 1.8 0 0 1 1.8 1.8v10a2.4 2.4 0 0 1-2.4 2.4h-8.2" opacity="0.5" />
+          <path d="M10.5 12.1c.5-.5 1.3-.4 1.6.2.3-.6 1.1-.7 1.6-.2.5.5.4 1.1-.2 1.6L12.1 15l-1.4-1.3c-.6-.5-.7-1.1-.2-1.6Z" fill={color} stroke="none" />
         </g>
       )}
       {name === "me" && (
@@ -217,7 +218,83 @@ export function NavIcon({ name, active, size = 22 }: { name: NavKey; active: boo
   );
 }
 
-/* ── 부적 카드 일러스트 ───────────────────────────────── */
+/* ── 오늘의 카드 문양(CardEmblem) ─────────────────────── */
+
+export function CardEmblem({
+  size = 112,
+  muted = false,
+  className = "",
+}: {
+  size?: number;
+  muted?: boolean;
+  className?: string;
+}) {
+  const uid = useId().replace(/:/g, "");
+  const gold = muted ? "#C0AF88" : "#C7A862";
+  const leafFront = muted ? "#93AC9B" : "#3E8F63";
+  const leafBack = muted ? "#7E9788" : "#1F6A48";
+
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 168 168"
+      fill="none"
+      className={className}
+      aria-hidden="true"
+    >
+      <defs>
+        <radialGradient id={`disc-${uid}`} cx="0.5" cy="0.4" r="0.66">
+          <stop stopColor={muted ? "#FCFAF2" : "#FFFDF7"} />
+          <stop offset="1" stopColor={muted ? "#F3EEE1" : "#F5EFDD"} />
+        </radialGradient>
+        <linearGradient id={`leaf-${uid}`} x1="84" y1="60" x2="84" y2="132" gradientUnits="userSpaceOnUse">
+          <stop stopColor={leafFront} />
+          <stop offset="1" stopColor={leafBack} />
+        </linearGradient>
+      </defs>
+
+      {/* 원반과 이중 테두리 */}
+      <circle cx="84" cy="84" r="83" fill={`url(#disc-${uid})`} />
+      <circle cx="84" cy="84" r="80.5" stroke={gold} strokeWidth="0.9" opacity="0.55" />
+      <circle cx="84" cy="84" r="72" stroke={gold} strokeWidth="0.6" opacity="0.32" strokeDasharray="1 4.2" />
+
+      {/* 위쪽의 작은 별 */}
+      <path
+        d="M84 19 L86.4 26.4 L93.8 28.8 L86.4 31.2 L84 38.6 L81.6 31.2 L74.2 28.8 L81.6 26.4 Z"
+        fill={gold}
+        opacity={muted ? 0.55 : 0.92}
+      />
+      <path d="M70 28.8 H64" stroke={gold} strokeWidth="0.7" opacity={muted ? 0.3 : 0.45} strokeLinecap="round" />
+      <path d="M98 28.8 H104" stroke={gold} strokeWidth="0.7" opacity={muted ? 0.3 : 0.45} strokeLinecap="round" />
+
+      {/* 가운데 네잎클로버 */}
+      <g transform="translate(84 100)">
+        <ellipse cx="0" cy="-6" rx="44" ry="40" fill="#FFFFFF" opacity="0.22" />
+        {[0, 90, 180, 270].map((deg) => (
+          <g key={deg} transform={`rotate(${deg})`}>
+            <path
+              d="M0 0 C 8.5 -7 14.5 -17 10 -26 C 5.5 -33.5 -5.5 -33.5 -10 -26 C -14.5 -17 -8.5 -7 0 0 Z"
+              fill={deg % 180 === 0 ? leafFront : leafBack}
+              stroke={muted ? "#F9F5EA" : "#FBF7EA"}
+              strokeWidth="1.5"
+              strokeLinejoin="round"
+            />
+            <path d="M0 -4 L0 -22" stroke="#FFFFFF" strokeOpacity="0.32" strokeWidth="1" strokeLinecap="round" />
+          </g>
+        ))}
+        <path d="M1 7 C 3 18 2 26 0 34" stroke={leafBack} strokeWidth="2" strokeLinecap="round" />
+        <circle cx="0" cy="0" r="2.6" fill={muted ? "#F5EFE1" : "#FCF8EC"} />
+      </g>
+
+      {/* 아래쪽 장식 */}
+      <path d="M62 146 Q84 154 106 146" stroke={gold} strokeWidth="0.8" opacity={muted ? 0.3 : 0.55} fill="none" />
+      <circle cx="84" cy="150.5" r="1.1" fill={gold} opacity={muted ? 0.3 : 0.6} />
+    </svg>
+  );
+}
+
+/* ── 오늘의 카드 일러스트(잠금 미리보기) ──────────────── */
 
 function LaurelBranch({ mirrored = false }: { mirrored?: boolean }) {
   const points = Array.from({ length: 12 }, (_, i) => {

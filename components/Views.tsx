@@ -23,7 +23,7 @@ export function CalendarView({ state }: { state: AppState }) {
       <div className="flex items-end justify-between px-1">
         <div>
           <h1 className="text-[21px] font-extrabold tracking-tight text-ink">행운 달력</h1>
-          <p className="mt-0.5 text-[12px] text-ink-faint">부적을 모은 날이 클로버로 남아요</p>
+          <p className="mt-0.5 text-[12px] text-ink-faint">카드를 받은 날이 클로버로 남아요</p>
         </div>
         <div className="flex items-center gap-2">
           <button
@@ -86,7 +86,7 @@ export function CalendarView({ state }: { state: AppState }) {
         {[
           { label: "이번 달", value: `${monthDone}일`, tint: "#E6F4EB", color: "#12805C" },
           { label: "연속", value: `${state.streak}일`, tint: "#FBF1D8", color: "#A9873C" },
-          { label: "모은 부적", value: `${Object.keys(state.charms).length}개`, tint: "#EEF3FA", color: "#4A86B8" },
+          { label: "모은 카드", value: `${Object.keys(state.charms).length}장`, tint: "#EEF3FA", color: "#4A86B8" },
         ].map((item) => (
           <div key={item.label} className="rounded-2xl px-3 py-3 text-center" style={{ background: item.tint }}>
             <p className="text-[10.5px] font-semibold text-ink-soft">{item.label}</p>
@@ -96,14 +96,14 @@ export function CalendarView({ state }: { state: AppState }) {
       </div>
 
       <p className="rounded-2xl bg-cream-2/70 px-4 py-3 text-[11.5px] leading-relaxed text-ink-soft">
-        하루에 퀘스트 두 개를 모두 마치면 부적 하나가 열리고, 그날이 달력에 남아요.
+        하루에 퀘스트 두 개를 모두 마치면 카드 한 장이 열리고, 그날이 달력에 남아요.
         하루 쉬어가도 괜찮아요 — 다시 시작하면 새 클로버가 피어나요.
       </p>
     </div>
   );
 }
 
-/* ── 부적 보관함 ───────────────────────────────────────── */
+/* ── 카드 보관함 ───────────────────────────────────────── */
 
 export function CharmsView({ state }: { state: AppState }) {
   const entries = Object.entries(state.charms).sort((a, b) => (a[0] < b[0] ? 1 : -1));
@@ -111,36 +111,47 @@ export function CharmsView({ state }: { state: AppState }) {
   return (
     <div className="space-y-4 px-5 pb-8 pt-2">
       <div className="px-1">
-        <h1 className="text-[21px] font-extrabold tracking-tight text-ink">부적 카드 보관함</h1>
-        <p className="mt-0.5 text-[12px] text-ink-faint">지금까지 모은 럭키 부적 {entries.length}장</p>
+        <p className="lq-overline">Card Archive</p>
+        <h1 className="mt-1 font-serif text-[21px] font-medium tracking-[-0.015em] text-ink">카드 보관함</h1>
+        <p className="mt-1 text-[12px] text-ink-faint">지금까지 모은 카드 {entries.length}장</p>
       </div>
 
       {entries.length === 0 ? (
-        <div className="card flex flex-col items-center gap-3 px-6 py-12 text-center">
-          <StarMascot size={72} mood="idle" />
-          <p className="text-[14px] font-bold text-ink">아직 모은 부적이 없어요</p>
-          <p className="text-[12px] leading-relaxed text-ink-soft">
-            오늘의 퀘스트 두 개를 마치면<br />첫 번째 부적이 열려요.
+        <div className="lq-card flex flex-col items-center gap-3 px-6 py-12 text-center">
+          <span aria-hidden className="lq-card-inner" />
+          <StarMascot size={64} mood="idle" />
+          <p className="font-serif text-[14.5px] text-ink">아직 모은 카드가 없어요</p>
+          <p className="text-[12px] leading-[1.8] text-ink-soft">
+            오늘의 퀘스트 두 개를 마치면
+            <br />첫 번째 카드가 열려요.
           </p>
         </div>
       ) : (
-        <div className="space-y-2">
+        <div className="space-y-2.5">
           {entries.map(([key, charmId]) => {
             const element = charmId.split("-").pop() as keyof typeof CHARMS;
             const charm = CHARMS[element];
             if (!charm) return null;
             const meta = ELEMENT_META[element];
             return (
-              <div key={key} className="flex items-center gap-3 rounded-[20px] border border-line bg-white/80 px-4 py-3">
-                <div className="flex size-11 items-center justify-center rounded-full" style={{ background: meta.soft }}>
-                  <ElementIcon element={element} size={22} />
+              <article key={key} className="lq-card px-4 py-3.5">
+                <span aria-hidden className="lq-card-inner" />
+                <div className="relative flex items-center gap-3">
+                  <div
+                    className="flex size-10 shrink-0 items-center justify-center rounded-full border border-gold-line/45 bg-white/70"
+                    style={{ boxShadow: `inset 0 0 0 3px ${meta.soft}` }}
+                  >
+                    <ElementIcon element={element} size={20} />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="font-serif text-[14px] leading-tight text-ink">{charm.title}</p>
+                    <p className="mt-1 text-[10px] tracking-[0.03em] text-ink-soft">
+                      {formatKoreanDate(key)} · {meta.name} 기운
+                    </p>
+                  </div>
+                  <Clover size={18} tone="gold" className="shrink-0 opacity-80" />
                 </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-[13.5px] font-bold text-ink">{charm.title}</p>
-                  <p className="text-[11px] text-ink-faint">{formatKoreanDate(key)} · {meta.name} 기운</p>
-                </div>
-                <Clover size={20} tone="gold" />
-              </div>
+              </article>
             );
           })}
         </div>

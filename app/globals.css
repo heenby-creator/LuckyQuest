@@ -14,9 +14,16 @@
   --color-gold-soft: #fbf1d8;
   --color-line: #efe4c9;
   --color-line-soft: #f6eeda;
+  --color-paper: #fcfbf7;
+  --color-paper-2: #f7f4ec;
+  --color-gold-line: #d4b876;
+  --color-gold-deep: #c7a862;
+  --color-forest: #12503c;
 
   --font-sans: "Pretendard Variable", Pretendard, "Noto Sans KR", "Apple SD Gothic Neo",
     "Malgun Gothic", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-serif: "Noto Serif KR", "Nanum Myeongjo", "Noto Serif CJK KR", "Apple SD Gothic Neo",
+    Georgia, serif;
 
   --radius-card: 26px;
 }
@@ -109,6 +116,36 @@ button {
 
 .card-pop {
   animation: card-pop 0.5s cubic-bezier(0.2, 0.9, 0.3, 1.2) both;
+}
+
+/* ── 오늘의 카드 (editorial paper) ─────────────── */
+.lq-card {
+  position: relative;
+  background: linear-gradient(178deg, #fcfbf7 0%, #faf7ee 100%);
+  border: 1px solid rgba(199, 168, 98, 0.55);
+  border-radius: 20px;
+  box-shadow: 0 22px 40px -36px rgba(104, 82, 28, 0.6);
+}
+
+.lq-card-inner {
+  position: absolute;
+  inset: 5px;
+  border-radius: 15px;
+  border: 1px solid rgba(212, 184, 118, 0.42);
+  pointer-events: none;
+}
+
+.lq-card--muted {
+  background: linear-gradient(178deg, #fbf8f0 0%, #f8f4e8 100%);
+}
+
+.lq-overline {
+  font-size: 8.5px;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: #b09355;
 }
 
 /* ── 애니메이션 ───────────────────────────────── */
@@ -213,7 +250,7 @@ button {
 
 /* ── 스크롤바 ─────────────────────────────────── */
 .lq-scroll::-webkit-scrollbar { width: 0; height: 0; }
-.lq-scroll { scrollbar-width: none; }
+.lq-scroll { scrollbar-width: none; overflow-x: hidden; }
 
 /* ── 게이지 ───────────────────────────────────── */
 .gauge-progress {
