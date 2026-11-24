@@ -6,7 +6,7 @@ import type { CharmView } from "./engine";
 import type { Element } from "./types";
 
 const W = 1080;
-const H = 1700;
+const H = 1760;
 
 const C = {
   paper: "#FFFDF7",
@@ -290,10 +290,12 @@ function drawCover(
   ctx.restore();
 
   ctx.save();
-  ctx.fillStyle = accent;
-  roundRect(ctx, x + width / 2 - 26, y + height - 6, 52, 6, 3);
-  ctx.fill();
+  ctx.strokeStyle = "rgba(199,168,98,0.55)";
+  ctx.lineWidth = 1.5;
+  roundRect(ctx, x - 5, y - 5, width + 10, height + 10, radius + 5);
+  ctx.stroke();
   ctx.restore();
+  void accent;
 }
 
 const ELEMENT_ACCENT: Record<Element, string> = {
@@ -386,7 +388,7 @@ export async function composeCardImage(input: CardImageInput): Promise<Blob> {
   // 명언
   ctx.font = `400 37px ${SERIF}`;
   ctx.fillStyle = C.inkSoft;
-  const quoteLines = wrapLines(ctx, `“${input.charm.quote}”`, 850).slice(0, 4);
+  const quoteLines = wrapLines(ctx, `“${input.charm.quote}”`, 850).slice(0, 3);
   const quoteTop = 708;
   quoteLines.forEach((line, i) => {
     ctx.fillText(line, W / 2, quoteTop + i * 54);
@@ -409,7 +411,7 @@ export async function composeCardImage(input: CardImageInput): Promise<Blob> {
     { label: "행운의 숫자", value: input.charm.number },
     { label: "행운의 아이템", value: input.charm.item },
   ];
-  const tableTop = 1024;
+  const tableTop = 990;
   const tableWidth = 864;
   const cellWidth = tableWidth / 3;
   const tableLeft = (W - tableWidth) / 2;
@@ -443,36 +445,20 @@ export async function composeCardImage(input: CardImageInput): Promise<Blob> {
     ctx.fillText(cell.value, centerX, tableTop + 94);
   });
 
-  // 인증샷
-  const photoTop = 1184;
-  const photoHeight = 404;
-  const photoWidth = 420;
+  // 인증샷 — 한 장이면 4:3, 두 장이면 나란히
+  const photoTop = 1150;
+  const photoHeight = 480;
   const photoGap = 24;
   const images = await Promise.all(input.photos.slice(0, 2).map((blob) => loadBitmap(blob).catch(() => null)));
   const shown = images.filter(Boolean) as (ImageBitmap | HTMLImageElement)[];
 
   if (shown.length > 0) {
-    ctx.textAlign = "center";
-    setLetterSpacing(ctx, "3px");
-    ctx.font = `600 21px ${SERIF}`;
-    ctx.fillStyle = C.label;
-    ctx.fillText("오늘 남긴 인증샷", W / 2, photoTop - 20);
-    setLetterSpacing(ctx, "0px");
-
-    const totalWidth = photoWidth * 2 + photoGap;
-    const startX = (W - totalWidth) / 2;
+    const groupWidth = 864;
+    const startX = (W - groupWidth) / 2;
     shown.forEach((image, index) => {
-      const width = shown.length === 1 ? totalWidth : photoWidth;
-      drawCover(
-        ctx,
-        image,
-        shown.length === 1 ? startX : startX + index * (photoWidth + photoGap),
-        photoTop,
-        width,
-        photoHeight,
-        24,
-        ELEMENT_ACCENT[input.charm.element],
-      );
+      const width = shown.length === 1 ? 640 : (groupWidth - photoGap) / 2;
+      const x = shown.length === 1 ? (W - width) / 2 : startX + index * (width + photoGap);
+      drawCover(ctx, image, x, photoTop, width, photoHeight, 24, ELEMENT_ACCENT[input.charm.element]);
       if ("close" in image && typeof image.close === "function") image.close();
     });
   }
@@ -484,7 +470,7 @@ export async function composeCardImage(input: CardImageInput): Promise<Blob> {
   ctx.font = `400 23px ${SERIF}`;
   const siteWidth = ctx.measureText("·  luckyquest.app").width;
   const footerStart = (W - (brandWidth + siteWidth)) / 2;
-  const footerY = H - 74;
+  const footerY = H - 80;
   ctx.font = `600 25px ${SERIF}`;
   ctx.fillStyle = C.leafDeep;
   ctx.fillText("Lucky Quest", footerStart, footerY);
