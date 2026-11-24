@@ -8,6 +8,7 @@ import { QuestList } from "./QuestList";
 import { CalendarView, CharmsView, MeView } from "./Views";
 import { Clover, NavIcon, Sparkle, StarMascot, type NavKey } from "./illustrations";
 import { buildDaily } from "@/lib/engine";
+import { shareText, shareUrl } from "@/lib/share";
 import { clearState, ensureDay, freshState, loadState, saveState, todayKey, toggleCheck } from "@/lib/storage";
 import type { AppState, Profile } from "@/lib/types";
 
@@ -104,8 +105,9 @@ export function LuckyQuestApp() {
 
   const onShare = useCallback(async () => {
     if (!daily) return;
-    const text = `오늘의 카드 — ${daily.charm.title}\n"${daily.charm.message}"`;
-    const url = "https://luckyquest.app";
+    const text = shareText({ title: daily.charm.title, message: daily.charm.message });
+    // 카드의 날짜를 링크에 담아, 들어온 사람이 그 카드의 미리보기를 보게 한다.
+    const url = shareUrl(daily.dateKey);
     const nav = typeof navigator !== "undefined" ? navigator : undefined;
     if (nav?.share) {
       try {

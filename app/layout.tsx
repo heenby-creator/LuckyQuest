@@ -1,31 +1,45 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
+// apex(luckyquest.app)는 www로 308 리다이렉트되므로, 크롤러가 곧장 200을 받도록 www를 기준 주소로 쓴다.
+const SITE_URL = "https://www.luckyquest.app";
+const OG_DESCRIPTION =
+  "사주 오행으로 읽는 오늘의 기운과 MBTI로 고른 작은 퀘스트. 하루 두 걸음이면 오늘의 카드가 열려요.";
+
 export const metadata: Metadata = {
-  metadataBase: new URL("https://luckyquest.app"),
+  metadataBase: new URL(SITE_URL),
   title: {
     default: "Lucky Quest — 오늘의 운세와 럭키 퀘스트",
     template: "%s · Lucky Quest",
   },
-  description:
-    "사주 오행으로 읽는 오늘의 기운과 MBTI로 고른 작은 퀘스트. 하루 두 걸음이면 오늘의 카드가 열려요.",
+  description: OG_DESCRIPTION,
   applicationName: "Lucky Quest",
+  alternates: { canonical: "/" },
   manifest: "/manifest.webmanifest",
   keywords: ["운세", "사주", "오행", "MBTI", "행운", "럭키 카드", "퀘스트", "Lucky Quest"],
   authors: [{ name: "Lucky Quest", url: "https://luckyquest.app" }],
   openGraph: {
     type: "website",
     locale: "ko_KR",
-    url: "https://luckyquest.app",
+    url: SITE_URL,
     siteName: "Lucky Quest",
     title: "Lucky Quest — 오늘의 운세와 럭키 퀘스트",
-    description:
-      "사주 오행으로 읽는 오늘의 기운과 MBTI로 고른 작은 퀘스트. 하루 두 걸음이면 오늘의 카드가 열려요.",
+    description: OG_DESCRIPTION,
+    images: [
+      {
+        url: "/og-default.png",
+        width: 1200,
+        height: 630,
+        type: "image/png",
+        alt: "Lucky Quest — 오늘의 행운을 한 걸음씩",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
     title: "Lucky Quest — 오늘의 운세와 럭키 퀘스트",
     description: "사주 오행과 MBTI로 만나는 오늘의 행운 퀘스트.",
+    images: [{ url: "/og-default.png", alt: "Lucky Quest — 오늘의 행운을 한 걸음씩" }],
   },
   appleWebApp: {
     capable: true,

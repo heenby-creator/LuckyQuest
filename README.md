@@ -39,6 +39,8 @@ app/
   page.tsx          앱 진입점
   manifest.ts       PWA manifest (/manifest.webmanifest)
   globals.css       디자인 토큰·애니메이션
+  card/[date]/      공유 링크 착지 페이지 — 그날의 카드 + 동적 OG 메타(SSR)
+  api/og/route.tsx  OG 이미지 엔드포인트(/api/og, /api/og?card=YYYY-MM-DD)
 components/
   LuckyQuestApp.tsx 앱 셸(헤더·탭·시트·토스트)과 상태 관리
   Onboarding.tsx    5초 설정(생년월일·시간·MBTI·간단 검사)
@@ -51,9 +53,54 @@ lib/
   saju.ts           manseryeok 래퍼(사주 기둥·오행·일진)
   content.ts        퀘스트·카드 콘텐츠 풀(오행 50 + 복합 40 + MBTI 128)
   engine.ts         오늘의 운세·퀘스트 매칭 로직(복합 오행 결핍 판정 포함)
+  share.ts          공유 링크·OG 메타용 카드 복원(날짜 → 오늘의 카드)
   storage.ts        localStorage 상태
   utils.ts          날짜·해시 유틸
+public/
+  og-default.png    대표 OG 이미지(1200×630)
+  fonts/            OG 이미지용 Noto Serif KR 서브셋(scripts/og-fonts.sh로 생성)
 ```
+
+## 공유 미리보기 (OG 이미지 · 동적 공유)
+
+카톡·페이스북·X에 링크를 붙였을 때 그림과 문구가 뜨도록 두 갈래로 만들었습니다.
+
+| 주소 | 무엇 |
+| --- | --- |
+| `https://www.luckyquest.app/` | 대표 이미지 `public/og-default.png`(1200×630) |
+| `https://www.luckyquest.app/card/2026-11-24` | 그날 '오늘의 카드'의 제목·한마디·문양이 담긴 동적 OG 메타 |
+| `https://www.luckyquest.app/api/og?card=2026-11-24` | 위 페이지의 OG 이미지(1200×630 PNG, `next/og`) |
+
+- **기준 주소는 `www.luckyquest.app`** — apex(`luckyquest.app`)는 Vercel이 www로 308 리다이렉트하므로, 크롤러가 곧장 200을 받도록 `metadataBase`와 공유 URL을 www로 맞췄습니다.
+- 카드는 (날짜 · 그날의 일진 오행)으로만 정해지므로, 공유 링크에 생년월일·MBTI 같은 개인 정보가 들어가지 않습니다. `lib/share.ts`의 `cardForDate()`가 앱과 똑같은 카드를 복원합니다.
+- 오늘의 카드 '공유하기'는 `https://www.luckyquest.app/card/<날짜>`를 넘깁니다(Web Share → 없으면 링크 복사).
+- 공유 페이지는 자바스크립트 없이 서버에서 그려지고(`app/card/[date]/page.tsx`), 아래에 '나도 오늘의 카드 열기' 버튼으로 앱(`/`)에 바로 들어갑니다.
+- 미래 날짜·잘못된 날짜(`/card/2027-01-01`, `/card/abc`)는 404입니다.
+
+### OG 폰트
+
+`next/og`(satori)는 웹폰트를 스스로 불러오지 못합니다. 그래서 Noto Serif KR에서 **이 프로젝트에 실제로 쓰이는 글자만** 뽑아 `public/fonts/og-serif-{400,600}.ttf`(각 336KB)로 두었습니다. 카드 문구나 OG 문구를 고쳐 글자가 늘면 다시 만들어 커밋합니다.
+
+```bash
+bash scripts/og-fonts.sh   # python3 + fontTools 필요
+```
+
+### 대표 이미지 다시 만들기
+
+`public/og-default.png`는 `/api/og`(파라미터 없음) 응답을 그대로 저장한 것입니다. 디자인을 고치면:
+
+```bash
+npm run build && npm start
+curl -sS -o public/og-default.png "http://localhost:3000/api/og"
+```
+
+### 카톡·페이스북 기존 캐시 지우기
+
+이미 한 번 공유한 링크는 각 서비스가 예전 미리보기를 들고 있습니다. 배포 후 아래에서 주소를 넣고 캐시를 비웁니다.
+
+- 카카오: <https://developers.kakao.com/tool/debugger/sharing> — 주소 입력 → 캐시 초기화
+- 페이스북: <https://developers.facebook.com/tools/debug/> — 주소 입력 → `Scrape Again`
+- X: <https://cards-dev.twitter.com/validator> (또는 새 주소로 공유)
 
 ## 검증
 
@@ -76,4 +123,5 @@ npm run verify
 - 퀘스트 완료 기록의 서버 동기화(기기 변경 대응)
 - 오늘의 카드 이미지 저장(PNG 내보내기)
 - 주간/월간 운세 리포트
-- OG 이미지 자동 생성, 실제 도메인 연결
+- 오늘의 카드 이미지 저장(PNG 내보내기)
+- 공유 링크 통계(어떤 카드가 많이 퍼지는지)

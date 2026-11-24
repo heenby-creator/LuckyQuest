@@ -1,0 +1,75 @@
+import { CHARMS } from "./content";
+import { todayEnergy } from "./saju";
+import type { Element } from "./types";
+import { dateKey, pick } from "./utils";
+
+/** 공유 링크와 OG 메타의 기준 주소 — apex(luckyquest.app)는 www로 308 리다이렉트되므로 www를 쓴다. */
+export const SITE_URL = "https://www.luckyquest.app";
+
+const WEEKDAY_LONG = ["일", "월", "화", "수", "목", "금", "토"];
+
+export interface ShareCard {
+  dateKey: string;
+  /** 오늘의 일진 오행 */
+  element: Element;
+  /** 일진 간지 (예: 임술) */
+  pillar: string;
+  title: string;
+  message: string;
+  keyword: string;
+  colorName: string;
+  number: string;
+  /** 예: 11월 24일 화요일 */
+  dateLabel: string;
+}
+
+/** `YYYY-MM-DD` 문자열을 검증해 정규화한다. 형식이 어긋나면 null. */
+export function parseCardDate(raw: string | null | undefined): string | null {
+  if (!raw) return null;
+  const matched = /^(\d{4})-(\d{2})-(\d{2})$/.exec(raw.trim());
+  if (!matched) return null;
+  const year = Number(matched[1]);
+  const month = Number(matched[2]);
+  const day = Number(matched[3]);
+  if (year < 2024 || year > 2099 || month < 1 || month > 12 || day < 1 || day > 31) return null;
+  const date = new Date(year, month - 1, day);
+  if (date.getFullYear() !== year || date.getMonth() !== month - 1 || date.getDate() !== day) return null;
+  return dateKey(date);
+}
+
+/**
+ * 그날의 '오늘의 카드'를 그대로 복원한다.
+ * 카드는 (날짜, 일진 오행)으로만 정해지므로 생년월일·MBTI 없이도 같은 카드가 나온다 —
+ * 공유 링크에 개인 정보가 담기지 않는 이유이기도 하다.
+ */
+export function cardForDate(key: string): ShareCard {
+  const [year, month, day] = key.split("-").map(Number);
+  const date = new Date(year, month - 1, day, 12, 0, 0);
+  const today = todayEnergy(date);
+  const content = CHARMS[today.element];
+  return {
+    dateKey: key,
+    element: today.element,
+    pillar: today.pillar,
+    title: content.title,
+    message: pick(content.messages, `${key}-charm-${today.element}`),
+    keyword: content.keyword,
+    colorName: content.colorName,
+    number: content.number,
+    dateLabel: `${month}월 ${day}일 ${WEEKDAY_LONG[date.getDay()]}요일`,
+  };
+}
+
+/** 아직 오지 않은 날의 카드는 공유할 수 없다. */
+export function isShareableDate(key: string, now: Date = new Date()): boolean {
+  return key <= dateKey(now);
+}
+
+export function shareUrl(key: string): string {
+  return `${SITE_URL}/card/${key}`;
+}
+
+/** 공유 문구 — 카톡·링크 복사·Web Share에 함께 쓰는 한 벌. */
+export function shareText(card: Pick<ShareCard, "title" | "message">): string {
+  return `오늘의 카드 — ${card.title}\n"${card.message}"`;
+}
