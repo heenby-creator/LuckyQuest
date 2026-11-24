@@ -47,7 +47,7 @@ function Emblem({ size = 128 }: { size?: number }) {
       <path d="M98 28.8 H104" stroke="#C7A862" strokeWidth="0.7" opacity="0.45" strokeLinecap="round" />
       <g transform="translate(84 104)">
         <ellipse cx="0" cy="-2" rx="52" ry="46" fill="url(#share-glow)" />
-        <ellipse cx="0" cy="30" rx="30" ry="6.5" fill="#123F2C" opacity="0.09" />
+        <ellipse cx="0" cy="29" rx="26" ry="5" fill="#123F2C" opacity="0.05" />
         {[270, 90, 0, 180].map((deg) => (
           <g key={deg} transform={`rotate(${deg})`}>
             <path d={LEAF_PATH} transform="translate(1.1 2.1)" fill="#123F2C" opacity="0.14" />
@@ -198,7 +198,7 @@ export default async function SharedCardPage({ params }: PageProps) {
             </dl>
 
             <p className="mt-3 text-center text-[10.5px] text-[#94804F]">
-              오늘의 기운 · {element.name} · {card.pillar}
+              오늘의 기운 · {element.name} · {card.pillar}일
             </p>
           </div>
         </article>

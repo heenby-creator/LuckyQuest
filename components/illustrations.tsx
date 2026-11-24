@@ -320,7 +320,7 @@ export function CardEmblem({
       {/* 가운데 네잎클로버 */}
       <g transform="translate(84 104)">
         <ellipse cx="0" cy="-2" rx="52" ry="46" fill={`url(#glow-${uid})`} />
-        <ellipse cx="0" cy="30" rx="30" ry="6.5" fill="#123F2C" opacity={muted ? 0.05 : 0.09} />
+        <ellipse cx="0" cy="29" rx="26" ry="5" fill="#123F2C" opacity={muted ? 0.03 : 0.05} />
         {[270, 90].map(leafGroup)}
         {[0, 180].map(leafGroup)}
         {/* 줄기 — 부드러운 곡선 */}

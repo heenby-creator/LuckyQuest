@@ -115,7 +115,7 @@ export const EMBLEM_URI = toUri(`<svg xmlns="http://www.w3.org/2000/svg" width="
 <path d="M98 28.8 H104" stroke="#C7A862" stroke-width="0.7" opacity="0.45" stroke-linecap="round"/>
 <g transform="translate(84 104)">
 <ellipse cx="0" cy="-2" rx="52" ry="46" fill="url(#gw)"/>
-<ellipse cx="0" cy="30" rx="30" ry="6.5" fill="#123F2C" opacity="0.09"/>
+<ellipse cx="0" cy="29" rx="26" ry="5" fill="#123F2C" opacity="0.05"/>
 ${emblemLeaf(270)}
 ${emblemLeaf(90)}
 ${emblemLeaf(0)}
