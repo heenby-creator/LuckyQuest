@@ -74,7 +74,7 @@ export function CalendarView({ state }: { state: AppState }) {
       <div className="flex items-end justify-between px-1">
         <div>
           <h1 className="text-[21px] font-extrabold tracking-tight text-ink">행운 달력</h1>
-          <p className="mt-0.5 text-[12px] text-ink-faint">카드를 받은 날이 클로버로, 인증샷을 남긴 날이 카메라로 남아요</p>
+          <p className="mt-0.5 text-[12px] text-ink-faint">카드는 클로버로, 인증샷은 카메라로 남아요</p>
         </div>
         <div className="flex items-center gap-2">
           <button
@@ -260,8 +260,9 @@ export function CharmsView({ state }: { state: AppState }) {
                       {formatKoreanDate(key)} · {meta.name} 기운
                     </p>
                     <p className="mt-1 line-clamp-2 text-[10.5px] leading-relaxed text-[#8C8064]">
-                      &ldquo;{charm.quote}&rdquo; — {charm.author}
+                      &ldquo;{charm.quote}&rdquo;
                     </p>
+                    <p className="mt-0.5 text-[10px] text-[#94804F]">— {charm.author}</p>
                   </div>
                   <Clover size={18} tone="gold" className="mt-0.5 shrink-0 opacity-80" />
                 </div>
@@ -302,7 +303,7 @@ export function MeView({
           </div>
           <div className="min-w-0 flex-1">
             <p className="text-[15px] font-extrabold text-ink">
-              {ELEMENT_HANJA[chart.dayMaster]} · {chart.dayMaster} 일간 · {state.profile.mbti}
+              {ELEMENT_HANJA[chart.dayMaster]} 일간 · {state.profile.mbti}
             </p>
             <p className="mt-0.5 text-[11.5px] text-ink-soft">{chart.birthLabel} · {timeLabel(state.profile.time)}</p>
           </div>

@@ -6,7 +6,7 @@ import type { CharmView } from "./engine";
 import type { Element } from "./types";
 
 const W = 1080;
-const H = 1620;
+const H = 1700;
 
 const C = {
   paper: "#FFFDF7",
@@ -30,6 +30,7 @@ export interface CardImageInput {
   dateLabel: string;
   /** 수(水) */
   elementName: string;
+  /** 임인 */
   pillar: string;
   photos: Blob[];
 }
@@ -53,100 +54,159 @@ function setLetterSpacing(ctx: CanvasRenderingContext2D, value: string) {
   if ("letterSpacing" in target) target.letterSpacing = value;
 }
 
-function drawClover(ctx: CanvasRenderingContext2D, cx: number, cy: number, leaf: number) {
-  const k = leaf / 30;
-  const leafPath = (rot: number) => {
-    ctx.save();
-    ctx.translate(cx, cy);
-    ctx.rotate((rot * Math.PI) / 180);
-    ctx.beginPath();
-    ctx.moveTo(0, 0);
-    ctx.bezierCurveTo(8 * k, -6 * k, 13.5 * k, -15.5 * k, 9.5 * k, -23.5 * k);
-    ctx.bezierCurveTo(5.5 * k, -30.5 * k, -5.5 * k, -30.5 * k, -9.5 * k, -23.5 * k);
-    ctx.bezierCurveTo(-13.5 * k, -15.5 * k, -8 * k, -6 * k, 0, 0);
-    ctx.closePath();
-    const gradient = ctx.createLinearGradient(0, -30 * k, 0, 0);
-    gradient.addColorStop(0, rot % 180 === 0 ? "#5CAF7F" : "#3E8F63");
-    gradient.addColorStop(1, rot % 180 === 0 ? "#2E7A55" : "#1F6A48");
-    ctx.fillStyle = gradient;
-    ctx.fill();
-    ctx.strokeStyle = "rgba(251,247,234,0.9)";
-    ctx.lineWidth = 2.5 * k;
-    ctx.stroke();
-    // 잎맥
-    ctx.beginPath();
-    ctx.moveTo(0, -4 * k);
-    ctx.lineTo(0, -22 * k);
-    ctx.strokeStyle = "rgba(255,255,255,0.34)";
-    ctx.lineWidth = 1.6 * k;
-    ctx.stroke();
-    ctx.restore();
-  };
-
-  [0, 90, 180, 270].forEach(leafPath);
-
-  // 줄기
+/** 잎 하나의 윤곽 — 중심(0,0)에서 위로 뻗는 하트 모양 잎 */
+function leafPath(ctx: CanvasRenderingContext2D, k: number) {
   ctx.beginPath();
-  ctx.moveTo(cx + 2 * k, cy + 6 * k);
-  ctx.bezierCurveTo(cx + 6 * k, cy + 22 * k, cx + 2 * k, cy + 30 * k, cx - 4 * k, cy + 42 * k);
-  ctx.strokeStyle = "#1F6A48";
-  ctx.lineWidth = 5 * k;
-  ctx.lineCap = "round";
-  ctx.stroke();
+  ctx.moveTo(0, 0);
+  ctx.bezierCurveTo(8.6 * k, -7 * k, 14.6 * k, -17 * k, 10.1 * k, -26.2 * k);
+  ctx.bezierCurveTo(5.4 * k, -33.8 * k, -5.4 * k, -33.8 * k, -10.1 * k, -26.2 * k);
+  ctx.bezierCurveTo(-14.6 * k, -17 * k, -8.6 * k, -7 * k, 0, 0);
+  ctx.closePath();
 }
 
-function drawEmblem(ctx: CanvasRenderingContext2D, cx: number, cy: number) {
-  const r = 150;
-  const disc = ctx.createRadialGradient(cx - 30, cy - 60, 10, cx, cy, r);
-  disc.addColorStop(0, "#FFFEF9");
-  disc.addColorStop(1, "#F5EFDD");
+function drawClover(ctx: CanvasRenderingContext2D, cx: number, cy: number, leafLen: number) {
+  const k = leafLen / 30;
+
+  // 바닥 그림자
+  ctx.save();
   ctx.beginPath();
-  ctx.arc(cx, cy, r, 0, Math.PI * 2);
+  ctx.ellipse(cx, cy + leafLen * 0.62, leafLen * 0.56, leafLen * 0.12, 0, 0, Math.PI * 2);
+  ctx.fillStyle = "rgba(18,63,44,0.10)";
+  ctx.fill();
+  ctx.restore();
+
+  // 줄기 — 잎 뒤에서 아래로 부드럽게
+  ctx.save();
+  ctx.beginPath();
+  ctx.moveTo(cx + leafLen * 0.02, cy + leafLen * 0.18);
+  ctx.bezierCurveTo(
+    cx + leafLen * 0.2,
+    cy + leafLen * 0.55,
+    cx + leafLen * 0.06,
+    cy + leafLen * 0.85,
+    cx - leafLen * 0.16,
+    cy + leafLen * 1.06,
+  );
+  ctx.strokeStyle = "#1C6B49";
+  ctx.lineWidth = Math.max(4, leafLen * 0.075);
+  ctx.lineCap = "round";
+  ctx.stroke();
+  ctx.restore();
+
+  for (const deg of [270, 90, 0, 180]) {
+    const isFront = deg % 180 === 0;
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.rotate((deg * Math.PI) / 180);
+
+    // 두께 그림자
+    ctx.save();
+    ctx.translate(1.2 * k, 2 * k);
+    leafPath(ctx, k);
+    ctx.fillStyle = "rgba(18,63,44,0.14)";
+    ctx.fill();
+    ctx.restore();
+
+    const gradient = ctx.createLinearGradient(0, -33 * k, 0, 0);
+    gradient.addColorStop(0, isFront ? "#7BCFA0" : "#60B98C");
+    gradient.addColorStop(0.55, isFront ? "#3E9B69" : "#2E8A5C");
+    gradient.addColorStop(1, isFront ? "#1C6B49" : "#16583C");
+
+    leafPath(ctx, k);
+    ctx.fillStyle = gradient;
+    ctx.fill();
+    ctx.strokeStyle = "rgba(252,248,236,0.95)";
+    ctx.lineWidth = Math.max(1.2, 1.1 * k);
+    ctx.stroke();
+
+    // 잎맥
+    ctx.beginPath();
+    ctx.moveTo(0, -3.4 * k);
+    ctx.lineTo(0, -23 * k);
+    ctx.strokeStyle = "rgba(234,247,239,0.62)";
+    ctx.lineWidth = Math.max(1, 1.0 * k);
+    ctx.lineCap = "round";
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.moveTo(0, -10 * k);
+    ctx.lineTo(4.1 * k, -13.2 * k);
+    ctx.moveTo(0, -10 * k);
+    ctx.lineTo(-4.1 * k, -13.2 * k);
+    ctx.moveTo(0, -15.2 * k);
+    ctx.lineTo(4.3 * k, -18.4 * k);
+    ctx.moveTo(0, -15.2 * k);
+    ctx.lineTo(-4.3 * k, -18.4 * k);
+    ctx.strokeStyle = "rgba(231,245,236,0.42)";
+    ctx.lineWidth = Math.max(0.7, 0.7 * k);
+    ctx.stroke();
+
+    // 하이라이트
+    ctx.beginPath();
+    ctx.ellipse(-3.6 * k, -17 * k, 2.9 * k, 7.6 * k, (-14 * Math.PI) / 180, 0, Math.PI * 2);
+    ctx.fillStyle = "rgba(255,255,255,0.24)";
+    ctx.fill();
+
+    ctx.restore();
+  }
+
+  // 중심
+  ctx.beginPath();
+  ctx.arc(cx, cy, Math.max(3.2, 2.6 * k), 0, Math.PI * 2);
+  ctx.fillStyle = "#FDF9EE";
+  ctx.fill();
+}
+
+function drawEmblem(ctx: CanvasRenderingContext2D, cx: number, cy: number, radius: number) {
+  const disc = ctx.createRadialGradient(cx - 30, cy - 60, 10, cx, cy, radius);
+  disc.addColorStop(0, "#FFFFFB");
+  disc.addColorStop(0.62, "#FBF6E8");
+  disc.addColorStop(1, "#F3ECD8");
+
+  ctx.beginPath();
+  ctx.arc(cx, cy, radius, 0, Math.PI * 2);
   ctx.fillStyle = disc;
   ctx.fill();
 
   ctx.beginPath();
-  ctx.arc(cx, cy, r - 5, 0, Math.PI * 2);
-  ctx.strokeStyle = "rgba(199,168,98,0.55)";
+  ctx.arc(cx, cy, radius - 6, 0, Math.PI * 2);
+  ctx.strokeStyle = "rgba(255,255,255,0.7)";
   ctx.lineWidth = 2;
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.arc(cx, cy, radius - 3, 0, Math.PI * 2);
+  ctx.strokeStyle = "rgba(199,168,98,0.6)";
+  ctx.lineWidth = 1.8;
   ctx.stroke();
 
   ctx.save();
   ctx.setLineDash([3, 12]);
   ctx.beginPath();
-  ctx.arc(cx, cy, r - 22, 0, Math.PI * 2);
+  ctx.arc(cx, cy, radius - 26, 0, Math.PI * 2);
   ctx.strokeStyle = "rgba(199,168,98,0.32)";
   ctx.lineWidth = 1.6;
   ctx.stroke();
   ctx.restore();
 
   // 위쪽 작은 별
-  const star = (x: number, y: number, s: number) => {
-    ctx.beginPath();
-    ctx.moveTo(x, y - s);
-    ctx.lineTo(x + s * 0.28, y - s * 0.28);
-    ctx.lineTo(x + s, y);
-    ctx.lineTo(x + s * 0.28, y + s * 0.28);
-    ctx.lineTo(x, y + s);
-    ctx.lineTo(x - s * 0.28, y + s * 0.28);
-    ctx.lineTo(x - s, y);
-    ctx.lineTo(x - s * 0.28, y - s * 0.28);
-    ctx.closePath();
-    ctx.fillStyle = C.gold;
-    ctx.fill();
-  };
-  star(cx, cy - r + 42, 16);
-
-  // 클로버 뒤 은은한 빛
-  const glow = ctx.createRadialGradient(cx, cy + 10, 20, cx, cy + 10, 130);
-  glow.addColorStop(0, "rgba(255,255,255,0.55)");
-  glow.addColorStop(1, "rgba(255,255,255,0)");
+  const s = radius * 0.1;
+  const sx = cx;
+  const sy = cy - radius + radius * 0.28;
   ctx.beginPath();
-  ctx.arc(cx, cy + 10, 130, 0, Math.PI * 2);
-  ctx.fillStyle = glow;
+  ctx.moveTo(sx, sy - s);
+  ctx.lineTo(sx + s * 0.28, sy - s * 0.28);
+  ctx.lineTo(sx + s, sy);
+  ctx.lineTo(sx + s * 0.28, sy + s * 0.28);
+  ctx.lineTo(sx, sy + s);
+  ctx.lineTo(sx - s * 0.28, sy + s * 0.28);
+  ctx.lineTo(sx - s, sy);
+  ctx.lineTo(sx - s * 0.28, sy - s * 0.28);
+  ctx.closePath();
+  ctx.fillStyle = C.gold;
   ctx.fill();
 
-  drawClover(ctx, cx, cy + 44, 82);
+  drawClover(ctx, cx, cy + radius * 0.16, radius * 0.52);
 }
 
 function wrapLines(ctx: CanvasRenderingContext2D, text: string, maxWidth: number): string[] {
@@ -161,7 +221,6 @@ function wrapLines(ctx: CanvasRenderingContext2D, text: string, maxWidth: number
       continue;
     }
     if (line) lines.push(line);
-    // 한 단어가 한 줄을 넘으면 글자 단위로 자른다.
     if (ctx.measureText(word).width > maxWidth) {
       let chunk = "";
       for (const char of word) {
@@ -209,8 +268,8 @@ function drawCover(
   radius: number,
   accent: string,
 ) {
-  const sourceWidth = "width" in image ? image.width : 1;
-  const sourceHeight = "height" in image ? image.height : 1;
+  const sourceWidth = image.width || 1;
+  const sourceHeight = image.height || 1;
   const scale = Math.max(width / sourceWidth, height / sourceHeight);
   const drawWidth = sourceWidth * scale;
   const drawHeight = sourceHeight * scale;
@@ -225,14 +284,15 @@ function drawCover(
 
   ctx.save();
   roundRect(ctx, x, y, width, height, radius);
-  ctx.strokeStyle = "rgba(255,253,247,0.9)";
+  ctx.strokeStyle = "rgba(255,253,247,0.92)";
   ctx.lineWidth = 6;
   ctx.stroke();
   ctx.restore();
 
   ctx.save();
   ctx.fillStyle = accent;
-  ctx.fillRect(x + width / 2 - 26, y + height - 5, 52, 5);
+  roundRect(ctx, x + width / 2 - 26, y + height - 6, 52, 6, 3);
+  ctx.fill();
   ctx.restore();
 }
 
@@ -285,62 +345,63 @@ export async function composeCardImage(input: CardImageInput): Promise<Blob> {
   // 머리글
   ctx.textAlign = "left";
   setLetterSpacing(ctx, "6px");
-  ctx.font = `600 26px ${SERIF}`;
+  ctx.font = `600 25px ${SERIF}`;
   ctx.fillStyle = C.goldDeep;
-  ctx.fillText("TODAY'S LUCKY CARD", 108, 130);
+  ctx.fillText("TODAY'S LUCKY CARD", 106, 124);
   setLetterSpacing(ctx, "0px");
 
   ctx.font = `600 42px ${SERIF}`;
   ctx.fillStyle = C.forest;
-  ctx.fillText("오늘의 행운 카드", 106, 188);
+  ctx.fillText("오늘의 행운 카드", 104, 182);
 
   ctx.textAlign = "right";
-  ctx.font = `400 30px ${SERIF}`;
+  ctx.font = `400 28px ${SERIF}`;
   ctx.fillStyle = C.inkFaint;
-  ctx.fillText(input.dateLabel, W - 106, 186);
+  ctx.fillText(input.dateLabel, W - 104, 180);
 
   ctx.textAlign = "center";
 
   // 문양
-  drawEmblem(ctx, W / 2, 396);
+  drawEmblem(ctx, W / 2, 372, 136);
 
   // 키워드
-  ctx.font = `600 68px ${SERIF}`;
+  ctx.font = `600 64px ${SERIF}`;
   ctx.fillStyle = C.leafDeep;
-  ctx.fillText(input.charm.title, W / 2, 636);
+  ctx.fillText(input.charm.title, W / 2, 606);
 
   // 구분선
   ctx.strokeStyle = "rgba(212,184,118,0.8)";
   ctx.lineWidth = 2;
   ctx.beginPath();
-  ctx.moveTo(W / 2 - 118, 676);
-  ctx.lineTo(W / 2 - 22, 676);
-  ctx.moveTo(W / 2 + 22, 676);
-  ctx.lineTo(W / 2 + 118, 676);
+  ctx.moveTo(W / 2 - 112, 644);
+  ctx.lineTo(W / 2 - 20, 644);
+  ctx.moveTo(W / 2 + 20, 644);
+  ctx.lineTo(W / 2 + 112, 644);
   ctx.stroke();
   ctx.fillStyle = C.gold;
   ctx.beginPath();
-  ctx.arc(W / 2, 676, 5, 0, Math.PI * 2);
+  ctx.arc(W / 2, 644, 5, 0, Math.PI * 2);
   ctx.fill();
 
   // 명언
-  ctx.font = `400 40px ${SERIF}`;
+  ctx.font = `400 37px ${SERIF}`;
   ctx.fillStyle = C.inkSoft;
-  const quoteLines = wrapLines(ctx, `“${input.charm.quote}”`, 850);
-  const quoteTop = 742;
-  quoteLines.slice(0, 4).forEach((line, i) => {
-    ctx.fillText(line, W / 2, quoteTop + i * 58);
+  const quoteLines = wrapLines(ctx, `“${input.charm.quote}”`, 850).slice(0, 4);
+  const quoteTop = 708;
+  quoteLines.forEach((line, i) => {
+    ctx.fillText(line, W / 2, quoteTop + i * 54);
   });
 
   // 저자
-  ctx.font = `600 30px ${SERIF}`;
+  const authorY = quoteTop + quoteLines.length * 54 + 10;
+  ctx.font = `600 29px ${SERIF}`;
   ctx.fillStyle = C.goldDeep;
-  ctx.fillText(`— ${input.charm.author}`, W / 2, quoteTop + quoteLines.slice(0, 4).length * 58 + 14);
+  ctx.fillText(`— ${input.charm.author}`, W / 2, authorY);
 
   // 오늘의 기운
-  ctx.font = `400 26px ${SERIF}`;
+  ctx.font = `400 24px ${SERIF}`;
   ctx.fillStyle = C.inkFaint;
-  ctx.fillText(`오늘의 기운 · ${input.elementName} · ${input.pillar}`, W / 2, quoteTop + quoteLines.slice(0, 4).length * 58 + 66);
+  ctx.fillText(`오늘의 기운 · ${input.elementName} · ${input.pillar}일`, W / 2, authorY + 48);
 
   // 행운의 색 · 숫자 · 아이템
   const cells = [
@@ -348,7 +409,7 @@ export async function composeCardImage(input: CardImageInput): Promise<Blob> {
     { label: "행운의 숫자", value: input.charm.number },
     { label: "행운의 아이템", value: input.charm.item },
   ];
-  const tableTop = 1060;
+  const tableTop = 1024;
   const tableWidth = 864;
   const cellWidth = tableWidth / 3;
   const tableLeft = (W - tableWidth) / 2;
@@ -358,8 +419,8 @@ export async function composeCardImage(input: CardImageInput): Promise<Blob> {
   ctx.beginPath();
   ctx.moveTo(tableLeft, tableTop);
   ctx.lineTo(tableLeft + tableWidth, tableTop);
-  ctx.moveTo(tableLeft, tableTop + 128);
-  ctx.lineTo(tableLeft + tableWidth, tableTop + 128);
+  ctx.moveTo(tableLeft, tableTop + 120);
+  ctx.lineTo(tableLeft + tableWidth, tableTop + 120);
   ctx.stroke();
 
   cells.forEach((cell, index) => {
@@ -367,30 +428,37 @@ export async function composeCardImage(input: CardImageInput): Promise<Blob> {
     if (index > 0) {
       ctx.beginPath();
       ctx.moveTo(tableLeft + cellWidth * index, tableTop);
-      ctx.lineTo(tableLeft + cellWidth * index, tableTop + 128);
+      ctx.lineTo(tableLeft + cellWidth * index, tableTop + 120);
       ctx.strokeStyle = C.line;
       ctx.stroke();
     }
     ctx.textAlign = "center";
     setLetterSpacing(ctx, "3px");
-    ctx.font = `600 22px ${SERIF}`;
+    ctx.font = `600 21px ${SERIF}`;
     ctx.fillStyle = C.label;
-    ctx.fillText(cell.label, centerX, tableTop + 46);
+    ctx.fillText(cell.label, centerX, tableTop + 44);
     setLetterSpacing(ctx, "0px");
-    ctx.font = `600 38px ${SERIF}`;
+    ctx.font = `600 36px ${SERIF}`;
     ctx.fillStyle = "#3E3A2C";
-    ctx.fillText(cell.value, centerX, tableTop + 100);
+    ctx.fillText(cell.value, centerX, tableTop + 94);
   });
 
   // 인증샷
-  const photoTop = 1236;
-  const photoHeight = 268;
+  const photoTop = 1184;
+  const photoHeight = 404;
   const photoWidth = 420;
   const photoGap = 24;
   const images = await Promise.all(input.photos.slice(0, 2).map((blob) => loadBitmap(blob).catch(() => null)));
   const shown = images.filter(Boolean) as (ImageBitmap | HTMLImageElement)[];
 
   if (shown.length > 0) {
+    ctx.textAlign = "center";
+    setLetterSpacing(ctx, "3px");
+    ctx.font = `600 21px ${SERIF}`;
+    ctx.fillStyle = C.label;
+    ctx.fillText("오늘 남긴 인증샷", W / 2, photoTop - 20);
+    setLetterSpacing(ctx, "0px");
+
     const totalWidth = photoWidth * 2 + photoGap;
     const startX = (W - totalWidth) / 2;
     shown.forEach((image, index) => {
@@ -402,30 +470,27 @@ export async function composeCardImage(input: CardImageInput): Promise<Blob> {
         photoTop,
         width,
         photoHeight,
-        22,
+        24,
         ELEMENT_ACCENT[input.charm.element],
       );
       if ("close" in image && typeof image.close === "function") image.close();
     });
-    ctx.textAlign = "center";
-    ctx.font = `400 22px ${SERIF}`;
-    ctx.fillStyle = C.inkFaint;
-    ctx.fillText("오늘 남긴 인증샷", W / 2, photoTop + photoHeight + 46);
   }
 
   // 꼬리말
   ctx.textAlign = "left";
-  ctx.font = `600 26px ${SERIF}`;
+  ctx.font = `600 25px ${SERIF}`;
   const brandWidth = ctx.measureText("Lucky Quest").width;
-  ctx.font = `400 24px ${SERIF}`;
+  ctx.font = `400 23px ${SERIF}`;
   const siteWidth = ctx.measureText("·  luckyquest.app").width;
   const footerStart = (W - (brandWidth + siteWidth)) / 2;
-  ctx.font = `600 26px ${SERIF}`;
+  const footerY = H - 74;
+  ctx.font = `600 25px ${SERIF}`;
   ctx.fillStyle = C.leafDeep;
-  ctx.fillText("Lucky Quest", footerStart, H - 96);
-  ctx.font = `400 24px ${SERIF}`;
+  ctx.fillText("Lucky Quest", footerStart, footerY);
+  ctx.font = `400 23px ${SERIF}`;
   ctx.fillStyle = C.inkFaint;
-  ctx.fillText("·  luckyquest.app", footerStart + brandWidth, H - 96);
+  ctx.fillText("·  luckyquest.app", footerStart + brandWidth, footerY);
   setLetterSpacing(ctx, "0px");
 
   const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/png"));
