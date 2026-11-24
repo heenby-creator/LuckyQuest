@@ -5,6 +5,7 @@ import { ELEMENT_META } from "@/lib/content";
 import type { DailyView } from "@/lib/engine";
 import { composeCardImage, saveOrShareImage } from "@/lib/cardImage";
 import type { QuestPhoto } from "@/lib/photos";
+import { trackEvent } from "@/lib/analytics";
 import { formatKoreanDate } from "@/lib/utils";
 import { CardEmblem, Clover, LockIcon, ShareIcon, Sparkle } from "./illustrations";
 
@@ -39,6 +40,7 @@ export function CharmCard({
         photos: photos.map((photo) => photo.blob),
       });
       const result = await saveOrShareImage(blob, `luckyquest-${daily.dateKey}.png`);
+      trackEvent("card_download", { date: daily.dateKey, photo_count: photos.length, method: result });
       onToast?.(result === "shared" ? "인증샷 카드를 공유했어요" : "인증샷 카드 이미지를 저장했어요");
     } catch {
       onToast?.("이미지를 만들지 못했어요. 잠시 뒤 다시 시도해 주세요");

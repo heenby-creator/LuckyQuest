@@ -8,6 +8,7 @@ import { QuestList } from "./QuestList";
 import { CalendarView, CharmsView, MeView } from "./Views";
 import { Clover, NavIcon, Sparkle, StarMascot, type NavKey } from "./illustrations";
 import { buildDaily } from "@/lib/engine";
+import { isKakaoTalkBrowser, trackEvent } from "@/lib/analytics";
 import { deleteQuestPhoto, getDayPhotos, preparePhoto, saveQuestPhoto, type QuestPhoto } from "@/lib/photos";
 import { shareText, shareUrl } from "@/lib/share";
 import { clearState, ensureDay, freshState, loadState, saveState, todayKey, toggleCheck } from "@/lib/storage";
@@ -84,6 +85,7 @@ export function LuckyQuestApp() {
 
   const onSaveProfile = useCallback(
     (profile: Profile) => {
+      const firstTime = !state;
       setState((prev) => {
         const base = prev ?? freshState(profile);
         const days = { ...base.days };
@@ -96,8 +98,14 @@ export function LuckyQuestApp() {
       setEditing(false);
       setTab("today");
       setToast("정보를 저장했어요 ☘️");
+      trackEvent("onboarding_complete", {
+        first_time: firstTime,
+        mbti: profile.mbti,
+        time_known: profile.time.kind === "jin",
+        lunar: profile.birth.isLunar,
+      });
     },
-    [],
+    [state],
   );
 
   const onToggle = useCallback(
@@ -105,10 +113,18 @@ export function LuckyQuestApp() {
       if (!state || !daily || !day) return;
       const next = toggleCheck(state, index, daily.charm.id);
       const willUnlock = !day.unlockedAt && Boolean(next.days[daily.dateKey]?.unlockedAt);
+      const nowChecked = Boolean(next.days[daily.dateKey]?.checks[index]);
       setState(next);
       saveState(next);
       setMood("cheer");
+      if (nowChecked) {
+        trackEvent("quest_complete", {
+          quest_index: (index + 1) as 1 | 2,
+          quest_badge: daily.quests[index].badge,
+        });
+      }
       if (willUnlock) {
+        trackEvent("card_unlock", { date: daily.dateKey, streak: next.streak });
         setJustUnlocked(true);
         setToast("오늘의 행운 카드가 열렸어요! 🍀");
         window.setTimeout(() => setJustUnlocked(false), 3200);
@@ -125,6 +141,7 @@ export function LuckyQuestApp() {
         const saved = await saveQuestPhoto(daily.dateKey, index, prepared);
         setPhotos((prev) => [...prev.filter((photo) => photo.index !== index), saved].sort((a, b) => a.index - b.index));
         setToast("인증샷을 저장했어요 · 이 기기에만");
+        trackEvent("photo_attach", { quest_index: (index + 1) as 1 | 2 });
       } catch {
         setToast("사진을 저장하지 못했어요");
       }
@@ -152,9 +169,12 @@ export function LuckyQuestApp() {
     // 카드의 날짜를 링크에 담아, 들어온 사람이 그 카드의 미리보기를 보게 한다.
     const url = shareUrl(daily.dateKey);
     const nav = typeof navigator !== "undefined" ? navigator : undefined;
+    const viaKakao = isKakaoTalkBrowser();
     if (nav?.share) {
       try {
         await nav.share({ title: "Lucky Quest", text, url });
+        if (viaKakao) trackEvent("share_kakao", { date: daily.dateKey, method: "kakaotalk" });
+        else trackEvent("share_link", { date: daily.dateKey, method: "native_share" });
         return;
       } catch {
         return;
@@ -163,6 +183,7 @@ export function LuckyQuestApp() {
     try {
       await nav?.clipboard?.writeText(`${text}\n${url}`);
       setToast("카드 링크를 복사했어요");
+      trackEvent("share_link", { date: daily.dateKey, method: "clipboard" });
     } catch {
       setToast("luckyquest.app 에서 만나요");
     }

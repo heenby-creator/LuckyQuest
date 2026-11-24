@@ -9,6 +9,7 @@ import {
   type FortuneTopic,
 } from "@/lib/content";
 import type { DailyView } from "@/lib/engine";
+import { trackEvent } from "@/lib/analytics";
 import { formatKoreanDate } from "@/lib/utils";
 import { ElementIcon, Sparkle, StarMascot } from "./illustrations";
 
@@ -137,7 +138,10 @@ export function FortuneCard({ daily, mbti }: { daily: DailyView; mbti: string })
                 type="button"
                 role="tab"
                 aria-selected={active}
-                onClick={() => setTab(t.key)}
+                onClick={() => {
+                  setTab(t.key);
+                  trackEvent("fortune_tab_click", { tab: t.key, label: t.label });
+                }}
                 className={`flex flex-col items-center gap-0.5 rounded-2xl border-2 px-1 py-2 transition active:scale-[0.97] ${
                   active
                     ? "border-leaf bg-leaf-soft shadow-[0_10px_20px_-16px_rgba(18,128,92,1)]"
