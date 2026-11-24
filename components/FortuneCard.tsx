@@ -144,10 +144,10 @@ export function FortuneCard({ daily, mbti }: { daily: DailyView; mbti: string })
                     : "border-[#E7DCC2] bg-white/85 hover:border-leaf/35 hover:bg-white"
                 }`}
               >
-                <span className={`text-[12.5px] font-extrabold leading-none tracking-tight ${active ? "text-leaf-strong" : "text-ink-soft"}`}>
+                <span className={`text-[13px] font-extrabold leading-none tracking-tight ${active ? "text-leaf-strong" : "text-[#4C4637]"}`}>
                   {t.label}
                 </span>
-                <span className={`text-[11px] font-bold leading-none tabular-nums ${active ? "text-leaf" : "text-ink-faint"}`}>
+                <span className={`text-[11px] font-bold leading-none tabular-nums ${active ? "text-leaf" : "text-[#8C8168]"}`}>
                   {percent}%
                 </span>
               </button>
