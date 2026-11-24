@@ -71,6 +71,14 @@ function QuestCard({
             >
               {quest.badge}
             </span>
+            {quest.elements.length > 1 && (
+              <span
+                className="rounded-full border bg-white/80 px-1.5 py-0.5 text-[10px] font-extrabold tracking-tight"
+                style={{ borderColor: `${accent}66`, color: accent }}
+              >
+                {quest.elements.join("+")} 함께
+              </span>
+            )}
             {checked && (
               <span className="inline-flex items-center gap-0.5 text-[10.5px] font-bold text-leaf anim-fade-up">
                 <Clover size={11} /> 완료!
@@ -115,7 +123,15 @@ function QuestCard({
           {quest.why}
         </p>
         <span className="shrink-0 opacity-90">
-          {gold ? <Clover size={24} tone="gold" /> : <ElementIcon element={quest.element} size={24} />}
+          {gold ? (
+            <Clover size={24} tone="gold" />
+          ) : (
+            <span className="flex items-center gap-0.5">
+              {quest.elements.map((el) => (
+                <ElementIcon key={el} element={el} size={quest.elements.length > 1 ? 19 : 24} />
+              ))}
+            </span>
+          )}
         </span>
       </div>
     </div>

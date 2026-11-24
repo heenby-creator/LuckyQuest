@@ -9,7 +9,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "verify": "tsc -p tsconfig.verify.json && node .verify/scripts/verify-quests.js"
   },
   "dependencies": {
     "manseryeok": "2.0.0",
