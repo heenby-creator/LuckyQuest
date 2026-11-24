@@ -7,15 +7,18 @@
  * 실행: npm run verify
  */
 import {
+  CHARM_POOL,
   COMBO_QUESTS,
   ELEMENT_QUESTS,
   MBTI_QUESTS,
+  charmForDate,
   comboKeyOf,
   type ComboKey,
   type Quest,
 } from "../lib/content";
 import { buildDaily, deficiencyOf } from "../lib/engine";
 import { ELEMENTS, computeChart } from "../lib/saju";
+import { cardForDate } from "../lib/share";
 import type { BirthTime, Element, Mbti, Profile } from "../lib/types";
 
 const MBTI_TYPES: Mbti[] = [
@@ -326,6 +329,79 @@ for (let day = 1; day <= 60; day += 1) {
 }
 console.log(`   · 60일 동안 화·수 복합 퀘스트 ${variety.size}종`);
 expect(variety.size >= 3, "복합 퀘스트가 날마다 거의 바뀌지 않아요");
+
+/* ── 4. 오늘의 행운 카드 · 주제별 운세 검사 ───────────────── */
+
+console.log("④ 오늘의 행운 카드 · 주제별 운세 검사");
+
+const FATE_STATUSES = new Set(["아주 좋은 흐름", "흐름 좋음", "무난한 하루", "차분히 챙기기", "천천히 가기"]);
+const allCards = ELEMENTS.flatMap((el) => CHARM_POOL[el]);
+
+for (const el of ELEMENTS) {
+  expect(CHARM_POOL[el].length >= 3, `오행 ${el} 행운 카드가 3장보다 적어요 (${CHARM_POOL[el].length})`);
+  for (const card of CHARM_POOL[el]) {
+    expect(card.element === el, `카드 ${card.id}: 오행이 ${el}이 아니에요`);
+  }
+}
+expect(allCards.length >= 15, `행운 카드가 15장보다 적어요 (${allCards.length})`);
+
+const cardIds = new Set<string>();
+const cardTitles = new Set<string>();
+for (const card of allCards) {
+  const where = `카드 ${card.id}`;
+  expect(!cardIds.has(card.id), `카드 id가 중복돼요: ${card.id}`);
+  cardIds.add(card.id);
+  expect(!cardTitles.has(card.title), `카드 제목이 중복돼요: ${card.title}`);
+  cardTitles.add(card.title);
+  expect(compact(card.title).length >= 3 && compact(card.title).length <= 10, `${where}: 제목(키워드) 길이가 어색해요 (${card.title})`);
+  expect(card.quote.trim().length >= 8 && card.quote.trim().length <= 60, `${where}: 명언 길이가 어색해요 (${card.quote})`);
+  expect(!card.quote.includes('"') && !card.quote.includes("“"), `${where}: 명언에 따옴표가 들어 있어요 (${card.quote})`);
+  expect(card.author.trim().length >= 1, `${where}: 명언 저자가 비어 있어요`);
+  expect(card.colorName.trim().length >= 2, `${where}: 행운의 색이 비어 있어요`);
+  expect(card.item.trim().length >= 2, `${where}: 행운의 아이템이 비어 있어요`);
+  const number = Number(card.number);
+  expect(Number.isInteger(number) && number >= 1 && number <= 10, `${where}: 행운의 숫자가 1~10이 아니에요 (${card.number})`);
+}
+
+// 날짜가 바뀌면 카드도 달라져야 한다.
+for (const el of ELEMENTS) {
+  const seen = new Set<string>();
+  for (let day = 1; day <= 60; day += 1) {
+    const key = `2026-${day <= 30 ? "11" : "12"}-${String(day <= 30 ? day : day - 30).padStart(2, "0")}`;
+    seen.add(charmForDate(key, el).id);
+  }
+  expect(seen.size >= 3, `오행 ${el} 카드가 날마다 거의 바뀌지 않아요 (${seen.size}종)`);
+}
+
+// 앱과 공유 페이지(/card/[날짜], OG)가 같은 카드를 봐야 한다.
+const SHARE_DAYS = [1, 7, 16, 24, 30];
+for (const day of SHARE_DAYS) {
+  const key = `2026-11-${String(day).padStart(2, "0")}`;
+  const daily = buildDaily(kdProfile, new Date(2026, 10, day));
+  const shared = cardForDate(key);
+  expect(shared.cardId === daily.charm.id, `[${key}] 공유 카드(${shared.cardId})와 앱 카드(${daily.charm.id})가 달라요`);
+  expect(shared.quote === daily.charm.quote, `[${key}] 공유 카드의 명언이 앱과 달라요`);
+  expect(shared.item === daily.charm.item, `[${key}] 공유 카드의 아이템이 앱과 달라요`);
+}
+
+// 주제별 지수 · 상태 배지 · 두 줄 설명
+for (const now of DATES) {
+  const daily = buildDaily(kdProfile, now);
+  expect(daily.score >= 65 && daily.score <= 95, `[${daily.dateKey}] 종합 지수가 65~95를 벗어났어요 (${daily.score})`);
+  expect(FATE_STATUSES.has(daily.scoreStatus), `[${daily.dateKey}] 종합 상태 배지가 이상해요 (${daily.scoreStatus})`);
+  for (const topic of ["money", "love", "work"] as const) {
+    const fortune = daily.topics[topic];
+    const label = `[${daily.dateKey} ${topic}]`;
+    expect(Number.isInteger(fortune.score) && fortune.score >= 58 && fortune.score <= 97, `${label}: 지수가 58~97을 벗어났어요 (${fortune.score})`);
+    expect(FATE_STATUSES.has(fortune.status), `${label}: 상태 배지가 이상해요 (${fortune.status})`);
+    expect(fortune.flow.trim().endsWith("요."), `${label}: 흐름 문장이 '~요.'로 끝나지 않아요 (${fortune.flow})`);
+    expect(compact(fortune.flow).length >= 12 && compact(fortune.flow).length <= 45, `${label}: 흐름 문장 길이가 어색해요 (${compact(fortune.flow).length}자)`);
+    expect(fortune.advice.trim().length >= 20 && fortune.advice.trim().length <= 90, `${label}: 조언 문장 길이가 어색해요 (${fortune.advice})`);
+    expect(fortune.mbtiNote.includes("편이라"), `${label}: 성향 한마디가 비어 있어요`);
+  }
+}
+
+console.log(`   카드 ${allCards.length}장(오행별 ${ELEMENTS.map((el) => CHARM_POOL[el].length).join("/")}) · 검사 ${checks}건 · 문제 ${failures.length}건`);
 
 /* ── 결과 ───────────────────────────────────────────────── */
 

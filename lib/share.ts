@@ -1,13 +1,13 @@
-import { CHARMS } from "./content";
+import { charmForDate } from "./content";
 import { todayEnergy } from "./saju";
 import type { Element } from "./types";
-import { dateKey, pick } from "./utils";
+import { dateKey } from "./utils";
 
 /** 공유 링크와 OG 메타의 기준 주소 — apex(luckyquest.app)는 www로 308 리다이렉트되므로 www를 쓴다. */
 export const SITE_URL = "https://www.luckyquest.app";
 
 /** OG 카드 디자인을 바꿔 크롤러·CDN 캐시를 넘길 때 올리는 번호 */
-export const OG_CARD_VERSION = "1";
+export const OG_CARD_VERSION = "2";
 
 const WEEKDAY_LONG = ["일", "월", "화", "수", "목", "금", "토"];
 
@@ -18,10 +18,15 @@ export interface ShareCard {
   /** 일진 간지 (예: 임술) */
   pillar: string;
   title: string;
-  message: string;
-  keyword: string;
+  /** 오늘의 기운과 맞닿은 명언 */
+  quote: string;
+  author: string;
   colorName: string;
   number: string;
+  /** 행운의 아이템 */
+  item: string;
+  /** 카드 id (예: c-수-01) */
+  cardId: string;
   /** 예: 11월 24일 화요일 */
   dateLabel: string;
 }
@@ -41,7 +46,7 @@ export function parseCardDate(raw: string | null | undefined): string | null {
 }
 
 /**
- * 그날의 '오늘의 카드'를 그대로 복원한다.
+ * 그날의 '오늘의 행운 카드'를 그대로 복원한다.
  * 카드는 (날짜, 일진 오행)으로만 정해지므로 생년월일·MBTI 없이도 같은 카드가 나온다 —
  * 공유 링크에 개인 정보가 담기지 않는 이유이기도 하다.
  */
@@ -49,16 +54,18 @@ export function cardForDate(key: string): ShareCard {
   const [year, month, day] = key.split("-").map(Number);
   const date = new Date(year, month - 1, day, 12, 0, 0);
   const today = todayEnergy(date);
-  const content = CHARMS[today.element];
+  const content = charmForDate(key, today.element);
   return {
     dateKey: key,
     element: today.element,
     pillar: today.pillar,
     title: content.title,
-    message: pick(content.messages, `${key}-charm-${today.element}`),
-    keyword: content.keyword,
+    quote: content.quote,
+    author: content.author,
     colorName: content.colorName,
     number: content.number,
+    item: content.item,
+    cardId: content.id,
     dateLabel: `${month}월 ${day}일 ${WEEKDAY_LONG[date.getDay()]}요일`,
   };
 }
@@ -78,6 +85,6 @@ export function ogImageUrl(key: string): string {
 }
 
 /** 공유 문구 — 카톡·링크 복사·Web Share에 함께 쓰는 한 벌. */
-export function shareText(card: Pick<ShareCard, "title" | "message">): string {
-  return `오늘의 카드 — ${card.title}\n"${card.message}"`;
+export function shareText(card: Pick<ShareCard, "title" | "quote" | "author">): string {
+  return `오늘의 행운 카드 — ${card.title}\n"${card.quote}" — ${card.author}`;
 }

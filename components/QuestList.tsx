@@ -1,7 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { ELEMENT_HANJA } from "@/lib/content";
 import type { ResolvedQuest } from "@/lib/engine";
+import type { QuestPhoto } from "@/lib/photos";
 import { CheckMark, Clover, ElementIcon, Sparkle } from "./illustrations";
 
 function Burst({ seed }: { seed: number }) {
@@ -40,20 +42,59 @@ function Burst({ seed }: { seed: number }) {
   );
 }
 
+/** IndexedDB에 담긴 사진 Blob을 화면용 주소로 바꿔 보여 준다. */
+function PhotoThumb({ blob, alt }: { blob: Blob; alt: string }) {
+  const [url, setUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    const next = URL.createObjectURL(blob);
+    setUrl(next);
+    return () => URL.revokeObjectURL(next);
+  }, [blob]);
+
+  if (!url) {
+    return <div className="size-16 animate-pulse rounded-xl bg-cream-3/60" aria-hidden />;
+  }
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img src={url} alt={alt} className="size-16 rounded-xl border border-line object-cover" />
+  );
+}
+
 function QuestCard({
   quest,
   checked,
   onToggle,
+  photo,
+  onAddPhoto,
+  onRemovePhoto,
 }: {
   quest: ResolvedQuest;
   checked: boolean;
   onToggle: () => void;
+  photo?: QuestPhoto;
+  onAddPhoto: (file: File) => Promise<void>;
+  onRemovePhoto: () => Promise<void>;
 }) {
   const [burst, setBurst] = useState(0);
+  const [busy, setBusy] = useState(false);
+  const fileRef = useRef<HTMLInputElement | null>(null);
 
   const gold = quest.badge === "Quest 2";
   const accent = gold ? "#DFAE3F" : "#12805C";
   const soft = gold ? "#FBF1D8" : "#E6F4EB";
+  const elementLabel = quest.elements.map((el) => ELEMENT_HANJA[el]).join("+");
+
+  const onPick = async (file: File | undefined) => {
+    if (!file || busy) return;
+    setBusy(true);
+    try {
+      await onAddPhoto(file);
+    } finally {
+      setBusy(false);
+      if (fileRef.current) fileRef.current.value = "";
+    }
+  };
 
   return (
     <div
@@ -71,12 +112,13 @@ function QuestCard({
             >
               {quest.badge}
             </span>
-            {quest.elements.length > 1 && (
+            {quest.elements.length > 0 && (
               <span
                 className="rounded-full border bg-white/80 px-1.5 py-0.5 text-[10px] font-extrabold tracking-tight"
                 style={{ borderColor: `${accent}66`, color: accent }}
               >
-                {quest.elements.join("+")} 함께
+                {elementLabel}
+                {quest.elements.length > 1 ? " 함께" : " 기운"}
               </span>
             )}
             {checked && (
@@ -114,8 +156,6 @@ function QuestCard({
         </div>
       </div>
 
-      {/* 카드 오른쪽 아래 장식은 설명 박스 안에 나란히 놓아요 */}
-
       <div className="relative mt-3 flex items-center gap-2 rounded-xl px-2.5 py-1.5" style={{ background: soft }}>
         <Sparkle size={11} color={accent} className="mt-[3px] shrink-0 self-start" />
         <p className="flex-1 text-[11px] leading-relaxed text-[#6A6350]">
@@ -134,6 +174,55 @@ function QuestCard({
           )}
         </span>
       </div>
+
+      {/* 인증샷 — 완료한 퀘스트에만, 선택으로 */}
+      {checked && (
+        <div className="mt-2.5">
+          {photo ? (
+            <div className="flex items-center gap-2.5 rounded-xl border border-[#DCEBE1] bg-[#F6FBF8] p-2">
+              <PhotoThumb blob={photo.blob} alt={`${quest.title} 인증샷`} />
+              <div className="min-w-0 flex-1">
+                <p className="text-[11.5px] font-bold text-[#3F6653]">인증샷 남김</p>
+                <p className="mt-0.5 text-[10px] leading-relaxed text-[#7E9488]">
+                  이 기기에만 저장돼요 · {Math.max(1, Math.round(photo.bytes / 1024))}KB
+                </p>
+              </div>
+              <div className="flex shrink-0 flex-col gap-1">
+                <button
+                  type="button"
+                  onClick={() => fileRef.current?.click()}
+                  className="rounded-lg border border-[#CFE0D6] bg-white px-2 py-1 text-[10.5px] font-bold text-[#4B7A62]"
+                >
+                  바꾸기
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void onRemovePhoto()}
+                  className="rounded-lg px-2 py-1 text-[10.5px] font-bold text-[#A08B72]"
+                >
+                  지우기
+                </button>
+              </div>
+            </div>
+          ) : (
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() => fileRef.current?.click()}
+              className="flex w-full items-center justify-center gap-1.5 rounded-xl border border-dashed border-[#CFDCCF] bg-white/60 py-2 text-[11.5px] font-bold text-[#5F7D68] transition active:scale-[0.99] disabled:opacity-60"
+            >
+              {busy ? "사진을 저장하는 중…" : "📷 인증샷 남기기(선택)"}
+            </button>
+          )}
+          <input
+            ref={fileRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={(event) => void onPick(event.target.files?.[0])}
+          />
+        </div>
+      )}
     </div>
   );
 }
@@ -142,12 +231,19 @@ export function QuestList({
   quests,
   checks,
   onToggle,
+  photos = [],
+  onAddPhoto,
+  onRemovePhoto,
 }: {
   quests: [ResolvedQuest, ResolvedQuest];
   checks: [boolean, boolean];
   onToggle: (index: 0 | 1) => void;
+  photos?: QuestPhoto[];
+  onAddPhoto?: (index: 0 | 1, file: File) => Promise<void>;
+  onRemovePhoto?: (index: 0 | 1) => Promise<void>;
 }) {
   const done = checks.filter(Boolean).length;
+  const photoOf = (index: 0 | 1) => photos.find((photo) => photo.index === index);
 
   return (
     <section className="space-y-2.5">
@@ -161,8 +257,22 @@ export function QuestList({
         </span>
       </div>
 
-      <QuestCard quest={quests[0]} checked={checks[0]} onToggle={() => onToggle(0)} />
-      <QuestCard quest={quests[1]} checked={checks[1]} onToggle={() => onToggle(1)} />
+      <QuestCard
+        quest={quests[0]}
+        checked={checks[0]}
+        onToggle={() => onToggle(0)}
+        photo={photoOf(0)}
+        onAddPhoto={(file) => onAddPhoto?.(0, file) ?? Promise.resolve()}
+        onRemovePhoto={() => onRemovePhoto?.(0) ?? Promise.resolve()}
+      />
+      <QuestCard
+        quest={quests[1]}
+        checked={checks[1]}
+        onToggle={() => onToggle(1)}
+        photo={photoOf(1)}
+        onAddPhoto={(file) => onAddPhoto?.(1, file) ?? Promise.resolve()}
+        onRemovePhoto={() => onRemovePhoto?.(1) ?? Promise.resolve()}
+      />
     </section>
   );
 }

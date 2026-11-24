@@ -1,5 +1,4 @@
 import {
-  CHARMS,
   COMBO_QUESTS,
   ELEMENT_QUESTS,
   ELEMENT_WHY,
@@ -7,15 +6,18 @@ import {
   MBTI_STYLE,
   RELATION_PHRASE,
   TODAY_MOOD,
-  TOPIC_ELEMENT_LINES,
+  TOPIC_ADVICE,
+  TOPIC_FLOW,
   TOPIC_MBTI_ACTIONS,
-  TOPIC_TIPS,
+  charmForDate,
   comboKeyOf,
   type FortuneTopic,
   type Quest,
 } from "./content";
 import {
+  CONTROLS,
   ELEMENTS,
+  GENERATES,
   chartOf,
   elementPercent,
   elementStatus,
@@ -49,20 +51,28 @@ export interface BalanceItem {
 }
 
 export interface TopicFortune {
-  /** 주제별 1~2줄 풀이 — 오행 기운 + MBTI 성향 */
-  lines: string[];
-  /** 오늘 바로 해볼 한 줄 팁 */
-  tip: string;
+  /** 오늘 이 분야의 지수(%) — 일진 오행과 내 일간의 관계로 계산한다. */
+  score: number;
+  /** 지수에 맞춘 상태 배지 (예: 흐름 좋음) */
+  status: string;
+  /** ① 오늘 이 분야의 직관적 흐름 판단 한 줄 */
+  flow: string;
+  /** ② 오늘 바로 참고할 구체적 생활 조언 한 줄 */
+  advice: string;
+  /** MBTI 성향에 맞춘 한마디 */
+  mbtiNote: string;
 }
 
 export interface CharmView {
   id: string;
   element: Element;
+  /** 카드 제목이 되는 키워드 */
   title: string;
-  message: string;
-  keyword: string;
+  quote: string;
+  author: string;
   colorName: string;
   number: string;
+  item: string;
 }
 
 export interface DailyView {
@@ -71,6 +81,8 @@ export interface DailyView {
   today: { element: Element; pillar: string };
   score: number;
   scoreLabel: string;
+  /** 점수에 맞춘 짧은 상태 배지 (예: 흐름 좋음) */
+  scoreStatus: string;
   scoreCaption: string;
   balance: BalanceItem[];
   reading: string[];
@@ -103,20 +115,61 @@ function scoreLabel(score: number): string {
 
 const TOPIC_KEYS: FortuneTopic[] = ["money", "love", "work"];
 
-function buildTopicFortunes(mbti: Mbti, element: Element, seed: string): Record<FortuneTopic, TopicFortune> {
+/** 주제가 기대는 오행 — 재물은 결실(금), 연애·대인은 온기(화), 일·학업은 시작(목). */
+const TOPIC_MAIN: Record<FortuneTopic, Element> = { money: "금", love: "화", work: "목" };
+
+/** 지수를 상태 배지로 옮긴다. 탭·본문 어디서나 같은 기준을 쓴다. */
+export function fortuneStatus(score: number): string {
+  if (score >= 88) return "아주 좋은 흐름";
+  if (score >= 80) return "흐름 좋음";
+  if (score >= 70) return "무난한 하루";
+  if (score >= 62) return "차분히 챙기기";
+  return "천천히 가기";
+}
+
+/**
+ * 주제별 지수 — 오늘 일진 오행과 내 일간의 관계(상생·상극)에
+ * 그 주제가 기대는 오행과의 상생 관계를 더해 계산한다. 날짜 시드로 ±5 정도만 흔든다.
+ */
+function topicScore(today: Element, me: Element, topic: FortuneTopic, seed: string): number {
+  let base = 72;
+
+  const relation = relationOf(today, me);
+  if (relation === "도움") base += 8;
+  else if (relation === "같음") base += 6;
+  else if (relation === "보탬") base += 3;
+  else base += 4;
+
+  const main = TOPIC_MAIN[topic];
+  if (today === main) base += 9;
+  else if (GENERATES[today] === main) base += 7;
+  else if (GENERATES[main] === today) base += 2;
+  else if (CONTROLS[today] === main) base -= 4;
+
+  const jitter = (hash(`${seed}-${topic}`) % 11) - 5;
+  return clamp(base + jitter, 58, 97);
+}
+
+function buildTopicFortunes(
+  mbti: Mbti,
+  element: Element,
+  me: Element,
+  seed: string,
+): Record<FortuneTopic, TopicFortune> {
   const result = {} as Record<FortuneTopic, TopicFortune>;
 
   for (const topic of TOPIC_KEYS) {
-    // 앞 두 글자(E/I·S/N) 중 하나, 뒤 두 글자(T/F·J/P) 중 하나를 골라 성향 문장을 만든다.
+    // 앞 두 글자(E/I·S/N) 중 하나, 뒤 두 글자(T/F·J/P) 중 하나를 골라 성향 한마디를 만든다.
     const styleLetter = (hash(`${seed}-${topic}-style`) % 2 === 0 ? mbti[0] : mbti[1]) as keyof typeof MBTI_STYLE;
     const actionLetter = (hash(`${seed}-${topic}-action`) % 2 === 0 ? mbti[2] : mbti[3]) as keyof (typeof TOPIC_MBTI_ACTIONS)[FortuneTopic];
+    const score = topicScore(element, me, topic, seed);
 
     result[topic] = {
-      lines: [
-        pick(TOPIC_ELEMENT_LINES[topic][element], `${seed}-${topic}-element`),
-        `${MBTI_STYLE[styleLetter]}, ${TOPIC_MBTI_ACTIONS[topic][actionLetter]}`,
-      ],
-      tip: TOPIC_TIPS[topic][element],
+      score,
+      status: fortuneStatus(score),
+      flow: pick(TOPIC_FLOW[topic][element], `${seed}-${topic}-flow`),
+      advice: pick(TOPIC_ADVICE[topic][element], `${seed}-${topic}-advice`),
+      mbtiNote: `${MBTI_STYLE[styleLetter]}, ${TOPIC_MBTI_ACTIONS[topic][actionLetter]}`,
     };
   }
 
@@ -235,8 +288,7 @@ export function buildDaily(profile: Profile, now: Date = new Date()): DailyView 
     balanceLine,
   ];
 
-  const charmContent = CHARMS[today.element];
-  const charmMessage = pick(charmContent.messages, `${key}-charm-${today.element}`);
+  const charmContent = charmForDate(key, today.element);
 
   const rawPercents = ELEMENTS.map((el) => (chart.counts[el] / Math.max(chart.total, 1)) * 100);
   const floors = rawPercents.map((p) => Math.floor(p));
@@ -265,23 +317,25 @@ export function buildDaily(profile: Profile, now: Date = new Date()): DailyView 
     today,
     score,
     scoreLabel: scoreLabel(score),
+    scoreStatus: fortuneStatus(score),
     scoreCaption: scoreLabel(score),
     balance,
     reading,
-    topics: buildTopicFortunes(profile.mbti, today.element, `${key}-${profile.mbti}`),
+    topics: buildTopicFortunes(profile.mbti, today.element, chart.dayMaster, `${key}-${profile.mbti}`),
     quests: [
       resolveQuest(q1, "Quest 1", focus[0], profile.mbti, "leaf"),
       resolveQuest(q2, "Quest 2", focus[0], profile.mbti, "gold"),
     ],
     focus,
     charm: {
-      id: `${key}-${today.element}`,
+      id: charmContent.id,
       element: today.element,
       title: charmContent.title,
-      message: charmMessage,
-      keyword: charmContent.keyword,
+      quote: charmContent.quote,
+      author: charmContent.author,
       colorName: charmContent.colorName,
       number: charmContent.number,
+      item: charmContent.item,
     },
   };
 }

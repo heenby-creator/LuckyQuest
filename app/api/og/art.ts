@@ -71,30 +71,59 @@ ${leaves}
 </svg>`);
 }
 
-/** 오늘의 카드 문양 — 원반 + 금빛 이중 테두리 + 클로버 */
+/** 오늘의 행운 카드 문양 — 입체감 있는 네잎클로버(그라데이션·잎맥·하이라이트) */
+const LEAF_PATH = "M0 0 C 8.6 -7 14.6 -17 10.1 -26.2 C 5.4 -33.8 -5.4 -33.8 -10.1 -26.2 C -14.6 -17 -8.6 -7 0 0 Z";
+const VEIN_PATH = "M0 -10 L4.2 -13.2 M0 -10 L-4.2 -13.2 M0 -15.2 L4.4 -18.4 M0 -15.2 L-4.4 -18.4 M0 -19.8 L3.5 -22 M0 -19.8 L-3.5 -22";
+
+function emblemLeaf(deg: number): string {
+  const fill = deg % 180 === 0 ? "url(#lf)" : "url(#lb)";
+  return `<g transform="rotate(${deg})">
+<path d="${LEAF_PATH}" transform="translate(1.1 2.1)" fill="#123F2C" opacity="0.14"/>
+<path d="${LEAF_PATH}" fill="${fill}" stroke="#FCF8EC" stroke-width="1.15" stroke-linejoin="round"/>
+<path d="M0 -3.6 L0 -23.2" stroke="#EAF7EF" stroke-width="1.15" stroke-linecap="round" opacity="0.6"/>
+<path d="${VEIN_PATH}" stroke="#E7F5EC" stroke-width="0.72" stroke-linecap="round" opacity="0.45"/>
+<ellipse cx="-3.7" cy="-17" rx="3" ry="7.8" transform="rotate(-14 -3.7 -17)" fill="#FFFFFF" opacity="0.26"/>
+<ellipse cx="3.9" cy="-11.2" rx="1.9" ry="4.6" fill="#0E3F2C" opacity="0.11"/>
+<circle cx="0" cy="-24.6" r="1.15" fill="#FFFFFF" opacity="0.4"/>
+</g>`;
+}
+
 export const EMBLEM_URI = toUri(`<svg xmlns="http://www.w3.org/2000/svg" width="168" height="168" viewBox="0 0 168 168" fill="none">
 <defs>
-<radialGradient id="dc" cx="0.5" cy="0.4" r="0.66">
-<stop stop-color="#FFFDF7"/><stop offset="1" stop-color="#F5EFDD"/>
+<radialGradient id="dc" cx="0.46" cy="0.36" r="0.7">
+<stop stop-color="#FFFFFB"/><stop offset="0.62" stop-color="#FBF6E8"/><stop offset="1" stop-color="#F3ECD8"/>
 </radialGradient>
-<linearGradient id="lf" x1="84" y1="60" x2="84" y2="132" gradientUnits="userSpaceOnUse">
-<stop stop-color="#3E8F63"/><stop offset="1" stop-color="#1F6A48"/>
+<linearGradient id="lf" x1="0" y1="-33" x2="0" y2="2" gradientUnits="userSpaceOnUse">
+<stop stop-color="#77CB9C"/><stop offset="0.55" stop-color="#3E9B69"/><stop offset="1" stop-color="#1C6B49"/>
 </linearGradient>
+<linearGradient id="lb" x1="0" y1="-33" x2="0" y2="2" gradientUnits="userSpaceOnUse">
+<stop stop-color="#5AB588"/><stop offset="0.55" stop-color="#2E8A5C"/><stop offset="1" stop-color="#16583C"/>
+</linearGradient>
+<linearGradient id="st" x1="0" y1="0" x2="0" y2="42" gradientUnits="userSpaceOnUse">
+<stop stop-color="#3E9B69"/><stop offset="1" stop-color="#1C6B49"/>
+</linearGradient>
+<radialGradient id="gw" cx="0.5" cy="0.5" r="0.5">
+<stop stop-color="#FFFFFF" stop-opacity="0.75"/><stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/>
+</radialGradient>
 </defs>
 <circle cx="84" cy="84" r="83" fill="url(#dc)"/>
-<circle cx="84" cy="84" r="80.5" stroke="#C7A862" stroke-width="0.9" opacity="0.55"/>
-<circle cx="84" cy="84" r="72" stroke="#C7A862" stroke-width="0.6" opacity="0.32" stroke-dasharray="1 4.2"/>
-<path d="M84 19 L86.4 26.4 L93.8 28.8 L86.4 31.2 L84 38.6 L81.6 31.2 L74.2 28.8 L81.6 26.4 Z" fill="#C7A862" opacity="0.92"/>
+<circle cx="84" cy="84" r="81.5" stroke="#FFFFFF" stroke-width="1.4" opacity="0.7"/>
+<circle cx="84" cy="84" r="80.5" stroke="#C7A862" stroke-width="0.9" opacity="0.6"/>
+<circle cx="84" cy="84" r="72" stroke="#C7A862" stroke-width="0.6" opacity="0.34" stroke-dasharray="1 4.2"/>
+<path d="M84 19 L86.4 26.4 L93.8 28.8 L86.4 31.2 L84 38.6 L81.6 31.2 L74.2 28.8 L81.6 26.4 Z" fill="#C7A862" opacity="0.95"/>
 <path d="M70 28.8 H64" stroke="#C7A862" stroke-width="0.7" opacity="0.45" stroke-linecap="round"/>
 <path d="M98 28.8 H104" stroke="#C7A862" stroke-width="0.7" opacity="0.45" stroke-linecap="round"/>
-<g transform="translate(84 100)">
-<ellipse cx="0" cy="-6" rx="44" ry="40" fill="#FFFFFF" opacity="0.22"/>
-<g transform="rotate(0)"><path d="M0 0 C 8.5 -7 14.5 -17 10 -26 C 5.5 -33.5 -5.5 -33.5 -10 -26 C -14.5 -17 -8.5 -7 0 0 Z" fill="#3E8F63" stroke="#FBF7EA" stroke-width="1.5" stroke-linejoin="round"/><path d="M0 -4 L0 -22" stroke="#FFFFFF" stroke-opacity="0.32" stroke-width="1" stroke-linecap="round"/></g>
-<g transform="rotate(90)"><path d="M0 0 C 8.5 -7 14.5 -17 10 -26 C 5.5 -33.5 -5.5 -33.5 -10 -26 C -14.5 -17 -8.5 -7 0 0 Z" fill="#1F6A48" stroke="#FBF7EA" stroke-width="1.5" stroke-linejoin="round"/><path d="M0 -4 L0 -22" stroke="#FFFFFF" stroke-opacity="0.32" stroke-width="1" stroke-linecap="round"/></g>
-<g transform="rotate(180)"><path d="M0 0 C 8.5 -7 14.5 -17 10 -26 C 5.5 -33.5 -5.5 -33.5 -10 -26 C -14.5 -17 -8.5 -7 0 0 Z" fill="#3E8F63" stroke="#FBF7EA" stroke-width="1.5" stroke-linejoin="round"/><path d="M0 -4 L0 -22" stroke="#FFFFFF" stroke-opacity="0.32" stroke-width="1" stroke-linecap="round"/></g>
-<g transform="rotate(270)"><path d="M0 0 C 8.5 -7 14.5 -17 10 -26 C 5.5 -33.5 -5.5 -33.5 -10 -26 C -14.5 -17 -8.5 -7 0 0 Z" fill="#1F6A48" stroke="#FBF7EA" stroke-width="1.5" stroke-linejoin="round"/><path d="M0 -4 L0 -22" stroke="#FFFFFF" stroke-opacity="0.32" stroke-width="1" stroke-linecap="round"/></g>
-<path d="M1 7 C 3 18 2 26 0 34" stroke="#1F6A48" stroke-width="2" stroke-linecap="round"/>
-<circle cx="0" cy="0" r="2.6" fill="#FCF8EC"/>
+<g transform="translate(84 104)">
+<ellipse cx="0" cy="-2" rx="52" ry="46" fill="url(#gw)"/>
+<ellipse cx="0" cy="30" rx="30" ry="6.5" fill="#123F2C" opacity="0.09"/>
+${emblemLeaf(270)}
+${emblemLeaf(90)}
+${emblemLeaf(0)}
+${emblemLeaf(180)}
+<path d="M1.2 6 C 5.6 19 2.4 29.4 -3.2 40" stroke="url(#st)" stroke-width="2.7" stroke-linecap="round" fill="none"/>
+<path d="M-1.6 28 C -5.8 26 -8 22.6 -8.6 18.8 C -4.6 18.4 -2 21 -1.6 28 Z" fill="#1C6B49" opacity="0.8"/>
+<circle cx="0" cy="0" r="2.8" fill="#FDF9EE"/>
+<circle cx="0" cy="0" r="1.3" fill="#3E9B69" opacity="0.55"/>
 </g>
 <path d="M62 146 Q84 154 106 146" stroke="#C7A862" stroke-width="0.8" opacity="0.55" fill="none"/>
 <circle cx="84" cy="150.5" r="1.1" fill="#C7A862" opacity="0.6"/>

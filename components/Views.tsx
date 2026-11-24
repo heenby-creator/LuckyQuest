@@ -1,29 +1,80 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { CHARMS, ELEMENT_META } from "@/lib/content";
+import { useEffect, useMemo, useState } from "react";
+import { CHARM_POOL, ELEMENT_HANJA, ELEMENT_META, cardById, charmForDate, type LuckyCard } from "@/lib/content";
+import { getDayPhotos, countPhotosByDate, type QuestPhoto } from "@/lib/photos";
 import { chartOf, elementPercent, timeLabel } from "@/lib/saju";
-import type { AppState } from "@/lib/types";
+import type { AppState, Element } from "@/lib/types";
 import { WEEKDAY_LABEL, dateKey, formatKoreanDate, monthMatrix } from "@/lib/utils";
 import { Clover, ElementIcon, Sparkle, StarMascot } from "./illustrations";
+
+/** 저장된 카드 id로 카드를 되찾는다. 예전 기록(`2026-11-24-수`)도 읽을 수 있게 둔다. */
+function resolveCharm(key: string, id: string | undefined): LuckyCard | null {
+  if (!id) return null;
+  const found = cardById(id);
+  if (found) return found;
+  const legacy = id.split("-").pop() as Element | undefined;
+  if (legacy && CHARM_POOL[legacy]) return charmForDate(key, legacy);
+  return null;
+}
+
+function DayPhoto({ blob, label }: { blob: Blob; label: string }) {
+  const [url, setUrl] = useState<string | null>(null);
+  useEffect(() => {
+    const next = URL.createObjectURL(blob);
+    setUrl(next);
+    return () => URL.revokeObjectURL(next);
+  }, [blob]);
+  if (!url) return <div className="aspect-square animate-pulse rounded-xl bg-cream-3/60" aria-hidden />;
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img src={url} alt={label} className="aspect-square w-full rounded-xl border border-line object-cover" />
+  );
+}
 
 /* ── 달력 ─────────────────────────────────────────────── */
 
 export function CalendarView({ state }: { state: AppState }) {
   const now = new Date();
   const [cursor, setCursor] = useState({ year: now.getFullYear(), month: now.getMonth() + 1 });
+  const [selected, setSelected] = useState<string>(dateKey(new Date()));
+  const [photoCounts, setPhotoCounts] = useState<Record<string, number>>({});
+  const [selectedPhotos, setSelectedPhotos] = useState<QuestPhoto[]>([]);
+
   const rows = useMemo(() => monthMatrix(cursor.year, cursor.month), [cursor]);
   const prefix = `${cursor.year}-${`${cursor.month}`.padStart(2, "0")}`;
 
   const monthDone = Object.keys(state.charms).filter((k) => k.startsWith(prefix)).length;
   const today = dateKey(new Date());
 
+  useEffect(() => {
+    let alive = true;
+    void countPhotosByDate().then((counts) => {
+      if (alive) setPhotoCounts(counts);
+    });
+    return () => {
+      alive = false;
+    };
+  }, [selected, cursor]);
+
+  useEffect(() => {
+    let alive = true;
+    void getDayPhotos(selected).then((photos) => {
+      if (alive) setSelectedPhotos(photos);
+    });
+    return () => {
+      alive = false;
+    };
+  }, [selected]);
+
+  const selectedCard = resolveCharm(selected, state.charms[selected]);
+
   return (
     <div className="space-y-4 px-5 pb-8 pt-2">
       <div className="flex items-end justify-between px-1">
         <div>
           <h1 className="text-[21px] font-extrabold tracking-tight text-ink">행운 달력</h1>
-          <p className="mt-0.5 text-[12px] text-ink-faint">카드를 받은 날이 클로버로 남아요</p>
+          <p className="mt-0.5 text-[12px] text-ink-faint">카드를 받은 날이 클로버로, 인증샷을 남긴 날이 카메라로 남아요</p>
         </div>
         <div className="flex items-center gap-2">
           <button
@@ -57,28 +108,89 @@ export function CalendarView({ state }: { state: AppState }) {
             if (!key) return <span key={`empty-${i}`} />;
             const done = Boolean(state.charms[key]);
             const isToday = key === today;
+            const isSelected = key === selected;
+            const photos = photoCounts[key] ?? 0;
             const date = Number(key.slice(8));
             return (
               <div key={key} className="flex aspect-square items-center justify-center">
-                <div
-                  className={`relative flex size-full max-h-[42px] max-w-[42px] flex-col items-center justify-center rounded-xl text-[12px] font-semibold ${
+                <button
+                  type="button"
+                  onClick={() => setSelected(key)}
+                  aria-pressed={isSelected}
+                  aria-label={`${key} 기록 보기${photos > 0 ? `, 인증샷 ${photos}장` : ""}`}
+                  className={`relative flex size-full max-h-[42px] max-w-[42px] flex-col items-center justify-center rounded-xl text-[12px] font-semibold transition ${
                     done
                       ? "bg-leaf-soft text-leaf-strong"
                       : isToday
                         ? "border border-leaf/40 text-ink"
-                        : "text-ink-soft"
-                  }`}
+                        : "text-ink-soft hover:bg-cream-2/70"
+                  } ${isSelected ? "ring-2 ring-leaf ring-offset-1" : ""}`}
                 >
                   <span>{date}</span>
+                  {photos > 0 && (
+                    <span className="absolute right-0.5 top-0.5 text-[8px] leading-none" aria-hidden>
+                      📷
+                    </span>
+                  )}
                   {done && (
                     <span className="absolute -bottom-0.5">
                       <Clover size={11} />
                     </span>
                   )}
-                </div>
+                </button>
               </div>
             );
           })}
+        </div>
+      </div>
+
+      {/* 고른 날의 카드와 인증샷 */}
+      <div className="card p-4">
+        <div className="flex items-center justify-between gap-2">
+          <p className="text-[13px] font-extrabold text-ink">{formatKoreanDate(selected)}</p>
+          {selectedCard ? (
+            <span className="rounded-full bg-cream-2 px-2 py-0.5 text-[10px] font-bold text-[#8A7444]">
+              {ELEMENT_META[selectedCard.element].name} 기운
+            </span>
+          ) : (
+            <span className="text-[10.5px] text-ink-faint">카드 없음</span>
+          )}
+        </div>
+
+        {selectedCard ? (
+          <div className="mt-2">
+            <p className="font-serif text-[15px] font-medium leading-snug text-[#2F4A3B]">{selectedCard.title}</p>
+            <p className="mt-1 text-[11.5px] leading-[1.7] text-ink-soft">
+              &ldquo;{selectedCard.quote}&rdquo; — {selectedCard.author}
+            </p>
+          </div>
+        ) : (
+          <p className="mt-2 text-[11.5px] leading-relaxed text-ink-faint">
+            이날은 두 퀘스트를 모두 마치지 않아 카드가 열리지 않았어요.
+          </p>
+        )}
+
+        <div className="mt-3 border-t border-dashed border-line pt-3">
+          <div className="flex items-center justify-between">
+            <p className="text-[11.5px] font-bold text-ink-soft">그날의 인증샷</p>
+            <span className="text-[10.5px] text-ink-faint">{selectedPhotos.length}장</span>
+          </div>
+          {selectedPhotos.length > 0 ? (
+            <div className="mt-2 grid grid-cols-3 gap-2">
+              {selectedPhotos.map((photo) => (
+                <DayPhoto
+                  key={photo.id}
+                  blob={photo.blob}
+                  label={`${formatKoreanDate(selected)} 인증샷`}
+                />
+              ))}
+            </div>
+          ) : (
+            <p className="mt-1.5 text-[11px] text-ink-faint">남긴 인증샷이 없어요.</p>
+          )}
+          <p className="mt-2 text-[10px] leading-relaxed text-ink-faint">
+            인증샷은 서버로 보내지 않고 이 기기 브라우저에만 저장돼요.
+          </p>
         </div>
       </div>
 
@@ -112,7 +224,7 @@ export function CharmsView({ state }: { state: AppState }) {
     <div className="space-y-4 px-5 pb-8 pt-2">
       <div className="px-1">
         <p className="lq-overline">Card Archive</p>
-        <h1 className="mt-1 font-serif text-[21px] font-medium tracking-[-0.015em] text-ink">카드 보관함</h1>
+        <h1 className="mt-1 font-serif text-[21px] font-medium tracking-[-0.015em] text-ink">행운 카드 보관함</h1>
         <p className="mt-1 text-[12px] text-ink-faint">지금까지 모은 카드 {entries.length}장</p>
       </div>
 
@@ -123,33 +235,35 @@ export function CharmsView({ state }: { state: AppState }) {
           <p className="font-serif text-[14.5px] text-ink">아직 모은 카드가 없어요</p>
           <p className="text-[12px] leading-[1.8] text-ink-soft">
             오늘의 퀘스트 두 개를 마치면
-            <br />첫 번째 카드가 열려요.
+            <br />첫 번째 행운 카드가 열려요.
           </p>
         </div>
       ) : (
         <div className="space-y-2.5">
           {entries.map(([key, charmId]) => {
-            const element = charmId.split("-").pop() as keyof typeof CHARMS;
-            const charm = CHARMS[element];
+            const charm = resolveCharm(key, charmId);
             if (!charm) return null;
-            const meta = ELEMENT_META[element];
+            const meta = ELEMENT_META[charm.element];
             return (
               <article key={key} className="lq-card px-4 py-3.5">
                 <span aria-hidden className="lq-card-inner" />
-                <div className="relative flex items-center gap-3">
+                <div className="relative flex items-start gap-3">
                   <div
                     className="flex size-10 shrink-0 items-center justify-center rounded-full border border-gold-line/45 bg-white/70"
                     style={{ boxShadow: `inset 0 0 0 3px ${meta.soft}` }}
                   >
-                    <ElementIcon element={element} size={20} />
+                    <ElementIcon element={charm.element} size={20} />
                   </div>
                   <div className="min-w-0 flex-1">
                     <p className="font-serif text-[14px] leading-tight text-ink">{charm.title}</p>
                     <p className="mt-1 text-[10px] tracking-[0.03em] text-ink-soft">
                       {formatKoreanDate(key)} · {meta.name} 기운
                     </p>
+                    <p className="mt-1 line-clamp-2 text-[10.5px] leading-relaxed text-[#8C8064]">
+                      &ldquo;{charm.quote}&rdquo; — {charm.author}
+                    </p>
                   </div>
-                  <Clover size={18} tone="gold" className="shrink-0 opacity-80" />
+                  <Clover size={18} tone="gold" className="mt-0.5 shrink-0 opacity-80" />
                 </div>
               </article>
             );
@@ -187,7 +301,9 @@ export function MeView({
             <ElementIcon element={chart.dayMaster} size={28} />
           </div>
           <div className="min-w-0 flex-1">
-            <p className="text-[15px] font-extrabold text-ink">{chart.dayMaster} 일간 · {state.profile.mbti}</p>
+            <p className="text-[15px] font-extrabold text-ink">
+              {ELEMENT_HANJA[chart.dayMaster]} · {chart.dayMaster} 일간 · {state.profile.mbti}
+            </p>
             <p className="mt-0.5 text-[11.5px] text-ink-soft">{chart.birthLabel} · {timeLabel(state.profile.time)}</p>
           </div>
           <span className="rounded-full bg-white/80 px-2.5 py-1 text-[10.5px] font-bold text-[#7A7057]">
@@ -215,8 +331,8 @@ export function MeView({
               const percent = elementPercent(chart.counts[el], chart.total);
               return (
                 <div key={el} className="flex items-center gap-2">
-                  <span className="flex w-6 items-center gap-1 text-[10.5px] font-bold text-ink-soft">
-                    <ElementIcon element={el} size={13} />{el}
+                  <span className="flex w-7 items-center gap-1 text-[12px] font-bold text-ink-soft">
+                    <ElementIcon element={el} size={13} />{ELEMENT_HANJA[el]}
                   </span>
                   <div className="h-2 flex-1 overflow-hidden rounded-full bg-cream-3/60">
                     <div className="h-full rounded-full" style={{ width: `${Math.max(percent, 3)}%`, background: ELEMENT_META[el].color, opacity: 0.85 }} />
@@ -244,7 +360,7 @@ export function MeView({
         <Sparkle size={12} color="#C9A227" className="mt-1 shrink-0" />
         <p className="text-[11px] leading-relaxed text-ink-soft">
           사주는 만세력 라이브러리로 계산해요. 태어난 시간을 모르면 세 기둥으로 계산하고,
-          그만큼 운세는 부드럽게 안내해요. 입력한 정보는 이 기기 안에만 저장돼요.
+          그만큼 운세는 부드럽게 안내해요. 입력한 정보와 인증샷은 이 기기 안에만 저장돼요.
         </p>
       </div>
     </div>

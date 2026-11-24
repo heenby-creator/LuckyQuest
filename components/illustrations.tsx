@@ -218,7 +218,7 @@ export function NavIcon({ name, active, size = 22 }: { name: NavKey; active: boo
   );
 }
 
-/* ── 오늘의 카드 문양(CardEmblem) ─────────────────────── */
+/* ── 오늘의 행운 카드 문양(CardEmblem) ─────────────────────── */
 
 export function CardEmblem({
   size = 112,
@@ -231,8 +231,41 @@ export function CardEmblem({
 }) {
   const uid = useId().replace(/:/g, "");
   const gold = muted ? "#C0AF88" : "#C7A862";
-  const leafFront = muted ? "#93AC9B" : "#3E8F63";
-  const leafBack = muted ? "#7E9788" : "#1F6A48";
+
+  // 잎의 결 — 위는 밝은 에메랄드, 아래로 갈수록 세이지 그린으로 가라앉는다.
+  const frontTop = muted ? "#AEC6B6" : "#77CB9C";
+  const frontMid = muted ? "#8DAF99" : "#3E9B69";
+  const frontLow = muted ? "#76917F" : "#1C6B49";
+  const backTop = muted ? "#9DB8A7" : "#5AB588";
+  const backMid = muted ? "#82A490" : "#2E8A5C";
+  const backLow = muted ? "#6B8878" : "#16583C";
+
+  const leaf = "M0 0 C 8.6 -7 14.6 -17 10.1 -26.2 C 5.4 -33.8 -5.4 -33.8 -10.1 -26.2 C -14.6 -17 -8.6 -7 0 0 Z";
+  const veining = "M0 -10 L4.2 -13.2 M0 -10 L-4.2 -13.2 M0 -15.2 L4.4 -18.4 M0 -15.2 L-4.4 -18.4 M0 -19.8 L3.5 -22 M0 -19.8 L-3.5 -22";
+
+  const leafGroup = (deg: number) => {
+    const isFront = deg % 180 === 0;
+    return (
+      <g key={deg} transform={`rotate(${deg})`}>
+        {/* 잎이 만드는 그림자 — 접힌 듯한 두께를 준다 */}
+        <path d={leaf} transform="translate(1.1 2.1)" fill="#123F2C" opacity={muted ? 0.07 : 0.14} />
+        <path
+          d={leaf}
+          fill={isFront ? `url(#leaf-front-${uid})` : `url(#leaf-back-${uid})`}
+          stroke={muted ? "#F8F4E9" : "#FCF8EC"}
+          strokeWidth="1.15"
+          strokeLinejoin="round"
+        />
+        {/* 잎맥 — 가운데 줄기와 곁가지 */}
+        <path d="M0 -3.6 L0 -23.2" stroke={muted ? "#E4ECE4" : "#EAF7EF"} strokeWidth="1.15" strokeLinecap="round" opacity="0.6" />
+        <path d={veining} stroke={muted ? "#E4ECE4" : "#E7F5EC"} strokeWidth="0.72" strokeLinecap="round" opacity="0.45" />
+        {/* 표면 하이라이트와 그늘 */}
+        <ellipse cx="-3.7" cy="-17" rx="3" ry="7.8" transform="rotate(-14 -3.7 -17)" fill="#FFFFFF" opacity={muted ? 0.14 : 0.26} />
+        <ellipse cx="3.9" cy="-11.2" rx="1.9" ry="4.6" fill="#0E3F2C" opacity={muted ? 0.05 : 0.11} />
+        <circle cx="0" cy="-24.6" r="1.15" fill="#FFFFFF" opacity={muted ? 0.2 : 0.4} />
+      </g>
+    );
+  };
 
   return (
     <svg
@@ -244,47 +277,63 @@ export function CardEmblem({
       aria-hidden="true"
     >
       <defs>
-        <radialGradient id={`disc-${uid}`} cx="0.5" cy="0.4" r="0.66">
-          <stop stopColor={muted ? "#FCFAF2" : "#FFFDF7"} />
-          <stop offset="1" stopColor={muted ? "#F3EEE1" : "#F5EFDD"} />
+        <radialGradient id={`disc-${uid}`} cx="0.46" cy="0.36" r="0.7">
+          <stop stopColor={muted ? "#FCFAF2" : "#FFFFFB"} />
+          <stop offset="0.62" stopColor={muted ? "#F6F1E4" : "#FBF6E8"} />
+          <stop offset="1" stopColor={muted ? "#EFE9D9" : "#F3ECD8"} />
         </radialGradient>
-        <linearGradient id={`leaf-${uid}`} x1="84" y1="60" x2="84" y2="132" gradientUnits="userSpaceOnUse">
-          <stop stopColor={leafFront} />
-          <stop offset="1" stopColor={leafBack} />
+        <linearGradient id={`leaf-front-${uid}`} x1="0" y1="-33" x2="0" y2="2" gradientUnits="userSpaceOnUse">
+          <stop stopColor={frontTop} />
+          <stop offset="0.55" stopColor={frontMid} />
+          <stop offset="1" stopColor={frontLow} />
         </linearGradient>
+        <linearGradient id={`leaf-back-${uid}`} x1="0" y1="-33" x2="0" y2="2" gradientUnits="userSpaceOnUse">
+          <stop stopColor={backTop} />
+          <stop offset="0.55" stopColor={backMid} />
+          <stop offset="1" stopColor={backLow} />
+        </linearGradient>
+        <linearGradient id={`stem-${uid}`} x1="0" y1="0" x2="0" y2="42" gradientUnits="userSpaceOnUse">
+          <stop stopColor={frontMid} />
+          <stop offset="1" stopColor={frontLow} />
+        </linearGradient>
+        <radialGradient id={`glow-${uid}`} cx="0.5" cy="0.5" r="0.5">
+          <stop stopColor={muted ? "#FFFFFF" : "#FFFFFF"} stopOpacity={muted ? 0.2 : 0.75} />
+          <stop offset="1" stopColor="#FFFFFF" stopOpacity="0" />
+        </radialGradient>
       </defs>
 
       {/* 원반과 이중 테두리 */}
       <circle cx="84" cy="84" r="83" fill={`url(#disc-${uid})`} />
-      <circle cx="84" cy="84" r="80.5" stroke={gold} strokeWidth="0.9" opacity="0.55" />
-      <circle cx="84" cy="84" r="72" stroke={gold} strokeWidth="0.6" opacity="0.32" strokeDasharray="1 4.2" />
+      <circle cx="84" cy="84" r="81.5" stroke="#FFFFFF" strokeWidth="1.4" opacity="0.7" />
+      <circle cx="84" cy="84" r="80.5" stroke={gold} strokeWidth="0.9" opacity="0.6" />
+      <circle cx="84" cy="84" r="72" stroke={gold} strokeWidth="0.6" opacity="0.34" strokeDasharray="1 4.2" />
 
       {/* 위쪽의 작은 별 */}
       <path
         d="M84 19 L86.4 26.4 L93.8 28.8 L86.4 31.2 L84 38.6 L81.6 31.2 L74.2 28.8 L81.6 26.4 Z"
         fill={gold}
-        opacity={muted ? 0.55 : 0.92}
+        opacity={muted ? 0.55 : 0.95}
       />
       <path d="M70 28.8 H64" stroke={gold} strokeWidth="0.7" opacity={muted ? 0.3 : 0.45} strokeLinecap="round" />
       <path d="M98 28.8 H104" stroke={gold} strokeWidth="0.7" opacity={muted ? 0.3 : 0.45} strokeLinecap="round" />
 
       {/* 가운데 네잎클로버 */}
-      <g transform="translate(84 100)">
-        <ellipse cx="0" cy="-6" rx="44" ry="40" fill="#FFFFFF" opacity="0.22" />
-        {[0, 90, 180, 270].map((deg) => (
-          <g key={deg} transform={`rotate(${deg})`}>
-            <path
-              d="M0 0 C 8.5 -7 14.5 -17 10 -26 C 5.5 -33.5 -5.5 -33.5 -10 -26 C -14.5 -17 -8.5 -7 0 0 Z"
-              fill={deg % 180 === 0 ? leafFront : leafBack}
-              stroke={muted ? "#F9F5EA" : "#FBF7EA"}
-              strokeWidth="1.5"
-              strokeLinejoin="round"
-            />
-            <path d="M0 -4 L0 -22" stroke="#FFFFFF" strokeOpacity="0.32" strokeWidth="1" strokeLinecap="round" />
-          </g>
-        ))}
-        <path d="M1 7 C 3 18 2 26 0 34" stroke={leafBack} strokeWidth="2" strokeLinecap="round" />
-        <circle cx="0" cy="0" r="2.6" fill={muted ? "#F5EFE1" : "#FCF8EC"} />
+      <g transform="translate(84 104)">
+        <ellipse cx="0" cy="-2" rx="52" ry="46" fill={`url(#glow-${uid})`} />
+        <ellipse cx="0" cy="30" rx="30" ry="6.5" fill="#123F2C" opacity={muted ? 0.05 : 0.09} />
+        {[270, 90].map(leafGroup)}
+        {[0, 180].map(leafGroup)}
+        {/* 줄기 — 부드러운 곡선 */}
+        <path
+          d="M1.2 6 C 5.6 19 2.4 29.4 -3.2 40"
+          stroke={`url(#stem-${uid})`}
+          strokeWidth="2.7"
+          strokeLinecap="round"
+          fill="none"
+        />
+        <path d="M-1.6 28 C -5.8 26 -8 22.6 -8.6 18.8 C -4.6 18.4 -2 21 -1.6 28 Z" fill={frontLow} opacity={muted ? 0.5 : 0.8} />
+        <circle cx="0" cy="0" r="2.8" fill={muted ? "#F5EFE1" : "#FDF9EE"} />
+        <circle cx="0" cy="0" r="1.3" fill={frontMid} opacity="0.55" />
       </g>
 
       {/* 아래쪽 장식 */}
@@ -294,7 +343,7 @@ export function CardEmblem({
   );
 }
 
-/* ── 오늘의 카드 일러스트(잠금 미리보기) ──────────────── */
+/* ── 행운 카드 일러스트(잠금 미리보기) ──────────────── */
 
 function LaurelBranch({ mirrored = false }: { mirrored?: boolean }) {
   const points = Array.from({ length: 12 }, (_, i) => {

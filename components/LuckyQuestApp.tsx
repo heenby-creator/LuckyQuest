@@ -8,6 +8,7 @@ import { QuestList } from "./QuestList";
 import { CalendarView, CharmsView, MeView } from "./Views";
 import { Clover, NavIcon, Sparkle, StarMascot, type NavKey } from "./illustrations";
 import { buildDaily } from "@/lib/engine";
+import { deleteQuestPhoto, getDayPhotos, preparePhoto, saveQuestPhoto, type QuestPhoto } from "@/lib/photos";
 import { shareText, shareUrl } from "@/lib/share";
 import { clearState, ensureDay, freshState, loadState, saveState, todayKey, toggleCheck } from "@/lib/storage";
 import type { AppState, Profile } from "@/lib/types";
@@ -28,6 +29,7 @@ export function LuckyQuestApp() {
   const [toast, setToast] = useState<string | null>(null);
   const [menu, setMenu] = useState<null | "menu" | "about">(null);
   const [mood, setMood] = useState<"idle" | "cheer">("idle");
+  const [photos, setPhotos] = useState<QuestPhoto[]>([]);
   const mainRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
@@ -53,6 +55,18 @@ export function LuckyQuestApp() {
       saveState(next);
     }
   }, [state, daily]);
+
+  // 그날 남긴 인증샷 — 브라우저(IndexedDB)에서만 읽는다.
+  useEffect(() => {
+    if (!daily) return;
+    let alive = true;
+    void getDayPhotos(daily.dateKey).then((list) => {
+      if (alive) setPhotos(list);
+    });
+    return () => {
+      alive = false;
+    };
+  }, [daily]);
 
   useEffect(() => {
     if (!toast) return;
@@ -96,16 +110,45 @@ export function LuckyQuestApp() {
       setMood("cheer");
       if (willUnlock) {
         setJustUnlocked(true);
-        setToast("오늘의 카드가 열렸어요! 🍀");
+        setToast("오늘의 행운 카드가 열렸어요! 🍀");
         window.setTimeout(() => setJustUnlocked(false), 3200);
       }
     },
     [state, daily, day],
   );
 
+  const onAddPhoto = useCallback(
+    async (index: 0 | 1, file: File) => {
+      if (!daily) return;
+      try {
+        const prepared = await preparePhoto(file);
+        const saved = await saveQuestPhoto(daily.dateKey, index, prepared);
+        setPhotos((prev) => [...prev.filter((photo) => photo.index !== index), saved].sort((a, b) => a.index - b.index));
+        setToast("인증샷을 저장했어요 · 이 기기에만");
+      } catch {
+        setToast("사진을 저장하지 못했어요");
+      }
+    },
+    [daily],
+  );
+
+  const onRemovePhoto = useCallback(
+    async (index: 0 | 1) => {
+      if (!daily) return;
+      try {
+        await deleteQuestPhoto(daily.dateKey, index);
+        setPhotos((prev) => prev.filter((photo) => photo.index !== index));
+        setToast("인증샷을 지웠어요");
+      } catch {
+        setToast("인증샷을 지우지 못했어요");
+      }
+    },
+    [daily],
+  );
+
   const onShare = useCallback(async () => {
     if (!daily) return;
-    const text = shareText({ title: daily.charm.title, message: daily.charm.message });
+    const text = shareText({ title: daily.charm.title, quote: daily.charm.quote, author: daily.charm.author });
     // 카드의 날짜를 링크에 담아, 들어온 사람이 그 카드의 미리보기를 보게 한다.
     const url = shareUrl(daily.dateKey);
     const nav = typeof navigator !== "undefined" ? navigator : undefined;
@@ -183,7 +226,7 @@ export function LuckyQuestApp() {
                       <h1 className="text-[20px] font-extrabold leading-none tracking-tight text-leaf">Lucky Quest</h1>
                     </div>
                     <p className="mt-1 flex items-center gap-1 truncate text-[10.5px] text-ink-soft">
-                      오늘도 행운 가득한 하루 되세요!
+                      오늘도 행운 가득한 하루 보내세요!
                       <Clover size={10} className="shrink-0" />
                     </p>
                   </div>
@@ -209,13 +252,22 @@ export function LuckyQuestApp() {
               {tab === "today" && daily && day && (
                 <div className="space-y-4 px-4 pb-8 pt-3">
                   <FortuneCard daily={daily} mbti={state!.profile.mbti} />
-                  <QuestList quests={daily.quests} checks={day.checks} onToggle={onToggle} />
+                  <QuestList
+                    quests={daily.quests}
+                    checks={day.checks}
+                    onToggle={onToggle}
+                    photos={photos}
+                    onAddPhoto={onAddPhoto}
+                    onRemovePhoto={onRemovePhoto}
+                  />
                   <CharmCard
                     daily={daily}
                     unlocked={Boolean(day.unlockedAt)}
                     justUnlocked={justUnlocked}
                     onShare={onShare}
                     done={day.checks.filter(Boolean).length}
+                    photos={photos}
+                    onToast={setToast}
                   />
                   <p className="flex items-center justify-center gap-1.5 pb-1 text-center text-[10.5px] text-ink-faint">
                     <Sparkle size={10} color="#C9B98C" />
@@ -298,10 +350,10 @@ export function LuckyQuestApp() {
                   </div>
                   <p className="text-[12.5px] leading-[1.8] text-ink-soft">
                     오늘의 날씨가 되는 사주 오행과, 나다운 행동을 알려주는 MBTI를 담았어요.
-                    하루 한두 걸음의 작은 퀘스트로 기운을 채우면 오늘의 카드가 열립니다.
+                    하루 한두 걸음의 작은 퀘스트로 기운을 채우면 오늘의 행운 카드가 열립니다.
                   </p>
                   <p className="mt-2 text-[11px] text-ink-faint">
-                    입력한 생년월일과 MBTI는 이 기기에만 저장되고 어디에도 보내지 않아요.
+                    입력한 생년월일과 MBTI, 인증샷은 이 기기에만 저장되고 어디에도 보내지 않아요.
                   </p>
                   <button type="button" onClick={() => setMenu(null)} className="mt-4 w-full rounded-2xl bg-leaf py-3 text-[13.5px] font-bold text-white">
                     좋아요, 계속할게요

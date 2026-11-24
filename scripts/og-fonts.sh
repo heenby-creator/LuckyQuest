@@ -22,12 +22,17 @@ echo "→ 프로젝트에 나오는 글자 모으기"
 python3 - "$TMP/charset.txt" <<'PY'
 import sys
 
-files = [
-    "lib/content.ts", "lib/engine.ts", "lib/saju.ts", "lib/utils.ts", "lib/share.ts",
-    "components/CharmCard.tsx", "components/FortuneCard.tsx", "components/Views.tsx",
-    "components/Onboarding.tsx", "components/QuestList.tsx", "components/LuckyQuestApp.tsx",
-    "app/layout.tsx", "app/api/og/design.tsx", "app/card/[date]/page.tsx",
-]
+import glob
+
+files = (
+    sorted(glob.glob("lib/*.ts"))
+    + sorted(glob.glob("components/*.tsx"))
+    + [
+        "app/layout.tsx", "app/page.tsx", "app/manifest.ts",
+        "app/api/og/art.ts", "app/api/og/design.tsx", "app/api/og/route.tsx",
+        "app/card/[date]/page.tsx",
+    ]
+)
 chars = set()
 for path in files:
     chars.update(open(path, encoding="utf-8").read())

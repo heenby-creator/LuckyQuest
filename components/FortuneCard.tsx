@@ -1,12 +1,21 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ELEMENT_META, FORTUNE_TABS, FORTUNE_TOPIC_LABEL, type FortuneTopic } from "@/lib/content";
+import {
+  ELEMENT_HANJA,
+  ELEMENT_META,
+  FORTUNE_TABS,
+  FORTUNE_TOPIC_LABEL,
+  type FortuneTopic,
+} from "@/lib/content";
 import type { DailyView } from "@/lib/engine";
 import { formatKoreanDate } from "@/lib/utils";
 import { ElementIcon, Sparkle, StarMascot } from "./illustrations";
 
-const ARC_LEN = Math.PI * 96;
+/* 반원 게이지 — 위쪽 공간을 덜 차지하도록 크기를 줄였다(slim). */
+const ARC_R = 86;
+const ARC_LEN = Math.PI * ARC_R;
+const ARC_Y = 106;
 
 function Gauge({ value, label }: { value: number; label: string }) {
   const [shown, setShown] = useState(0);
@@ -17,46 +26,42 @@ function Gauge({ value, label }: { value: number; label: string }) {
 
   const offset = ARC_LEN * (1 - shown / 100);
   const angle = Math.PI * (1 - shown / 100);
-  const knobX = 120 + 96 * Math.cos(angle);
-  const knobY = 120 - 96 * Math.sin(angle);
+  const knobX = 120 + ARC_R * Math.cos(angle);
+  const knobY = ARC_Y - ARC_R * Math.sin(angle);
+  const arc = `M${120 - ARC_R} ${ARC_Y} A${ARC_R} ${ARC_R} 0 0 1 ${120 + ARC_R} ${ARC_Y}`;
 
   return (
-    <div className="relative mt-3">
-      <svg viewBox="0 0 240 148" className="w-full" role="img" aria-label={`오늘의 운세 에너지 ${value}%`}>
+    <div className="relative mt-2">
+      <svg viewBox="0 0 240 118" className="w-full" role="img" aria-label={`오늘의 운세 에너지 ${value}%`}>
         <defs>
-          <linearGradient id="gauge-grad" x1="24" y1="120" x2="216" y2="60" gradientUnits="userSpaceOnUse">
+          <linearGradient id="gauge-grad" x1="34" y1="106" x2="206" y2="52" gradientUnits="userSpaceOnUse">
             <stop stopColor="#0E7A54" />
             <stop offset="0.45" stopColor="#43A96B" />
             <stop offset="0.75" stopColor="#A5C94E" />
             <stop offset="1" stopColor="#F1D14B" />
           </linearGradient>
         </defs>
-        <path d="M24 120 A96 96 0 0 1 216 120" stroke="#F1E8D3" strokeWidth="17" strokeLinecap="round" fill="none" />
+        <path d={arc} stroke="#F1E8D3" strokeWidth="14" strokeLinecap="round" fill="none" />
         <path
-          d="M24 120 A96 96 0 0 1 216 120"
+          d={arc}
           stroke="url(#gauge-grad)"
-          strokeWidth="17"
+          strokeWidth="14"
           strokeLinecap="round"
           fill="none"
           strokeDasharray={ARC_LEN}
           strokeDashoffset={offset}
           className="gauge-progress"
         />
-        <circle cx={knobX} cy={knobY} r="13" fill="#FFFDF5" opacity="0.95" />
-        <circle cx={knobX} cy={knobY} r="7.5" fill="#FFFFFF" stroke="#0E7A54" strokeWidth="3.5" />
+        <circle cx={knobX} cy={knobY} r="11.5" fill="#FFFDF5" opacity="0.95" />
+        <circle cx={knobX} cy={knobY} r="6.5" fill="#FFFFFF" stroke="#0E7A54" strokeWidth="3" />
       </svg>
 
-      <div className="pointer-events-none absolute inset-x-0 bottom-[6px] flex flex-col items-center">
+      <div className="pointer-events-none absolute inset-x-0 bottom-[2px] flex flex-col items-center">
         <div className="flex items-start gap-0.5 text-leaf-strong">
-          <span className="text-[44px] font-extrabold leading-none tracking-tight tabular-nums">{value}</span>
-          <span className="mt-1.5 text-[17px] font-bold">%</span>
+          <span className="text-[38px] font-extrabold leading-none tracking-tight tabular-nums">{value}</span>
+          <span className="mt-1 text-[15px] font-bold">%</span>
         </div>
-        <p className="mt-1 text-[12.5px] font-bold text-[#4E7A5E]">{label}</p>
-      </div>
-
-      <div className="mt-1 flex justify-between px-1 text-[10.5px] text-ink-faint">
-        <span>0%</span>
-        <span>100%</span>
+        <p className="mt-0.5 text-[11.5px] font-bold text-[#4E7A5E]">{label}</p>
       </div>
     </div>
   );
@@ -66,7 +71,6 @@ export function FortuneCard({ daily, mbti }: { daily: DailyView; mbti: string })
   const todayMeta = ELEMENT_META[daily.today.element];
   const [tab, setTab] = useState<"all" | FortuneTopic>("all");
   const topic = tab === "all" ? null : daily.topics[tab];
-  const readingLines = topic ? topic.lines : daily.reading;
 
   return (
     <section className="card card-pop overflow-hidden">
@@ -87,16 +91,16 @@ export function FortuneCard({ daily, mbti }: { daily: DailyView; mbti: string })
 
         <Gauge value={daily.score} label={daily.scoreLabel} />
 
-        <div className="mt-1 flex items-center justify-center gap-1.5 rounded-full bg-cream-2/70 px-3 py-1.5 text-[11.5px] text-ink-soft">
+        <div className="mt-2 flex items-center justify-center gap-1.5 rounded-full bg-cream-2/70 px-3 py-1.5 text-[11.5px] text-ink-soft">
           <span className="size-1.5 rounded-full" style={{ background: todayMeta.color }} />
           오늘은 <b className="font-bold text-ink">{daily.today.pillar}일</b> · {todayMeta.name} 기운
         </div>
       </div>
 
-      <div className="mx-5 mt-4 border-t border-dashed border-line" />
+      <div className="mx-5 mt-3 border-t border-dashed border-line" />
 
-      <div className="px-5 py-4">
-        <div className="mb-2.5 flex items-center justify-between">
+      <div className="px-5 py-3.5">
+        <div className="mb-2 flex items-center justify-between">
           <h3 className="text-[13px] font-bold text-ink">오행 밸런스</h3>
           <span className="text-[10.5px] text-ink-faint">
             {daily.chart.hourKnown ? "네 기둥 기준" : "세 기둥 기준"}
@@ -111,21 +115,22 @@ export function FortuneCard({ daily, mbti }: { daily: DailyView; mbti: string })
             return (
               <div key={item.element} className="flex flex-col items-center gap-1">
                 <div className="flex size-12 items-center justify-center rounded-full border" style={{ background: meta.soft, borderColor: `${meta.color}33` }}>
-                  <ElementIcon element={item.element} size={24} />
+                  <ElementIcon element={item.element} size={23} />
                 </div>
-                <span className="text-[12px] font-bold text-ink">{item.element}</span>
+                <span className="text-[14px] font-bold leading-none text-ink">{ELEMENT_HANJA[item.element]}</span>
                 <span className="text-[10px] font-semibold" style={{ color: statusColor }}>{item.status}</span>
               </div>
             );
           })}
         </div>
-
       </div>
 
       <div className="mx-4 mb-4">
-        <div role="tablist" aria-label="운세 주제" className="mb-2.5 flex gap-1 rounded-full bg-cream-2/80 p-1">
+        {/* 4개 운세 탭 — 누를 수 있는 탭임이 한눈에 보이도록 테두리·대비·글자를 키우고 지수를 함께 보여 준다. */}
+        <div role="tablist" aria-label="운세 주제" className="grid grid-cols-4 gap-1.5">
           {FORTUNE_TABS.map((t) => {
             const active = tab === t.key;
+            const percent = t.key === "all" ? daily.score : daily.topics[t.key].score;
             return (
               <button
                 key={t.key}
@@ -133,13 +138,18 @@ export function FortuneCard({ daily, mbti }: { daily: DailyView; mbti: string })
                 role="tab"
                 aria-selected={active}
                 onClick={() => setTab(t.key)}
-                className={`flex-1 rounded-full px-1 py-1.5 text-[11.5px] font-bold transition-all duration-150 active:scale-[0.97] ${
+                className={`flex flex-col items-center gap-0.5 rounded-2xl border-2 px-1 py-2 transition active:scale-[0.97] ${
                   active
-                    ? "bg-white text-leaf-strong shadow-[0_6px_14px_-10px_rgba(18,128,92,0.85)]"
-                    : "text-ink-faint hover:text-ink-soft"
+                    ? "border-leaf bg-leaf-soft shadow-[0_10px_20px_-16px_rgba(18,128,92,1)]"
+                    : "border-[#E7DCC2] bg-white/85 hover:border-leaf/35 hover:bg-white"
                 }`}
               >
-                {t.label}
+                <span className={`text-[12.5px] font-extrabold leading-none tracking-tight ${active ? "text-leaf-strong" : "text-ink-soft"}`}>
+                  {t.label}
+                </span>
+                <span className={`text-[11px] font-bold leading-none tabular-nums ${active ? "text-leaf" : "text-ink-faint"}`}>
+                  {percent}%
+                </span>
               </button>
             );
           })}
@@ -147,24 +157,37 @@ export function FortuneCard({ daily, mbti }: { daily: DailyView; mbti: string })
 
         <div
           key={tab}
-          className="anim-fade-up relative rounded-[22px] border border-[#F1E5C4] bg-[#FFF9E8] px-4 pb-4 pt-3.5"
+          className="anim-fade-up relative mt-2.5 rounded-[22px] border border-[#F1E5C4] bg-[#FFF9E8] px-4 pb-4 pt-3.5"
         >
-          <p className="mb-1.5 text-[10px] font-bold tracking-[0.16em] text-[#B09355]">
-            {topic ? `${FORTUNE_TOPIC_LABEL[tab as FortuneTopic]} 한마디` : "오늘의 한마디"}
-          </p>
-          <div className="space-y-1.5 pr-5 text-[13px] leading-[1.7] text-[#4B4433]">
-            {readingLines.map((line, i) => (
-              <p key={i} className={i === 0 ? "font-semibold" : ""}>{line}</p>
-            ))}
-          </div>
-          {topic && (
-            <p className="mt-2.5 flex items-start gap-1.5 rounded-xl bg-white/75 px-2.5 py-2 pr-7 text-[11.5px] leading-relaxed text-ink-soft">
-              <span aria-hidden="true">💡</span>
-              <span>{topic.tip}</span>
+          <div className="mb-2 flex items-center justify-between gap-2">
+            <p className="text-[10px] font-bold tracking-[0.16em] text-[#B09355]">
+              {topic ? `${FORTUNE_TOPIC_LABEL[tab as FortuneTopic]} 한마디` : "오늘의 한마디"}
             </p>
+            <span className="flex items-center gap-1 rounded-full bg-white/85 px-2 py-0.5 text-[10.5px] font-extrabold text-[#8A6F33] shadow-[inset_0_0_0_1px_rgba(199,168,98,0.35)]">
+              <span className="tabular-nums">{topic ? topic.score : daily.score}%</span>
+              <span className="font-semibold text-[#A08B58]">{topic ? topic.status : daily.scoreStatus}</span>
+            </span>
+          </div>
+
+          {topic ? (
+            <div className="pr-10">
+              <p className="text-[13.5px] font-bold leading-[1.65] text-[#3E3A2C]">{topic.flow}</p>
+              <p className="mt-2 flex items-start gap-1.5 rounded-xl bg-white/80 px-2.5 py-2 text-[12px] leading-[1.7] text-[#4B4433]">
+                <span aria-hidden="true">💡</span>
+                <span>{topic.advice}</span>
+              </p>
+              <p className="mt-2 text-[11px] leading-relaxed text-[#8C8064]">{topic.mbtiNote}</p>
+            </div>
+          ) : (
+            <div className="space-y-1.5 pr-10 text-[13px] leading-[1.7] text-[#4B4433]">
+              {daily.reading.map((line, i) => (
+                <p key={i} className={i === 0 ? "font-semibold" : ""}>{line}</p>
+              ))}
+            </div>
           )}
+
           <div className="pointer-events-none absolute -bottom-3 right-2">
-            <StarMascot size={46} mood="idle" />
+            <StarMascot size={44} mood="idle" />
           </div>
         </div>
       </div>

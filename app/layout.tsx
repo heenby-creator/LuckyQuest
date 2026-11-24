@@ -4,7 +4,7 @@ import "./globals.css";
 // apex(luckyquest.app)는 www로 308 리다이렉트되므로, 크롤러가 곧장 200을 받도록 www를 기준 주소로 쓴다.
 const SITE_URL = "https://www.luckyquest.app";
 const OG_DESCRIPTION =
-  "사주 오행으로 읽는 오늘의 기운과 MBTI로 고른 작은 퀘스트. 하루 두 걸음이면 오늘의 카드가 열려요.";
+  "사주 오행으로 읽는 오늘의 기운과 MBTI로 고른 작은 퀘스트. 하루 두 걸음이면 오늘의 행운 카드가 열려요.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),

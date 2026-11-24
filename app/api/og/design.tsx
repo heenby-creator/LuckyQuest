@@ -103,7 +103,7 @@ export function OgDefault() {
             MBTI로 고른 작은 퀘스트.
           </div>
           <div style={text({ fontSize: 26, fontWeight: 400, lineHeight: 1.72, color: C.inkSoft, width: 580, marginTop: 4 })}>
-            두 걸음이면 오늘의 카드가 열려요.
+            두 걸음이면 오늘의 행운 카드가 열려요.
           </div>
 
           <div style={{ display: "flex", alignItems: "center", marginTop: 40 }}>
@@ -172,13 +172,13 @@ const META_LABEL: CSSProperties = {
   color: C.label,
 };
 
-/** 날짜별 '오늘의 카드' — 1200×630 에디토리얼 카드 */
+/** 날짜별 '오늘의 행운 카드' — 1200×630 에디토리얼 카드 */
 export function OgCard({ card }: { card: ShareCard }) {
   const elementName = ELEMENT_META[card.element].name;
   const cells = [
     { label: "행운의 색", value: card.colorName },
-    { label: "숫자", value: card.number },
-    { label: "키워드", value: card.keyword },
+    { label: "행운의 숫자", value: card.number },
+    { label: "행운의 아이템", value: card.item },
   ];
 
   return (
@@ -234,8 +234,8 @@ export function OgCard({ card }: { card: ShareCard }) {
         {/* 카드 문양 */}
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", width: 300 }}>
           <img src={EMBLEM_URI} width={284} height={284} alt="" />
-          <div style={text({ fontSize: 17, fontWeight: 600, letterSpacing: 4, color: C.goldDeep, marginTop: 18 })}>
-            TODAY&apos;S CARD
+          <div style={text({ fontSize: 16, fontWeight: 600, letterSpacing: 3, color: C.goldDeep, marginTop: 16 })}>
+            TODAY&apos;S LUCKY CARD
           </div>
           <div style={text({ fontSize: 21, fontWeight: 400, color: C.inkFaint, marginTop: 10 })}>{card.dateLabel}</div>
         </div>
@@ -243,8 +243,8 @@ export function OgCard({ card }: { card: ShareCard }) {
         {/* 카드 내용 */}
         <div style={{ display: "flex", flexDirection: "column", width: 660, marginLeft: 62 }}>
           <div style={{ display: "flex", alignItems: "center" }}>
-            <div style={text({ fontSize: 19, fontWeight: 600, letterSpacing: 6, color: C.goldDeep })}>
-              오늘의 카드
+            <div style={text({ fontSize: 19, fontWeight: 600, letterSpacing: 2, color: C.goldDeep })}>
+              오늘의 행운 카드
             </div>
             <div style={{ width: 5, height: 5, borderRadius: 5, background: C.goldPale, margin: "0 14px" }} />
             <div style={text({ fontSize: 21, fontWeight: 400, color: C.label })}>
@@ -260,8 +260,12 @@ export function OgCard({ card }: { card: ShareCard }) {
             <Divider width={40} />
           </div>
 
-          <div style={text({ fontSize: 30, fontWeight: 400, lineHeight: 1.68, color: C.inkSoft, width: 620, marginTop: 16 })}>
-            {card.message}
+          <div style={text({ fontSize: 28, fontWeight: 400, lineHeight: 1.62, color: C.inkSoft, width: 630, marginTop: 16, wordBreak: "keep-all" })}>
+            &ldquo;{card.quote}&rdquo;
+          </div>
+
+          <div style={text({ fontSize: 23, fontWeight: 600, color: C.goldDeep, marginTop: 10 })}>
+            — {card.author}
           </div>
 
           <div

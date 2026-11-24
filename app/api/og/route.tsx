@@ -10,7 +10,7 @@ export const size = { width: 1200, height: 630 };
 /**
  * OG 이미지 엔드포인트.
  *  - /api/og                → 대표 브랜드 이미지
- *  - /api/og?card=2026-11-24 → 그날 '오늘의 카드'
+ *  - /api/og?card=2026-11-24 → 그날 '오늘의 행운 카드'
  */
 export async function GET(request: Request) {
   const url = new URL(request.url);
