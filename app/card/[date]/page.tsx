@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ELEMENT_META } from "@/lib/content";
-import { SITE_URL, cardForDate, isShareableDate, parseCardDate, shareUrl } from "@/lib/share";
+import { cardForDate, isShareableDate, ogImageUrl, parseCardDate, shareUrl } from "@/lib/share";
 
 type PageProps = { params: Promise<{ date: string }> };
 
@@ -66,7 +66,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const url = shareUrl(key);
   const title = `오늘의 카드 — ${card.title}`;
   const description = `${card.dateLabel}의 오늘의 카드. "${card.message}" 사주 오행과 MBTI로 만나는 Lucky Quest.`;
-  const image = { url: `${SITE_URL}/api/og?card=${key}`, width: 1200, height: 630, type: "image/png", alt: `오늘의 카드 — ${card.title}` };
+  const image = { url: ogImageUrl(key), width: 1200, height: 630, type: "image/png", alt: `오늘의 카드 — ${card.title}` };
 
   return {
     title,

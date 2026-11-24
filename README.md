@@ -100,7 +100,10 @@ curl -sS -o public/og-default.png "http://localhost:3000/api/og"
 
 - 카카오: <https://developers.kakao.com/tool/debugger/sharing> — 주소 입력 → 캐시 초기화
 - 페이스북: <https://developers.facebook.com/tools/debug/> — 주소 입력 → `Scrape Again`
-- X: <https://cards-dev.twitter.com/validator> (또는 새 주소로 공유)
+- X: 새 글에 주소를 붙여 미리보기를 확인합니다(예전 카드 밸리데이터는 종료).
+
+OG 이미지 주소에는 `v=1`(`lib/share.ts`의 `OG_CARD_VERSION`)이 붙어 있습니다. 카드 이미지 디자인을 바꾸면
+이 숫자를 올려 크롤러·CDN이 새 이미지를 받게 합니다.
 
 ## 검증
 

@@ -29,8 +29,9 @@ export async function GET(request: Request) {
     })),
     headers: {
       "Content-Type": "image/png",
-      // 카드 이미지는 날짜로만 정해지므로 오래 캐시해도 안전하다.
-      "Cache-Control": "public, max-age=86400, s-maxage=31536000, immutable",
+      // 카드 내용은 날짜로만 정해진다. 다만 디자인을 고칠 수 있으니 CDN 캐시는 길게, 브라우저는 짧게 둔다.
+      // 디자인을 바꾸면 lib/share.ts의 OG_CARD_VERSION을 올려 주소를 바꾼다.
+      "Cache-Control": "public, max-age=3600, s-maxage=604800, stale-while-revalidate=86400",
       "X-OG-Card": key ?? "default",
     },
   });

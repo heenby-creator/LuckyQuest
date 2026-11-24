@@ -6,6 +6,9 @@ import { dateKey, pick } from "./utils";
 /** 공유 링크와 OG 메타의 기준 주소 — apex(luckyquest.app)는 www로 308 리다이렉트되므로 www를 쓴다. */
 export const SITE_URL = "https://www.luckyquest.app";
 
+/** OG 카드 디자인을 바꿔 크롤러·CDN 캐시를 넘길 때 올리는 번호 */
+export const OG_CARD_VERSION = "1";
+
 const WEEKDAY_LONG = ["일", "월", "화", "수", "목", "금", "토"];
 
 export interface ShareCard {
@@ -67,6 +70,11 @@ export function isShareableDate(key: string, now: Date = new Date()): boolean {
 
 export function shareUrl(key: string): string {
   return `${SITE_URL}/card/${key}`;
+}
+
+/** 그날 카드의 OG 이미지 주소 — 디자인을 고치면 OG_CARD_VERSION을 올린다. */
+export function ogImageUrl(key: string): string {
+  return `${SITE_URL}/api/og?card=${key}&v=${OG_CARD_VERSION}`;
 }
 
 /** 공유 문구 — 카톡·링크 복사·Web Share에 함께 쓰는 한 벌. */
