@@ -1,6 +1,6 @@
 /**
  * 인증샷 포함 카드 이미지 — 클라이언트 Canvas로 오늘의 행운 카드와 사진을 한 장에 합성한다.
- * 사진은 브라우저 밖으로 나가지 않고, 만들어진 PNG만 사용자가 저장·공유한다.
+ * 사진은 브라우저 밖으로 나가지 않고, 만들어진 PNG만 이용자가 저장·공유한다.
  */
 import type { CharmView } from "./engine";
 import type { Element } from "./types";

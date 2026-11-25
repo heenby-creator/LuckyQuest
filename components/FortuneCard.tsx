@@ -98,7 +98,7 @@ export function FortuneCard({ daily, onOpenMbti }: { daily: DailyView; onOpenMbt
 
         <div className="mt-2 flex items-center justify-center gap-1.5 rounded-full bg-cream-2/70 px-3 py-1.5 text-[11.5px] text-ink-soft">
           <span className="size-1.5 rounded-full" style={{ background: todayMeta.color }} />
-          오늘은 <b className="font-bold text-ink">{daily.today.pillar}일</b> · 겉 {ELEMENT_META[daily.today.element].name} · 바탕 {ELEMENT_META[daily.today.branchElement].name}
+          오늘은 <b className="font-bold text-ink">{daily.today.pillar}일</b> · 겉 {ELEMENT_META[daily.today.element].name} · 속 {ELEMENT_META[daily.today.branchElement].name}
         </div>
       </div>
 

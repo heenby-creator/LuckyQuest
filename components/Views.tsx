@@ -305,7 +305,7 @@ export function MeView({
           </div>
           <div className="min-w-0 flex-1">
             <p className="text-[15px] font-extrabold text-ink">
-              {ELEMENT_HANJA[chart.dayMaster]} 일간 · {state.profile.mbti ?? "사주 중심"}
+              {ELEMENT_META[chart.dayMaster].name} 기운 · {state.profile.mbti ?? "사주 중심"}
             </p>
             <p className="mt-0.5 text-[11.5px] text-ink-soft">{chart.birthLabel} · {timeLabel(state.profile.time)}</p>
           </div>
