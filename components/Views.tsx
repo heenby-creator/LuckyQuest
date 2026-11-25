@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { CHARM_POOL, ELEMENT_HANJA, ELEMENT_META, cardById, charmForDate, type LuckyCard } from "@/lib/content";
 import { getDayPhotos, countPhotosByDate, type QuestPhoto } from "@/lib/photos";
 import { chartOf, elementPercent, timeLabel } from "@/lib/saju";
@@ -355,6 +356,16 @@ export function MeView({
           기록 초기화
           <span className="text-ink-faint">›</span>
         </button>
+      </div>
+
+      <div className="flex items-center justify-between gap-2 px-1 pt-0.5">
+        <p className="text-[10.5px] text-ink-faint">입력한 정보는 이 기기에만 저장돼요</p>
+        <Link
+          href="/privacy"
+          className="text-[10.5px] font-semibold text-ink-faint underline decoration-line underline-offset-2 transition hover:text-ink-soft"
+        >
+          개인정보 처리방침
+        </Link>
       </div>
 
       <div className="flex items-start gap-2 rounded-2xl bg-cream-2/70 px-4 py-3">
