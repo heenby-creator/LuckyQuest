@@ -270,7 +270,6 @@ export function FortuneCard({ daily, onOpenMbti }: { daily: DailyView; onOpenMbt
             <span aria-hidden className="shrink-0 font-bold text-[#C0703A]">→</span>
             <span>{daily.caution.avoid}</span>
           </p>
-          <p className="mt-2 text-[11px] leading-[1.6] text-[#8E6E4E]">{daily.caution.basis}</p>
         </div>
 
         {/* 65세 이상 — 사주 풀이만으로 깔끔하게, 성향은 원할 때만 작게 더한다. */}
