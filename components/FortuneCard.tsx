@@ -212,20 +212,20 @@ export function FortuneCard({ daily }: { daily: DailyView }) {
         {/* 오늘 조심할 것 — 운세를 보는 이유에 답하는 전용 주의 포인트 */}
         <div className="relative z-10 mt-5 rounded-[22px] border border-[#F0CDB4] bg-[#FFF5EC] px-4 pb-3.5 pt-3">
           <div className="flex items-center justify-between gap-2">
-            <p className="flex items-center gap-1.5 text-[10px] font-bold tracking-[0.16em] text-[#C0703A]">
-              <span aria-hidden className="text-[12px] leading-none">⚠️</span>
+            <p className="flex items-center gap-1.5 text-[11px] font-bold tracking-[0.12em] text-[#C0703A]">
+              <span aria-hidden className="text-[13px] leading-none">⚠️</span>
               오늘 조심할 것
             </p>
-            <span className="rounded-full bg-white/80 px-2 py-0.5 text-[10px] font-bold text-[#B08A66]">
+            <span className="rounded-full bg-white/80 px-2 py-0.5 text-[10.5px] font-bold text-[#B08A66]">
               {daily.today.pillar}일 기준
             </span>
           </div>
-          <p className="mt-1.5 text-[13.5px] font-bold leading-[1.6] text-[#5A3A24]">{daily.caution.caution}</p>
-          <p className="mt-2 flex items-start gap-1.5 rounded-xl bg-white/75 px-2.5 py-2 text-[12px] leading-[1.7] text-[#6B4A32]">
+          <p className="mt-1.5 text-[14px] font-bold leading-[1.65] text-[#5A3A24]">{daily.caution.caution}</p>
+          <p className="mt-2 flex items-start gap-1.5 rounded-xl bg-white/75 px-2.5 py-2 text-[12.5px] leading-[1.7] text-[#6B4A32]">
             <span aria-hidden className="shrink-0 font-bold text-[#C0703A]">→</span>
             <span>{daily.caution.avoid}</span>
           </p>
-          <p className="mt-1.5 text-[10px] leading-relaxed text-[#A08163]">{daily.caution.basis}</p>
+          <p className="mt-2 text-[11px] leading-[1.6] text-[#8E6E4E]">{daily.caution.basis}</p>
         </div>
       </div>
     </section>
