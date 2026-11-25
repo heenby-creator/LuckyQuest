@@ -73,7 +73,6 @@ export function FortuneCard({ daily, onOpenMbti }: { daily: DailyView; onOpenMbt
   const [tab, setTab] = useState<"all" | FortuneTopic>("all");
   const topic = tab === "all" ? null : daily.topics[tab];
   const tabs = fortuneTabs(daily.ageGroup);
-  const activeIndex = Math.max(0, tabs.findIndex((t) => t.key === tab));
   const senior = daily.ageGroup === "senior";
 
   return (
@@ -186,9 +185,7 @@ export function FortuneCard({ daily, onOpenMbti }: { daily: DailyView; onOpenMbt
 
         <div
           key={tab}
-          className={`anim-fade-up relative border border-[#F1E5C4] bg-[#FFF9E8] px-4 pb-6 pt-3.5 rounded-b-[22px] ${
-            activeIndex === 0 ? "rounded-tl-none" : "rounded-tl-[18px]"
-          } ${activeIndex === tabs.length - 1 ? "rounded-tr-none" : "rounded-tr-[18px]"}`}
+          className={`anim-fade-up relative break-keep rounded-b-[22px] border border-[#F1E5C4] bg-[#FFF9E8] px-4 pb-6 pt-3.5`}
         >
           <div className="mb-2 flex items-center justify-between gap-2">
             <p className="text-[10px] font-bold tracking-[0.16em] text-[#B09355]">
@@ -258,7 +255,7 @@ export function FortuneCard({ daily, onOpenMbti }: { daily: DailyView; onOpenMbt
         </div>
 
         {/* 오늘 조심할 것 — 운세를 보는 이유에 답하는 전용 주의 포인트 */}
-        <div className="relative z-10 mt-5 rounded-[22px] border border-[#F0CDB4] bg-[#FFF5EC] px-4 pb-3.5 pt-3">
+        <div className="relative z-10 mt-5 break-keep rounded-[22px] border border-[#F0CDB4] bg-[#FFF5EC] px-4 pb-3.5 pt-3">
           <div className="flex items-center justify-between gap-2">
             <p className="flex items-center gap-1.5 text-[11px] font-bold tracking-[0.12em] text-[#C0703A]">
               <span aria-hidden className="text-[13px] leading-none">⚠️</span>
