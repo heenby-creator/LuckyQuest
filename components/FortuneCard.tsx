@@ -94,16 +94,21 @@ export function FortuneCard({ daily, mbti }: { daily: DailyView; mbti: string })
 
         <div className="mt-2 flex items-center justify-center gap-1.5 rounded-full bg-cream-2/70 px-3 py-1.5 text-[11.5px] text-ink-soft">
           <span className="size-1.5 rounded-full" style={{ background: todayMeta.color }} />
-          오늘은 <b className="font-bold text-ink">{daily.today.pillar}일</b> · {todayMeta.name} 기운
+          오늘은 <b className="font-bold text-ink">{daily.today.pillar}일</b> · 겉 {daily.today.element} · 바탕 {daily.today.branchElement}
         </div>
       </div>
 
       <div className="mx-5 mt-3 border-t border-dashed border-line" />
 
       <div className="px-5 py-3.5">
-        <div className="mb-2 flex items-center justify-between">
-          <h3 className="text-[13px] font-bold text-ink">오행 밸런스</h3>
-          <span className="text-[10.5px] text-ink-faint">
+        <div className="mb-2 flex items-end justify-between gap-2">
+          <div>
+            <h3 className="text-[13px] font-bold text-ink">타고난 오행 밸런스</h3>
+            <p className="mt-0.5 text-[10px] leading-tight text-ink-faint">
+              태어난 생년월일{daily.chart.hourKnown ? "시" : ""}로 계산한 타고난 분포예요
+            </p>
+          </div>
+          <span className="shrink-0 pb-0.5 text-[10.5px] text-ink-faint">
             {daily.chart.hourKnown ? "네 기둥 기준" : "세 기둥 기준"}
           </span>
         </div>

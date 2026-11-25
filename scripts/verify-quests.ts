@@ -11,6 +11,9 @@ import {
   COMBO_QUESTS,
   ELEMENT_QUESTS,
   MBTI_QUESTS,
+  BRANCH_MOOD,
+  RELATION_PHRASE,
+  TODAY_MOOD,
   charmForDate,
   comboKeyOf,
   type ComboKey,
@@ -387,12 +390,12 @@ for (const day of SHARE_DAYS) {
 // 주제별 지수 · 상태 배지 · 두 줄 설명
 for (const now of DATES) {
   const daily = buildDaily(kdProfile, now);
-  expect(daily.score >= 65 && daily.score <= 95, `[${daily.dateKey}] 종합 지수가 65~95를 벗어났어요 (${daily.score})`);
+  expect(daily.score >= 55 && daily.score <= 97, `[${daily.dateKey}] 종합 지수가 55~97을 벗어났어요 (${daily.score})`);
   expect(FATE_STATUSES.has(daily.scoreStatus), `[${daily.dateKey}] 종합 상태 배지가 이상해요 (${daily.scoreStatus})`);
   for (const topic of ["money", "love", "work"] as const) {
     const fortune = daily.topics[topic];
     const label = `[${daily.dateKey} ${topic}]`;
-    expect(Number.isInteger(fortune.score) && fortune.score >= 58 && fortune.score <= 97, `${label}: 지수가 58~97을 벗어났어요 (${fortune.score})`);
+    expect(Number.isInteger(fortune.score) && fortune.score >= 55 && fortune.score <= 97, `${label}: 지수가 55~97을 벗어났어요 (${fortune.score})`);
     expect(FATE_STATUSES.has(fortune.status), `${label}: 상태 배지가 이상해요 (${fortune.status})`);
     expect(fortune.flow.trim().endsWith("요."), `${label}: 흐름 문장이 '~요.'로 끝나지 않아요 (${fortune.flow})`);
     expect(compact(fortune.flow).length >= 12 && compact(fortune.flow).length <= 45, `${label}: 흐름 문장 길이가 어색해요 (${compact(fortune.flow).length}자)`);
@@ -402,6 +405,84 @@ for (const now of DATES) {
 }
 
 console.log(`   카드 ${allCards.length}장(오행별 ${ELEMENTS.map((el) => CHARM_POOL[el].length).join("/")}) · 검사 ${checks}건 · 문제 ${failures.length}건`);
+
+/* ── ⑤ 연속 7일 변별력 검사 ────────────────────────────── */
+
+console.log("⑤ 연속 7일 변별력 검사 (2026-11-23 ~ 11-29)");
+
+// 문장 풀 크기·중복
+for (const el of ELEMENTS) {
+  expect(TODAY_MOOD[el].length >= 5, `천간 문장 풀이 ${el} 5개보다 적어요 (${TODAY_MOOD[el].length})`);
+  expect(new Set(TODAY_MOOD[el]).size === TODAY_MOOD[el].length, `천간 ${el} 문장이 중복돼요`);
+  expect(BRANCH_MOOD[el].length >= 4, `지지 문장 풀이 ${el} 4개보다 적어요 (${BRANCH_MOOD[el].length})`);
+  expect(new Set(BRANCH_MOOD[el]).size === BRANCH_MOOD[el].length, `지지 ${el} 문장이 중복돼요`);
+}
+for (const relation of ["도움", "같음", "보탬", "버팀", "누름"] as const) {
+  expect(RELATION_PHRASE[relation].length >= 4, `관계 문장 풀이 ${relation} 4개보다 적어요`);
+  expect(new Set(RELATION_PHRASE[relation]).size === RELATION_PHRASE[relation].length, `관계 ${relation} 문장이 중복돼요`);
+}
+
+const streakProfiles: { name: string; profile: Profile }[] = [
+  { name: "경달 님", profile: kdProfile },
+  { name: "화·수 0 사주", profile: fwProfile },
+  { name: "목·수 부족 사주", profile: { birth: { year: 1988, month: 12, day: 5, isLunar: false, isLeapMonth: false }, time: { kind: "jin", index: 5 }, mbti: "ESFJ", createdAt: "2026-11-24T00:00:00.000Z" } },
+  { name: "목 과다 사주", profile: { birth: { year: 1975, month: 3, day: 10, isLunar: false, isLeapMonth: false }, time: { kind: "exact", hour: 7, minute: 0 }, mbti: "INTJ", createdAt: "2026-11-24T00:00:00.000Z" } },
+];
+
+for (const { name, profile } of streakProfiles) {
+  let prev: ReturnType<typeof buildDaily> | null = null;
+  console.log(`   · ${name}`);
+  for (let day = 23; day <= 29; day += 1) {
+    const daily = buildDaily(profile, new Date(2026, 10, day));
+    const t = daily.topics;
+    const scores = [t.money.score, t.love.score, t.work.score];
+    const label = `[${name} ${daily.dateKey}]`;
+
+    expect(new Set(scores).size === 3, `${label}: 세 주제 지수가 겹쳐요 (${scores.join("/")})`);
+    expect(Math.max(...scores) - Math.min(...scores) >= 3, `${label}: 세 주제 지수 차이가 3점 미만이에요 (${scores.join("/")})`);
+    expect(daily.score >= 55 && daily.score <= 97, `${label}: 종합 지수가 55~97을 벗어나요 (${daily.score})`);
+    expect(daily.reading[0].includes(daily.today.pillar), `${label}: 날씨줄에 그날 간지가 없어요 → ${daily.reading[0]}`);
+    expect(daily.reading[0].includes(daily.today.element), `${label}: 날씨줄에 천간 오행이 없어요 → ${daily.reading[0]}`);
+    expect(daily.reading[0].includes(daily.today.branchElement), `${label}: 날씨줄에 지지 오행이 없어요 → ${daily.reading[0]}`);
+
+    if (prev) {
+      const line = daily.score - prev.score;
+      for (const i of [0, 1, 2] as const) {
+        expect(daily.reading[i] !== prev.reading[i], `${label}: 어제와 같은 ${i + 1}번째 줄이 나왔어요 → ${daily.reading[i]}`);
+      }
+      for (const topic of ["money", "love", "work"] as const) {
+        expect(
+          t[topic].score !== prev.topics[topic].score,
+          `${label}: 어제와 ${topic} 지수가 같아요 (${t[topic].score})`,
+        );
+      }
+      expect(daily.score !== prev.score, `${label}: 어제와 종합 지수가 같아요 (${daily.score})`);
+      console.log(
+        `     ${daily.dateKey} ${daily.today.pillar}(${daily.today.element}/${daily.today.branchElement}) 종합 ${daily.score}(${line > 0 ? "+" : ""}${line}) · 재물 ${t.money.score} · 연애 ${t.love.score} · 일 ${t.work.score}`,
+      );
+    } else {
+      console.log(
+        `     ${daily.dateKey} ${daily.today.pillar}(${daily.today.element}/${daily.today.branchElement}) 종합 ${daily.score} · 재물 ${t.money.score} · 연애 ${t.love.score} · 일 ${t.work.score}`,
+      );
+    }
+    prev = daily;
+  }
+}
+
+// 60일 × 여러 사주에서 어제와 같은 줄이 하나도 없는지 마지막으로 훑는다.
+let streakDays = 0;
+let repeatedLines = 0;
+for (const { profile } of streakProfiles) {
+  let prev = buildDaily(profile, new Date(2026, 10, 1));
+  for (let i = 1; i < 60; i += 1) {
+    const daily = buildDaily(profile, new Date(2026, 10, 1 + i));
+    streakDays += 1;
+    for (const idx of [0, 1, 2] as const) if (daily.reading[idx] === prev.reading[idx]) repeatedLines += 1;
+    prev = daily;
+  }
+}
+console.log(`   60일 × ${streakProfiles.length}사주 ${streakDays}회 비교 — 어제와 같은 줄 ${repeatedLines}건`);
+console.log(`   검사 ${checks}건 · 문제 ${failures.length}건`);
 
 /* ── 결과 ───────────────────────────────────────────────── */
 

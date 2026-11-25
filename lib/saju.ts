@@ -121,8 +121,43 @@ export function computeChart(birth: Birth, time: BirthTime): Chart {
   };
 }
 
-/** 오늘 날짜의 일진(日辰) 오행 — 오늘 하루의 '날씨' */
-export function todayEnergy(now: Date = new Date()): { element: Element; pillar: string } {
+/** 60갑자의 천간·지지 한 글자 — 일진의 순번을 되짚을 때 쓴다. */
+const STEM_CHARS = ["갑", "을", "병", "정", "무", "기", "경", "신", "임", "계"];
+const BRANCH_CHARS = ["자", "축", "인", "묘", "진", "사", "오", "미", "신", "유", "술", "해"];
+
+/** 간지(예: 임인)를 60갑자 순번 0~59로 옮긴다. 날마다 다른 문장·점수를 고르는 씨앗이 된다. */
+export function sexagenaryIndex(pillar: string): number {
+  const stem = STEM_CHARS.indexOf(pillar.charAt(0));
+  const branch = BRANCH_CHARS.indexOf(pillar.charAt(1));
+  if (stem < 0 || branch < 0) return 0;
+  for (let i = 0; i < 60; i += 1) {
+    if (i % 10 === stem && i % 12 === branch) return i;
+  }
+  return 0;
+}
+
+export interface DayEnergy {
+  /** 일진 천간 오행 — 오늘 겉으로 드러나는 기운 */
+  element: Element;
+  /** 일진 지지 오행 — 오늘 발밑을 받쳐 주는 바탕 기운 */
+  branchElement: Element;
+  /** 천간 한 글자 (예: 계) */
+  stem: string;
+  /** 지지 한 글자 (예: 묘) */
+  branch: string;
+  /** 일진 간지 (예: 계묘) */
+  pillar: string;
+  /** 일진 간지 한자 (예: 癸卯) */
+  pillarHanja: string;
+  /** 60갑자 순번 0~59 */
+  cycleIndex: number;
+}
+
+/**
+ * 오늘 날짜의 일진(日辰) — 천간(겉기운)과 지지(바탕 기운)를 함께 돌려준다.
+ * 천간만 보면 열흘 중 이틀이 같은 오행으로 겹치고, 지지까지 보면 60갑자마다 결이 달라진다.
+ */
+export function todayEnergy(now: Date = new Date()): DayEnergy {
   const result = calculateFourPillars({
     year: now.getFullYear(),
     month: now.getMonth() + 1,
@@ -130,7 +165,16 @@ export function todayEnergy(now: Date = new Date()): { element: Element; pillar:
     hour: 12,
     minute: 0,
   });
-  return { element: result.dayElement.stem as Element, pillar: result.dayString };
+  const pillar = result.dayString;
+  return {
+    element: result.dayElement.stem as Element,
+    branchElement: result.dayElement.branch as Element,
+    stem: pillar.charAt(0),
+    branch: pillar.charAt(1),
+    pillar,
+    pillarHanja: result.dayHanja,
+    cycleIndex: sexagenaryIndex(pillar),
+  };
 }
 
 export function elementStatus(count: number, total: number): "좋음" | "보통" | "부족" {
@@ -144,11 +188,15 @@ export function elementPercent(count: number, total: number): number {
   return Math.round((count / Math.max(total, 1)) * 100);
 }
 
-export function relationOf(today: Element, me: Element): "도움" | "같음" | "보탬" | "다름" {
+/** 오늘 들어온 기운과 내 일간의 관계 — 상생은 도움·보탬, 상극은 버팀·누름으로 나눈다. */
+export type Relation = "도움" | "같음" | "보탬" | "버팀" | "누름";
+
+export function relationOf(today: Element, me: Element): Relation {
   if (GENERATES[today] === me) return "도움";
   if (today === me) return "같음";
   if (GENERATES[me] === today) return "보탬";
-  return "다름";
+  if (CONTROLS[today] === me) return "버팀";
+  return "누름";
 }
 
 export function chartOf(profile: Profile): Chart {
