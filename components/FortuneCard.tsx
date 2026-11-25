@@ -166,7 +166,7 @@ export function FortuneCard({ daily, mbti }: { daily: DailyView; mbti: string })
 
         <div
           key={tab}
-          className="anim-fade-up relative mt-2.5 rounded-[22px] border border-[#F1E5C4] bg-[#FFF9E8] px-4 pb-4 pt-3.5"
+          className="anim-fade-up relative mt-2.5 rounded-[22px] border border-[#F1E5C4] bg-[#FFF9E8] px-4 pb-6 pt-3.5"
         >
           <div className="mb-2 flex items-center justify-between gap-2">
             <p className="text-[10px] font-bold tracking-[0.16em] text-[#B09355]">
@@ -195,8 +195,8 @@ export function FortuneCard({ daily, mbti }: { daily: DailyView; mbti: string })
             </div>
           )}
 
-          <div className="pointer-events-none absolute -bottom-3 right-2">
-            <StarMascot size={44} mood="idle" />
+          <div className="pointer-events-none absolute -bottom-4 right-1.5">
+            <StarMascot size={38} mood="idle" />
           </div>
         </div>
       </div>

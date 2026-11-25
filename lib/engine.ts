@@ -134,10 +134,10 @@ function affinity(incoming: Element, main: Element): number {
 }
 
 function scoreLabel(score: number): string {
-  if (score >= 86) return "빛나는 하루예요!";
+  if (score >= 88) return "빛나는 하루예요!";
   if (score >= 80) return "아주 맑은 기운이에요";
-  if (score >= 73) return "좋은 기운이 가득해요";
-  if (score >= 66) return "차분히 좋은 날이에요";
+  if (score >= 70) return "무난한 하루";
+  if (score >= 62) return "차분히 챙기기";
   return "잔잔히 빛나는 하루예요";
 }
 
@@ -316,15 +316,15 @@ function supportLine(today: DayEnergy, target: Element): string | null {
   ];
   const same = layers.find((layer) => layer.element === target);
   if (same) {
-    return `오늘 들어온 ${same.label} ${same.char}의 ${target} 기운이 타고난 ${target} 부족을 채워 주는 날이에요.`;
+    return `오늘 들어온 ${same.label} ${same.char}의 ${target} 기운이 그 부족을 채워 주는 날이에요.`;
   }
   const feeds = layers.find((layer) => GENERATES[layer.element] === target);
   if (feeds) {
-    return `오늘 들어온 ${feeds.label} ${feeds.char}의 ${feeds.element} 기운이 타고난 ${target} 부족을 살려 주는 날이에요.`;
+    return `오늘 들어온 ${feeds.label} ${feeds.char}의 ${feeds.element} 기운이 그 부족을 살려 주는 날이에요.`;
   }
   const drains = layers.find((layer) => GENERATES[target] === layer.element);
   if (drains) {
-    return `타고난 ${target} 기운이 오늘 ${drains.label} ${drains.char}의 ${drains.element} 쪽으로 흘러 나가니, 조금 아껴 쓰는 편이 좋아요.`;
+    return `오늘 ${drains.label} ${drains.char}의 ${drains.element} 쪽으로 ${target} 기운이 새어 나가니, 조금 아껴 쓰세요.`;
   }
   return null;
 }
@@ -422,7 +422,7 @@ export function buildDaily(profile: Profile, now: Date = new Date()): DailyView 
     const link = supportLine(today, lead);
     return link
       ? `${head} ${link}`
-      : `${head} 오늘 ${today.pillar}일의 기운은 이쪽으로 크게 기울지 않으니, ${ELEMENT_WHY[lead]}`;
+      : `${head} 오늘 ${today.pillar}일은 이쪽으로 기울지 않으니, ${ELEMENT_WHY[lead]}`;
   })();
 
   // 겉기운(천간)과 바탕기운(지지)을 함께 이야기한다 — 오행이 연이틀 같아도 간지가 달라 문장이 달라진다.
