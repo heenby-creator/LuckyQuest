@@ -16,9 +16,12 @@ import {
   TODAY_MOOD,
   charmForDate,
   comboKeyOf,
+  fortuneTabs,
+  topicLabel,
   type ComboKey,
   type Quest,
 } from "../lib/content";
+import { ageGroupForYear } from "../lib/age";
 import { buildDaily, deficiencyOf } from "../lib/engine";
 import { ELEMENTS, computeChart } from "../lib/saju";
 import { cardForDate } from "../lib/share";
@@ -400,7 +403,7 @@ for (const now of DATES) {
     expect(fortune.flow.trim().endsWith("요."), `${label}: 흐름 문장이 '~요.'로 끝나지 않아요 (${fortune.flow})`);
     expect(compact(fortune.flow).length >= 12 && compact(fortune.flow).length <= 45, `${label}: 흐름 문장 길이가 어색해요 (${compact(fortune.flow).length}자)`);
     expect(fortune.advice.trim().length >= 20 && fortune.advice.trim().length <= 90, `${label}: 조언 문장 길이가 어색해요 (${fortune.advice})`);
-    expect(fortune.mbtiNote.includes("편이라"), `${label}: 성향 한마디가 비어 있어요`);
+    expect(Boolean(fortune.mbtiNote && fortune.mbtiNote.includes("편이라")), `${label}: 성향 한마디가 비어 있어요`);
   }
 }
 
@@ -482,6 +485,144 @@ for (const { profile } of streakProfiles) {
   }
 }
 console.log(`   60일 × ${streakProfiles.length}사주 ${streakDays}회 비교 — 어제와 같은 줄 ${repeatedLines}건`);
+console.log(`   검사 ${checks}건 · 문제 ${failures.length}건`);
+
+/* ── ⑥ 연령대 맞춤 · 오늘 조심할 것 ──────────────────────── */
+
+console.log("⑥ 연령대 맞춤 · 오늘 조심할 것 검사");
+
+const AGE_NOW = new Date(2026, 10, 25);
+const ageCases: { year: number; group: "young" | "mature" }[] = [
+  { year: 2004, group: "young" },
+  { year: 1995, group: "young" },
+  { year: 1982, group: "young" },
+  { year: 1981, group: "mature" },
+  { year: 1968, group: "mature" },
+  { year: 1955, group: "mature" },
+];
+for (const item of ageCases) {
+  expect(
+    ageGroupForYear(item.year, AGE_NOW) === item.group,
+    `${item.year}년생 연령대가 ${item.group}가 아니에요 (${ageGroupForYear(item.year, AGE_NOW)})`,
+  );
+}
+expect(ageGroupForYear(1981, new Date(2027, 0, 2)) === "mature", "해가 바뀌면 1981년생은 47세로 mature여야 해요");
+expect(topicLabel("love", "young") === "연애·대인", `45세 이하 관계 탭 이름이 이상해요 (${topicLabel("love", "young")})`);
+expect(topicLabel("love", "mature") === "대인·관계", `46세 이후 관계 탭 이름이 이상해요 (${topicLabel("love", "mature")})`);
+for (const group of ["young", "mature"] as const) {
+  const tabs = fortuneTabs(group);
+  expect(tabs.length === 4, `${group} 탭이 4개가 아니에요`);
+  expect(tabs[0].label === "종합", `${group} 첫 탭이 종합이 아니에요`);
+}
+
+const youngProfile: Profile = {
+  birth: { year: 1995, month: 4, day: 12, isLunar: false, isLeapMonth: false },
+  time: { kind: "jin", index: 6 },
+  mbti: "INFP",
+  createdAt: "2026-11-24T00:00:00.000Z",
+};
+const matureProfile: Profile = {
+  birth: { year: 1968, month: 11, day: 28, isLunar: false, isLeapMonth: false },
+  time: { kind: "unknown" },
+  mbti: "INFP",
+  createdAt: "2026-11-24T00:00:00.000Z",
+};
+const matureNoMbti: Profile = { ...matureProfile, mbti: null };
+
+const AXES = new Set(["clash", "press", "control", "over", "drain", "ease"]);
+const loveYoung = new Set<string>();
+const loveMature = new Set<string>();
+
+for (const profile of [youngProfile, matureProfile, matureNoMbti]) {
+  const who = `${profile.birth.year}년생${profile.mbti ? ` ${profile.mbti}` : " 사주중심"}`;
+  let prev: ReturnType<typeof buildDaily> | null = null;
+  const cautions = new Set<string>();
+  const avoIds = new Set<string>();
+  const axes = new Set<string>();
+
+  for (let i = 0; i < 60; i += 1) {
+    const daily = buildDaily(profile, new Date(2026, 10, 1 + i));
+    const label = `[${who} ${daily.dateKey}]`;
+    const c = daily.caution;
+
+    expect(daily.ageGroup === (profile.birth.year <= 1981 ? "mature" : "young"), `${label}: 연령대가 잘못 붙었어요 (${daily.ageGroup})`);
+    expect(AXES.has(c.axis), `${label}: 주의 축이 이상해요 (${c.axis})`);
+    expect(c.caution.trim().length >= 12 && c.caution.trim().length <= 80, `${label}: 주의점 길이가 어색해요 (${c.caution})`);
+    expect(c.avoid.trim().length >= 10 && c.avoid.trim().length <= 80, `${label}: 회피 행동 길이가 어색해요 (${c.avoid})`);
+    expect(/[요다]$/.test(c.caution.trim().replace(/[.!]$/, "")), `${label}: 주의점이 문장으로 끝나지 않아요 (${c.caution})`);
+    expect(/[요다]$/.test(c.avoid.trim().replace(/[.!]$/, "")), `${label}: 회피 행동이 문장으로 끝나지 않아요 (${c.avoid})`);
+    expect(!/[{}]/.test(c.caution + c.avoid), `${label}: 주의점에 치환되지 않은 자리표시가 남아 있어요`);
+    expect(c.basis.includes(daily.today.pillar), `${label}: 주의 근거에 오늘 간지가 없어요`);
+    expect(c.basis.includes(daily.chart.dayMaster), `${label}: 주의 근거에 내 일간이 없어요`);
+    expect(c.avoid !== c.caution, `${label}: 주의점과 회피 행동이 같아요`);
+    cautions.add(c.caution);
+    avoIds.add(c.avoid);
+    axes.add(c.axis);
+
+    // 45세 이하 3줄 · 46세 이후 5줄 (사주 깊이 두 줄 추가)
+    if (daily.ageGroup === "mature") {
+      expect(daily.reading.length === 5, `${label}: 사주 깊이 풀이가 5줄이 아니에요 (${daily.reading.length})`);
+      expect(
+        daily.reading[3].includes(daily.today.stem) && daily.reading[3].includes(daily.today.branch),
+        `${label}: 깊이 풀이에 천간·지지가 없어요`,
+      );
+      expect(
+        daily.reading[4].includes(daily.chart.strongest) && daily.reading[4].includes(daily.chart.weakest),
+        `${label}: 깊이 풀이에 강한·약한 오행이 없어요`,
+      );
+      if (prev) expect(daily.reading[3] !== prev.reading[3], `${label}: 어제와 같은 깊이 풀이가 나왔어요`);
+    } else {
+      expect(daily.reading.length === 3, `${label}: 45세 이하 리딩이 3줄이 아니에요 (${daily.reading.length})`);
+    }
+
+    if (daily.mbti) {
+      for (const topic of ["money", "love", "work"] as const) {
+        const note = daily.topics[topic].mbtiNote;
+        expect(Boolean(note && note.includes("편이라")), `${label}: ${topic} 성향 한마디가 비어 있어요`);
+        if (daily.ageGroup === "mature") {
+          expect(Boolean(note && note.startsWith("성향 참고 — ")), `${label}: 46세 이후 성향 한마디가 보조로 표시되지 않아요`);
+        }
+      }
+    } else {
+      for (const topic of ["money", "love", "work"] as const) {
+        expect(daily.topics[topic].mbtiNote === null, `${label}: MBTI 없이 시작했는데 성향 한마디가 있어요`);
+      }
+      const q2 = daily.quests[1];
+      expect(q2.elements.length === 1, `${label}: 사주 중심 Quest 2가 오행 퀘스트가 아니에요 (${q2.title})`);
+      expect(q2.why.includes(q2.elements[0]), `${label}: 사주 중심 Quest 2 이유에 오행 근거가 없어요`);
+    }
+
+    // 탭 안의 '오늘 조심할 것'도 비어 있으면 안 된다.
+    for (const topic of ["money", "love", "work"] as const) {
+      expect(daily.topics[topic].caution.trim().length >= 15, `${label}: ${topic} 조심할 것이 비어 있어요`);
+    }
+
+    // 46세 이후 '대인·관계'는 연애 대신 직장·가족·거래처 중심
+    const love = daily.topics.love;
+    if (daily.ageGroup === "mature") {
+      expect(!/연애|썸|데이트/.test(love.flow + love.advice + love.caution), `${label}: 46세 이후 관계 풀이에 연애 표현이 남아 있어요`);
+      loveMature.add(love.flow);
+    } else {
+      loveYoung.add(love.flow);
+    }
+
+    // 연이틀 같은 주의점·회피 행동이 나오면 안 된다.
+    if (prev) {
+      expect(c.caution !== prev.caution.caution, `${label}: 어제와 같은 주의점이 나왔어요 → ${c.caution}`);
+      expect(c.avoid !== prev.caution.avoid, `${label}: 어제와 같은 회피 행동이 나왔어요 → ${c.avoid}`);
+    }
+    prev = daily;
+  }
+
+  console.log(`   · ${who} — 60일 주의점 ${cautions.size}종 · 회피 행동 ${avoIds.size}종 · 축 ${axes.size}종`);
+  expect(cautions.size >= 6, `${who}: 60일 주의점이 ${cautions.size}종뿐이에요`);
+  expect(axes.size >= 3, `${who}: 주의 축이 ${axes.size}종뿐이에요`);
+}
+
+expect(loveYoung.size >= 2 && loveMature.size >= 2, "관계 탭 흐름 문장이 날마다 바뀌지 않아요");
+for (const line of loveMature) {
+  expect(!loveYoung.has(line), `45세 이하와 46세 이후의 관계 흐름이 같은 문장이에요 → ${line}`);
+}
 console.log(`   검사 ${checks}건 · 문제 ${failures.length}건`);
 
 /* ── 결과 ───────────────────────────────────────────────── */

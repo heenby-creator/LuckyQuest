@@ -100,7 +100,7 @@ export function LuckyQuestApp() {
       setToast("정보를 저장했어요 ☘️");
       trackEvent("onboarding_complete", {
         first_time: firstTime,
-        mbti: profile.mbti,
+        mbti: profile.mbti ?? "none",
         time_known: profile.time.kind === "jin",
         lunar: profile.birth.isLunar,
       });
@@ -272,7 +272,7 @@ export function LuckyQuestApp() {
             <main ref={mainRef} className="lq-scroll relative flex-1 overflow-y-auto">
               {tab === "today" && daily && day && (
                 <div className="space-y-4 px-4 pb-8 pt-3">
-                  <FortuneCard daily={daily} mbti={state!.profile.mbti} />
+                  <FortuneCard daily={daily} />
                   <QuestList
                     quests={daily.quests}
                     checks={day.checks}

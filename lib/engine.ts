@@ -1,20 +1,31 @@
 import {
+  BRANCH_DEPTH,
   BRANCH_MOOD,
+  CAUTION_BOX,
   COMBO_QUESTS,
   ELEMENT_QUESTS,
   ELEMENT_WHY,
   MBTI_QUESTS,
   MBTI_STYLE,
   RELATION_PHRASE,
+  STEM_DEPTH,
   TODAY_MOOD,
   TOPIC_ADVICE,
+  TOPIC_ADVICE_MATURE_LOVE,
+  TOPIC_CAUTION,
+  TOPIC_CAUTION_MATURE_LOVE,
   TOPIC_FLOW,
+  TOPIC_FLOW_MATURE_LOVE,
   TOPIC_MBTI_ACTIONS,
+  TOPIC_MBTI_ACTIONS_MATURE,
+  WEAK_DAY_TIP,
   charmForDate,
   comboKeyOf,
+  type CautionAxis,
   type FortuneTopic,
   type Quest,
 } from "./content";
+import { ageGroupOf, isMature, type AgeGroup } from "./age";
 import {
   CONTROLS,
   ELEMENTS,
@@ -42,7 +53,7 @@ export interface ResolvedQuest {
   /** Quest 1이 채우는 오행 — 복합 퀘스트는 두 개. */
   elements: Element[];
   element: Element;
-  mbti: Mbti;
+  mbti: Mbti | null;
   tone: "leaf" | "gold";
 }
 
@@ -62,8 +73,21 @@ export interface TopicFortune {
   flow: string;
   /** ② 오늘 바로 참고할 구체적 생활 조언 한 줄 */
   advice: string;
-  /** MBTI 성향에 맞춘 한마디 */
-  mbtiNote: string;
+  /** ③ 이 분야에서 오늘 조심할 것 한 줄 */
+  caution: string;
+  /** MBTI 성향에 맞춘 한마디 — MBTI 없이 시작한 경우 null */
+  mbtiNote: string | null;
+}
+
+/** 오늘 조심할 것 — 일진과 내 일간·부족 오행의 부딪킴을 근거로 한 주의점과 회피 행동 */
+export interface CautionView {
+  axis: CautionAxis;
+  /** 뾰족한 주의점 1가지 */
+  caution: string;
+  /** 바로 피하는 직관적 행동 1가지 */
+  avoid: string;
+  /** 사주 근거 — 오늘 간지·천간·지지와 내 일간·오행 분포 */
+  basis: string;
 }
 
 export interface CharmView {
@@ -80,6 +104,10 @@ export interface CharmView {
 
 export interface DailyView {
   dateKey: string;
+  /** 45세 이하 young / 46세 이후 mature */
+  ageGroup: AgeGroup;
+  /** 사주 중심으로 시작해 MBTI가 없으면 null */
+  mbti: Mbti | null;
   chart: Chart;
   today: DayEnergy;
   score: number;
@@ -89,7 +117,9 @@ export interface DailyView {
   scoreCaption: string;
   balance: BalanceItem[];
   reading: string[];
-  /** 재물 · 연애·대인 · 일·학업 한마디 */
+  /** 오늘 조심할 것 — 운세를 보는 이유에 답하는 전용 주의 포인트 */
+  caution: CautionView;
+  /** 재물 · 연애·대인(46세 이후 대인·관계) · 일·학업 한마디 */
   topics: Record<FortuneTopic, TopicFortune>;
   quests: [ResolvedQuest, ResolvedQuest];
   /** 오늘의 퀘스트가 겨냥한 오행 — 복합이면 두 개, 단일이면 하나. */
@@ -217,29 +247,96 @@ function rotate<T>(items: readonly T[], index: number, salt: string): T {
 }
 
 function buildTopicFortunes(
-  mbti: Mbti,
+  mbti: Mbti | null,
+  group: AgeGroup,
   today: DayEnergy,
   scores: Record<FortuneTopic, number>,
   seed: string,
 ): Record<FortuneTopic, TopicFortune> {
   const result = {} as Record<FortuneTopic, TopicFortune>;
+  const mature = isMature(group);
 
   for (const topic of TOPIC_KEYS) {
-    // 앞 두 글자(E/I·S/N) 중 하나, 뒤 두 글자(T/F·J/P) 중 하나를 골라 성향 한마디를 만든다.
-    const styleLetter = (hash(`${seed}-${topic}-style`) % 2 === 0 ? mbti[0] : mbti[1]) as keyof typeof MBTI_STYLE;
-    const actionLetter = (hash(`${seed}-${topic}-action`) % 2 === 0 ? mbti[2] : mbti[3]) as keyof (typeof TOPIC_MBTI_ACTIONS)[FortuneTopic];
     const score = scores[topic];
+    // 46세 이후의 '대인·관계'는 연애가 아니라 직장·지인·가족·거래처 중심으로 쓴다.
+    const relationTopic = mature && topic === "love";
+    const flowPool = relationTopic ? TOPIC_FLOW_MATURE_LOVE[today.element] : TOPIC_FLOW[topic][today.element];
+    const advicePool = relationTopic ? TOPIC_ADVICE_MATURE_LOVE[today.element] : TOPIC_ADVICE[topic][today.element];
+    const cautionPool = relationTopic ? TOPIC_CAUTION_MATURE_LOVE[today.element] : TOPIC_CAUTION[topic][today.element];
+
+    // 앞 두 글자(E/I·S/N) 중 하나, 뒤 두 글자(T/F·J/P) 중 하나를 골라 성향 한마디를 만든다.
+    let mbtiNote: string | null = null;
+    if (mbti) {
+      const styleLetter = (hash(`${seed}-${topic}-style`) % 2 === 0 ? mbti[0] : mbti[1]) as keyof typeof MBTI_STYLE;
+      const actionLetter = (hash(`${seed}-${topic}-action`) % 2 === 0 ? mbti[2] : mbti[3]) as keyof (typeof TOPIC_MBTI_ACTIONS)[FortuneTopic];
+      const actions = mature ? TOPIC_MBTI_ACTIONS_MATURE : TOPIC_MBTI_ACTIONS;
+      const note = `${MBTI_STYLE[styleLetter]}, ${actions[topic][actionLetter]}`;
+      // 46세 이후에는 사주 풀이가 앞서고 MBTI는 보조 맥락으로만 짚는다.
+      mbtiNote = mature ? `성향 참고 — ${note}` : note;
+    }
 
     result[topic] = {
       score,
       status: fortuneStatus(score),
-      flow: rotate(TOPIC_FLOW[topic][today.element], today.cycleIndex, `${topic}-flow-${today.element}`),
-      advice: rotate(TOPIC_ADVICE[topic][today.element], today.cycleIndex, `${topic}-advice-${today.element}`),
-      mbtiNote: `${MBTI_STYLE[styleLetter]}, ${TOPIC_MBTI_ACTIONS[topic][actionLetter]}`,
+      flow: rotate(flowPool, today.cycleIndex, `${topic}-flow-${today.element}-${group}`),
+      advice: rotate(advicePool, today.cycleIndex, `${topic}-advice-${today.element}-${group}`),
+      caution: rotate(cautionPool, today.cycleIndex, `${topic}-caution-${today.element}-${group}`),
+      mbtiNote,
     };
   }
 
   return result;
+}
+
+/* ── 오늘 조심할 것 ─────────────────────────────────────── */
+
+const REL_LABEL: Record<Relation, string> = {
+  도움: "힘을 보태는 쪽",
+  같음: "같은 결",
+  보탬: "내가 내주는 쪽",
+  버팀: "눌러 오는 쪽",
+  누름: "내가 누르는 쪽",
+};
+
+/**
+ * 오늘 조심할 것 — 일진(천간·지지)이 내 일간과 맺는 관계와 타고난 오행의 과다·부족을
+ * 근거로 축을 고르고, 그 축의 문장을 60갑자 순번으로 돌려 매일 다르게 만든다.
+ * 불안을 키우는 말 대신 '무엇을 조심하고 무엇을 바로 피할지'만 짧게 준다.
+ */
+function cautionOf(
+  chart: Chart,
+  today: DayEnergy,
+  deficiency: Deficiency,
+  group: AgeGroup,
+): CautionView {
+  const dayMaster = chart.dayMaster;
+  const stemRel = relationOf(today.element, dayMaster);
+  const branchRel = relationOf(today.branchElement, dayMaster);
+  const weak = deficiency.lead;
+  const weakCount = chart.counts[weak];
+  const strong = chart.strongest;
+  const strongCount = chart.counts[strong];
+
+  // 부족한 오행을 오늘 기운이 극하면 가장 뾰족한 주의점이 된다.
+  const clash = weakCount <= 1 && (CONTROLS[today.element] === weak || CONTROLS[today.branchElement] === weak);
+
+  let axis: CautionAxis;
+  if (clash) axis = "clash";
+  else if (stemRel === "버팀" || branchRel === "버팀") axis = "press";
+  else if (stemRel === "누름" || branchRel === "누름") axis = "control";
+  else if (strongCount >= 4 || (strongCount >= 3 && (stemRel === "같음" || branchRel === "같음"))) axis = "over";
+  else if (stemRel === "보탬" || branchRel === "보탬") axis = "drain";
+  else axis = "ease";
+
+  const copy = rotate(CAUTION_BOX[axis], today.cycleIndex, `caution-${axis}`);
+  const fill = (text: string) => text.replace(/\{weak\}/g, weak).replace(/\{today\}/g, today.element);
+
+  const clashNote = `부족한 ${weak} 기운을 오늘 ${today.element} 기운이 누르고 있어요.`;
+  const basis = isMature(group)
+    ? `오늘 ${today.pillar}일 — 겉 ${today.stem}(${today.element})·바탕 ${today.branch}(${today.branchElement}). 내 ${dayMaster} 일간에는 겉이 ‘${stemRel}’으로, 바탕이 ‘${branchRel}’으로 닿고, 타고난 ${strong} 기운은 ${strongCount}개·${weak} 기운은 ${weakCount}개예요.${clash ? ` ${clashNote}` : ""}`
+    : `오늘 ${today.pillar}일 — 겉 ${today.element}, 바탕 ${today.branchElement}. 내 ${dayMaster} 일간에는 겉이 ‘${REL_LABEL[stemRel]}’으로, 바탕이 ‘${REL_LABEL[branchRel]}’으로 닿아요. ${clash ? clashNote : `타고난 ${weak} 기운은 ${weakCount}개예요.`}`;
+
+  return { axis, caution: fill(copy.caution), avoid: fill(copy.avoid), basis };
 }
 
 /** 두 오행을 항상 목·화·토·금·수 순서로 정돈한다. */
@@ -293,7 +390,13 @@ export function deficiencyOf(chart: Chart, seed: string): Deficiency {
   return { pair: null, lead: pick(tiedLowest, `${seed}-lead`), zeros, ranked };
 }
 
-function resolveQuest(quest: Quest, badge: ResolvedQuest["badge"], element: Element, mbti: Mbti, tone: "leaf" | "gold"): ResolvedQuest {
+function resolveQuest(
+  quest: Quest,
+  badge: ResolvedQuest["badge"],
+  element: Element,
+  mbti: Mbti | null,
+  tone: "leaf" | "gold",
+): ResolvedQuest {
   return {
     id: quest.id,
     badge,
@@ -331,6 +434,10 @@ function supportLine(today: DayEnergy, target: Element): string | null {
 
 export function buildDaily(profile: Profile, now: Date = new Date()): DailyView {
   const key = dateKey(now);
+  const ageGroup = ageGroupOf(profile.birth, now);
+  const mature = isMature(ageGroup);
+  const mbti = profile.mbti;
+  const mbtiSeed = mbti ?? "saju";
   const chart = chartOf(profile);
   const today = todayEnergy(now);
   const deficiency = deficiencyOf(chart, key);
@@ -339,22 +446,34 @@ export function buildDaily(profile: Profile, now: Date = new Date()): DailyView 
   // Quest 1 — 부족한 오행 하나, 또는 두 오행을 함께 채우는 복합 퀘스트
   const comboKey = pair ? comboKeyOf(pair[0], pair[1]) : null;
   const q1Pool = comboKey ? COMBO_QUESTS[comboKey] : ELEMENT_QUESTS[lead];
-  const q1 = pick(q1Pool, `${key}-q1-${comboKey ?? lead}-${profile.mbti}`);
+  const q1 = pick(q1Pool, `${key}-q1-${comboKey ?? lead}-${mbtiSeed}`);
 
   // Quest 2 — MBTI 성향에 맞춘 행동. Quest 1과 같은 행동은 피한다.
-  const q2Pool = MBTI_QUESTS[profile.mbti];
-  const q2Candidates = q2Pool.filter((q) => q.action !== q1.action);
-  const q2 = pick(q2Candidates.length > 0 ? q2Candidates : q2Pool, `${key}-q2-${profile.mbti}`);
+  // MBTI 없이 사주 중심으로 시작한 경우에는 다음으로 부족한 오행을 채우는 퀘스트를 준다.
+  let q2: Quest;
+  if (mbti) {
+    const q2Pool = MBTI_QUESTS[mbti];
+    const q2Candidates = q2Pool.filter((q) => q.action !== q1.action);
+    q2 = pick(q2Candidates.length > 0 ? q2Candidates : q2Pool, `${key}-q2-${mbti}`);
+  } else {
+    const second =
+      [...ELEMENTS]
+        .filter((el) => !(pair ?? [lead]).includes(el))
+        .sort((a, b) => chart.counts[a] - chart.counts[b] || ELEMENTS.indexOf(a) - ELEMENTS.indexOf(b))[0] ?? lead;
+    const pool = ELEMENT_QUESTS[second];
+    const candidates = pool.filter((q) => q.action !== q1.action);
+    q2 = pick(candidates.length > 0 ? candidates : pool, `${key}-q2-${second}-saju`);
+  }
 
   // 주제별 지수를 먼저 내고, 그 평균으로 종합 지수를 잡는다 — 카테고리가 움직이면 종합도 따라 움직인다.
-  const stableSeed = `${profile.birth.year}${profile.birth.month}${profile.birth.day}-${profile.mbti}`;
-  const topicSeed = `${key}-${profile.mbti}`;
+  const stableSeed = `${profile.birth.year}${profile.birth.month}${profile.birth.day}-${mbtiSeed}`;
+  const topicSeed = `${key}-${mbtiSeed}`;
   const scoresOn = (date: Date) => {
     const dateKeyOf = dateKey(date);
     return topicScores(
       todayEnergy(date),
       chart.dayMaster,
-      `${dateKeyOf}-${profile.mbti}`,
+      `${dateKeyOf}-${mbtiSeed}`,
       stableSeed,
     );
   };
@@ -389,10 +508,11 @@ export function buildDaily(profile: Profile, now: Date = new Date()): DailyView 
   const prevToday = todayEnergy(prevDate);
   const yesterday = keepDifferent(scoresOn(prevDate), scoresOn(shiftDate(now, -2)));
   const finalScores = keepDifferent(scoresOn(now), yesterday);
-  const topics = buildTopicFortunes(profile.mbti, today, finalScores, topicSeed);
+  const topics = buildTopicFortunes(mbti, ageGroup, today, finalScores, topicSeed);
+  const caution = cautionOf(chart, today, deficiency, ageGroup);
 
   let score = overallScore(finalScores, today, topicSeed);
-  if (score === overallScore(yesterday, prevToday, `${prevKey}-${profile.mbti}`)) {
+  if (score === overallScore(yesterday, prevToday, `${prevKey}-${mbtiSeed}`)) {
     score = score < 97 ? score + 1 : score - 1;
   }
 
@@ -441,6 +561,20 @@ export function buildDaily(profile: Profile, now: Date = new Date()): DailyView 
     balanceLine,
   ];
 
+  // 46세 이후에는 일진의 겉·바탕이 내 일간에 어떻게 닿는지 한 겹 더 풀어 준다.
+  if (mature) {
+    const stemRel = relationOf(today.element, chart.dayMaster);
+    const branchRel = relationOf(today.branchElement, chart.dayMaster);
+    const stemDepth = rotate(STEM_DEPTH[stemRel], today.cycleIndex, `stem-depth-${stemRel}`);
+    const branchDepth = rotate(BRANCH_DEPTH[branchRel], today.cycleIndex, `branch-depth-${branchRel}`);
+    reading.push(
+      `한 겹 더 보면, 겉의 ${today.stem}(${today.element}) 기운은 ${stemDepth} 바탕의 ${today.branch}(${today.branchElement}) 기운은 ${branchDepth}`,
+    );
+    reading.push(
+      `타고난 ${chart.strongest} 기운이 ${chart.counts[chart.strongest]}개로 가장 두껍고, ${lead} 기운은 ${chart.counts[lead]}개로 가장 얇아요. ${rotate(WEAK_DAY_TIP[lead], today.cycleIndex, `weak-${lead}`)}`,
+    );
+  }
+
   const charmContent = charmForDate(key, today.element);
 
   const rawPercents = ELEMENTS.map((el) => (chart.counts[el] / Math.max(chart.total, 1)) * 100);
@@ -466,6 +600,8 @@ export function buildDaily(profile: Profile, now: Date = new Date()): DailyView 
 
   return {
     dateKey: key,
+    ageGroup,
+    mbti,
     chart,
     today,
     score,
@@ -474,10 +610,11 @@ export function buildDaily(profile: Profile, now: Date = new Date()): DailyView 
     scoreCaption: scoreLabel(score),
     balance,
     reading,
+    caution,
     topics,
     quests: [
-      resolveQuest(q1, "Quest 1", focus[0], profile.mbti, "leaf"),
-      resolveQuest(q2, "Quest 2", focus[0], profile.mbti, "gold"),
+      resolveQuest(q1, "Quest 1", focus[0], mbti, "leaf"),
+      resolveQuest(q2, "Quest 2", q2.elements[0] ?? focus[0], mbti, "gold"),
     ],
     focus,
     charm: {

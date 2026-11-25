@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { ageGroupForYear, koreanAge } from "@/lib/age";
 import { JIN, computeChart } from "@/lib/saju";
 import type { Birth, BirthTime, Mbti, Profile } from "@/lib/types";
 import { CheckMark, Clover, Sparkle, StarMascot } from "./illustrations";
@@ -92,11 +93,16 @@ export function Onboarding({
   const [day, setDay] = useState<number | "">(initial?.birth.day ?? "");
   const [timeChoice, setTimeChoice] = useState<TimeChoice | null>(() => initialTimeChoice(initial));
   const [mbti, setMbti] = useState<Mbti | null>(initial?.mbti ?? null);
+  // MBTI를 모르고 사주 중심으로 시작하는 경우 — 성향 퀘스트 대신 오행 퀘스트를 하나 더 준다.
+  const [skipMbti, setSkipMbti] = useState(Boolean(initial) && !initial?.mbti);
   const [quizOpen, setQuizOpen] = useState(false);
   const [quizAnswers, setQuizAnswers] = useState<Record<number, string>>({});
   const [error, setError] = useState<string | null>(null);
 
   const years = useMemo(buildYearOptions, []);
+  // 생년만 받으면 연령대가 정해진다 — 46세 이후에는 사주 중심 풀이와 '대인·관계' 탭으로 바뀐다.
+  const ageGroup = year ? ageGroupForYear(Number(year)) : null;
+  const mature = ageGroup === "mature";
   const daysInMonth = useMemo(() => {
     if (isLunar) return 30; // 음력은 29·30일까지 — 실제 존재 여부는 계산 단계에서 확인해요
     if (!year || !month) return 31;
@@ -108,18 +114,19 @@ export function Onboarding({
     return `${quizAnswers[0]}${quizAnswers[1]}${quizAnswers[2]}${quizAnswers[3]}` as Mbti;
   }, [quizAnswers]);
 
-  const ready = Boolean(year && month && day && mbti && timeChoice);
+  const ready = Boolean(year && month && day && (mbti || skipMbti) && timeChoice);
 
   const missing = useMemo(() => {
     const items: string[] = [];
     if (!year || !month || !day) items.push("생년월일");
     if (!timeChoice) items.push("태어난 시간");
-    if (!mbti) items.push("MBTI");
+    if (!mbti && !skipMbti) items.push("MBTI");
     return items;
-  }, [year, month, day, timeChoice, mbti]);
+  }, [year, month, day, timeChoice, mbti, skipMbti]);
 
   function submit() {
-    if (!year || !month || !day || !mbti || !timeChoice) return;
+    if (!year || !month || !day || !timeChoice) return;
+    if (!mbti && !skipMbti) return;
     const birth: Birth = {
       year: Number(year),
       month: Number(month),
@@ -140,7 +147,7 @@ export function Onboarding({
     onSave({
       birth,
       time,
-      mbti,
+      mbti: skipMbti ? null : mbti,
       createdAt: initial?.createdAt ?? new Date().toISOString(),
     });
   }
@@ -153,7 +160,9 @@ export function Onboarding({
         <div>
           <p className="text-[15px] font-bold text-ink">안녕하세요, 오늘의 별이에요</p>
           <p className="mt-0.5 text-[12.5px] leading-relaxed text-ink-soft">
-            생년월일과 MBTI, 태어난 시간을 알려주시면 <br />오늘의 운세와 퀘스트를 준비할게요.
+            생년월일과 태어난 시간, MBTI를 알려주시면 <br />오늘의 운세와 퀘스트를 준비할게요.
+            <br />
+            <span className="text-[11.5px] text-ink-faint">MBTI를 몰라도 사주만으로 시작할 수 있어요.</span>
           </p>
         </div>
       </div>
@@ -321,6 +330,11 @@ export function Onboarding({
             잘 모르겠어요
           </button>
         </div>
+        <p className="mb-2 text-[11.5px] leading-relaxed text-ink-faint">
+          {mature
+            ? `만 ${koreanAge(Number(year))}세 — 사주 일진·오행 풀이를 중심으로 깊게 봐 드리고, MBTI는 보조로만 짚어요.`
+            : "성향에 맞는 퀘스트를 고르는 데 써요. 몰라도 아래 ‘사주 중심’으로 시작할 수 있어요."}
+        </p>
 
         {quizOpen ? (
           <div className="mt-2 space-y-3">
@@ -359,6 +373,7 @@ export function Onboarding({
                   type="button"
                   onClick={() => {
                     setMbti(quizResult);
+                    setSkipMbti(false);
                     setQuizOpen(false);
                   }}
                   className="rounded-full bg-leaf px-3 py-1.5 text-[12px] font-bold text-white"
@@ -376,9 +391,12 @@ export function Onboarding({
                 <button
                   key={type}
                   type="button"
-                  onClick={() => setMbti(type)}
+                  onClick={() => {
+                    setMbti(type);
+                    setSkipMbti(false);
+                  }}
                   className={`rounded-xl border py-2 text-[12.5px] font-bold tracking-wide transition ${
-                    active
+                    active && !skipMbti
                       ? "border-leaf bg-leaf text-white shadow-[0_8px_18px_-14px_rgba(18,128,92,0.9)]"
                       : "border-line bg-white/60 text-ink-soft hover:border-[#cddcc9]"
                   }`}
@@ -388,6 +406,31 @@ export function Onboarding({
               );
             })}
           </div>
+        )}
+
+        {/* MBTI를 몰라도 부담 없이 시작 — 사주 중심으로 오늘의 흐름과 주의점을 풀어 준다 */}
+        <button
+          type="button"
+          aria-pressed={skipMbti}
+          onClick={() => {
+            setSkipMbti((v) => !v);
+            setMbti(null);
+            setQuizOpen(false);
+          }}
+          className={`mt-2 flex w-full items-center justify-center gap-1.5 rounded-2xl border px-3 py-2.5 transition-all duration-150 active:scale-[0.98] ${
+            skipMbti
+              ? "border-leaf bg-leaf text-white shadow-[0_10px_20px_-14px_rgba(18,128,92,0.95)]"
+              : "border-dashed border-[#dccfb0] bg-white/50 text-ink-soft hover:border-[#cddcc9] hover:bg-white"
+          }`}
+        >
+          {skipMbti && <CheckMark size={12} />}
+          <span className="text-[12.5px] font-bold">MBTI 잘 모름 · 사주 중심으로 시작</span>
+        </button>
+        {skipMbti && (
+          <p className="anim-fade-up mt-2 flex items-start gap-1.5 rounded-2xl bg-leaf-soft px-3 py-2 text-[11.5px] leading-relaxed font-semibold text-leaf-strong">
+            <Sparkle size={11} color="#12805C" className="mt-[3px] shrink-0" />
+            사주 일진과 오행으로 오늘의 흐름과 조심할 것을 풀고, 두 번째 퀘스트도 성향 대신 오행으로 골라 드려요.
+          </p>
         )}
       </section>
 

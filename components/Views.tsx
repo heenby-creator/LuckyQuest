@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { CHARM_POOL, ELEMENT_HANJA, ELEMENT_META, cardById, charmForDate, type LuckyCard } from "@/lib/content";
 import { getDayPhotos, countPhotosByDate, type QuestPhoto } from "@/lib/photos";
+import { ageGroupOf, AGE_GROUP_LABEL } from "@/lib/age";
 import { chartOf, elementPercent, timeLabel } from "@/lib/saju";
 import type { AppState, Element } from "@/lib/types";
 import { WEEKDAY_LABEL, dateKey, formatKoreanDate, monthMatrix } from "@/lib/utils";
@@ -304,12 +305,19 @@ export function MeView({
           </div>
           <div className="min-w-0 flex-1">
             <p className="text-[15px] font-extrabold text-ink">
-              {ELEMENT_HANJA[chart.dayMaster]} 일간 · {state.profile.mbti}
+              {ELEMENT_HANJA[chart.dayMaster]} 일간 · {state.profile.mbti ?? "사주 중심"}
             </p>
             <p className="mt-0.5 text-[11.5px] text-ink-soft">{chart.birthLabel} · {timeLabel(state.profile.time)}</p>
           </div>
           <span className="rounded-full bg-white/80 px-2.5 py-1 text-[10.5px] font-bold text-[#7A7057]">
             {chart.hourKnown ? "네 기둥" : "세 기둥"}
+          </span>
+        </div>
+
+        <div className="flex items-center justify-between gap-2 border-t border-line px-4 py-2.5">
+          <p className="text-[10.5px] font-semibold text-ink-faint">연령대 맞춤</p>
+          <span className="rounded-full bg-cream-2 px-2 py-0.5 text-[10.5px] font-bold text-[#7A6444]">
+            {AGE_GROUP_LABEL[ageGroupOf(state.profile.birth)]}
           </span>
         </div>
 

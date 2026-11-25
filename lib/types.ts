@@ -22,7 +22,8 @@ export interface Birth {
 export interface Profile {
   birth: Birth;
   time: BirthTime;
-  mbti: Mbti;
+  /** MBTI를 모르고 '사주 중심'으로 시작한 경우 null */
+  mbti: Mbti | null;
   createdAt: string;
 }
 

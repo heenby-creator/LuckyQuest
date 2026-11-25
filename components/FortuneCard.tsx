@@ -4,8 +4,8 @@ import { useEffect, useState } from "react";
 import {
   ELEMENT_HANJA,
   ELEMENT_META,
-  FORTUNE_TABS,
-  FORTUNE_TOPIC_LABEL,
+  fortuneTabs,
+  topicLabel,
   type FortuneTopic,
 } from "@/lib/content";
 import type { DailyView } from "@/lib/engine";
@@ -68,10 +68,11 @@ function Gauge({ value, label }: { value: number; label: string }) {
   );
 }
 
-export function FortuneCard({ daily, mbti }: { daily: DailyView; mbti: string }) {
+export function FortuneCard({ daily }: { daily: DailyView }) {
   const todayMeta = ELEMENT_META[daily.today.element];
   const [tab, setTab] = useState<"all" | FortuneTopic>("all");
   const topic = tab === "all" ? null : daily.topics[tab];
+  const tabs = fortuneTabs(daily.ageGroup);
 
   return (
     <section className="card card-pop overflow-hidden">
@@ -83,7 +84,9 @@ export function FortuneCard({ daily, mbti }: { daily: DailyView; mbti: string })
               <h2 className="text-[19px] font-extrabold tracking-tight text-ink">오늘의 운세</h2>
               <Sparkle size={12} color="#E0AE3E" className="anim-twinkle" style={{ animationDelay: "0.8s" }} />
             </div>
-            <p className="mt-0.5 text-[11.5px] text-ink-faint">{daily.chart.birthLabel} · {mbti}</p>
+            <p className="mt-0.5 text-[11.5px] text-ink-faint">
+              {daily.chart.birthLabel} · {daily.mbti ?? "사주 중심"}
+            </p>
           </div>
           <span className="rounded-full bg-leaf px-3 py-1 text-[12px] font-bold text-white shadow-[0_8px_18px_-14px_rgba(18,128,92,0.9)]">
             {formatKoreanDate(daily.dateKey)}
@@ -134,7 +137,7 @@ export function FortuneCard({ daily, mbti }: { daily: DailyView; mbti: string })
       <div className="mx-4 mb-4">
         {/* 4개 운세 탭 — 누를 수 있는 탭임이 한눈에 보이도록 테두리·대비·글자를 키우고 지수를 함께 보여 준다. */}
         <div role="tablist" aria-label="운세 주제" className="grid grid-cols-4 gap-1.5">
-          {FORTUNE_TABS.map((t) => {
+          {tabs.map((t) => {
             const active = tab === t.key;
             const percent = t.key === "all" ? daily.score : daily.topics[t.key].score;
             return (
@@ -170,7 +173,7 @@ export function FortuneCard({ daily, mbti }: { daily: DailyView; mbti: string })
         >
           <div className="mb-2 flex items-center justify-between gap-2">
             <p className="text-[10px] font-bold tracking-[0.16em] text-[#B09355]">
-              {topic ? `${FORTUNE_TOPIC_LABEL[tab as FortuneTopic]} 한마디` : "오늘의 한마디"}
+              {topic ? `${topicLabel(tab as FortuneTopic, daily.ageGroup)} 한마디` : "오늘의 한마디"}
             </p>
             <span className="flex items-center gap-1 rounded-full bg-white/85 px-2 py-0.5 text-[10.5px] font-extrabold text-[#8A6F33] shadow-[inset_0_0_0_1px_rgba(199,168,98,0.35)]">
               <span className="tabular-nums">{topic ? topic.score : daily.score}%</span>
@@ -185,7 +188,13 @@ export function FortuneCard({ daily, mbti }: { daily: DailyView; mbti: string })
                 <span aria-hidden="true">💡</span>
                 <span>{topic.advice}</span>
               </p>
-              <p className="mt-2 text-[11px] leading-relaxed text-[#8C8064]">{topic.mbtiNote}</p>
+              <p className="mt-2 flex items-start gap-1.5 rounded-xl bg-[#FFF1E8] px-2.5 py-2 text-[12px] leading-[1.7] text-[#6B4A32]">
+                <span aria-hidden="true">⚠️</span>
+                <span>{topic.caution}</span>
+              </p>
+              {topic.mbtiNote && (
+                <p className="mt-2 text-[11px] leading-relaxed text-[#8C8064]">{topic.mbtiNote}</p>
+              )}
             </div>
           ) : (
             <div className="space-y-1.5 pr-10 text-[13px] leading-[1.7] text-[#4B4433]">
@@ -198,6 +207,25 @@ export function FortuneCard({ daily, mbti }: { daily: DailyView; mbti: string })
           <div className="pointer-events-none absolute -bottom-4 right-1.5">
             <StarMascot size={38} mood="idle" />
           </div>
+        </div>
+
+        {/* 오늘 조심할 것 — 운세를 보는 이유에 답하는 전용 주의 포인트 */}
+        <div className="relative z-10 mt-5 rounded-[22px] border border-[#F0CDB4] bg-[#FFF5EC] px-4 pb-3.5 pt-3">
+          <div className="flex items-center justify-between gap-2">
+            <p className="flex items-center gap-1.5 text-[10px] font-bold tracking-[0.16em] text-[#C0703A]">
+              <span aria-hidden className="text-[12px] leading-none">⚠️</span>
+              오늘 조심할 것
+            </p>
+            <span className="rounded-full bg-white/80 px-2 py-0.5 text-[10px] font-bold text-[#B08A66]">
+              {daily.today.pillar}일 기준
+            </span>
+          </div>
+          <p className="mt-1.5 text-[13.5px] font-bold leading-[1.6] text-[#5A3A24]">{daily.caution.caution}</p>
+          <p className="mt-2 flex items-start gap-1.5 rounded-xl bg-white/75 px-2.5 py-2 text-[12px] leading-[1.7] text-[#6B4A32]">
+            <span aria-hidden className="shrink-0 font-bold text-[#C0703A]">→</span>
+            <span>{daily.caution.avoid}</span>
+          </p>
+          <p className="mt-1.5 text-[10px] leading-relaxed text-[#A08163]">{daily.caution.basis}</p>
         </div>
       </div>
     </section>
