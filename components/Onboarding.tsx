@@ -494,7 +494,7 @@ export function Onboarding({
         {senior && mbti && (
           <p className="anim-fade-up mt-2 flex items-start gap-1.5 rounded-2xl bg-leaf-soft px-3 py-2 text-[11.5px] leading-relaxed font-semibold text-leaf-strong">
             <Sparkle size={11} color="#12805C" className="mt-[3px] shrink-0" />
-            {mbti} 성향은 오늘의 운세 마지막에 한 줄로만 곁들여 드려요. 사주 풀이가 중심이에요.
+            {mbti} 맞춤 팁은 오늘의 운세 마지막에 한 줄로만 곁들여 드려요. 사주 풀이가 중심이에요.
           </p>
         )}
       </section>

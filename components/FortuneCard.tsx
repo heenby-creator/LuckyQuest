@@ -73,6 +73,7 @@ export function FortuneCard({ daily, onOpenMbti }: { daily: DailyView; onOpenMbt
   const [tab, setTab] = useState<"all" | FortuneTopic>("all");
   const topic = tab === "all" ? null : daily.topics[tab];
   const tabs = fortuneTabs(daily.ageGroup);
+  const activeIndex = Math.max(0, tabs.findIndex((t) => t.key === tab));
   const senior = daily.ageGroup === "senior";
 
   return (
@@ -98,7 +99,7 @@ export function FortuneCard({ daily, onOpenMbti }: { daily: DailyView; onOpenMbt
 
         <div className="mt-2 flex items-center justify-center gap-1.5 rounded-full bg-cream-2/70 px-3 py-1.5 text-[11.5px] text-ink-soft">
           <span className="size-1.5 rounded-full" style={{ background: todayMeta.color }} />
-          오늘은 <b className="font-bold text-ink">{daily.today.pillar}일</b> · 겉 {daily.today.element} · 바탕 {daily.today.branchElement}
+          오늘은 <b className="font-bold text-ink">{daily.today.pillar}일</b> · 겉 {ELEMENT_META[daily.today.element].name} · 바탕 {ELEMENT_META[daily.today.branchElement].name}
         </div>
       </div>
 
@@ -136,8 +137,12 @@ export function FortuneCard({ daily, onOpenMbti }: { daily: DailyView; onOpenMbt
       </div>
 
       <div className="mx-4 mb-4">
-        {/* 4개 운세 탭 — 누를 수 있는 탭임이 한눈에 보이도록 테두리·대비·글자를 키우고 지수를 함께 보여 준다. */}
-        <div role="tablist" aria-label="운세 주제" className="grid grid-cols-4 gap-1.5">
+        {/* 4개 운세 탭 — 폴더/노트 탭처럼 아래 풀이 박스와 이어 붙여 '누르면 내용이 바뀐다'가 한눈에 보이게. */}
+        <div className="mb-1 flex items-center justify-end gap-1 pr-0.5">
+          <span className="text-[10.5px] font-bold tracking-tight text-[#B09355]">탭을 눌러 분야별 풀이를 보세요</span>
+          <span aria-hidden className="text-[9px] leading-none text-[#C9B27A]">▼</span>
+        </div>
+        <div role="tablist" aria-label="운세 주제" className="flex items-end gap-1.5">
           {tabs.map((t) => {
             const active = tab === t.key;
             const percent = t.key === "all" ? daily.score : daily.topics[t.key].score;
@@ -151,16 +156,27 @@ export function FortuneCard({ daily, onOpenMbti }: { daily: DailyView; onOpenMbt
                   setTab(t.key);
                   trackEvent("fortune_tab_click", { tab: t.key, label: t.label });
                 }}
-                className={`flex flex-col items-center gap-0.5 rounded-2xl border-2 px-1 py-2 transition active:scale-[0.97] ${
+                className={`relative flex flex-1 flex-col items-center gap-0.5 border px-1 transition active:scale-[0.98] ${
                   active
-                    ? "border-leaf bg-leaf-soft shadow-[0_10px_20px_-16px_rgba(18,128,92,1)]"
-                    : "border-[#E7DCC2] bg-white/85 hover:border-leaf/35 hover:bg-white"
+                    ? "z-10 -mb-px rounded-t-[18px] border-b-0 border-[#F1E5C4] bg-[#FFF9E8] pb-2.5 pt-3"
+                    : "rounded-t-[13px] border-[#E3D7BC] bg-[#F4E9CF] pb-2 pt-1.5 shadow-[inset_0_2px_5px_rgba(168,140,84,0.14)] hover:bg-[#F9F0DA]"
                 }`}
               >
-                <span className={`text-[13px] font-extrabold leading-none tracking-tight ${active ? "text-leaf-strong" : "text-[#4C4637]"}`}>
+                {active && (
+                  <span aria-hidden className="absolute inset-x-3 top-[3.5px] h-[3px] rounded-full bg-leaf" />
+                )}
+                <span
+                  className={`text-[13px] font-extrabold leading-none tracking-tight ${
+                    active ? "text-leaf-strong" : "text-[#7B7159]"
+                  }`}
+                >
                   {t.label}
                 </span>
-                <span className={`text-[11px] font-bold leading-none tabular-nums ${active ? "text-leaf" : "text-[#8C8168]"}`}>
+                <span
+                  className={`text-[11px] font-bold leading-none tabular-nums ${
+                    active ? "text-leaf" : "text-[#A0947A]"
+                  }`}
+                >
                   {percent}%
                 </span>
               </button>
@@ -170,7 +186,9 @@ export function FortuneCard({ daily, onOpenMbti }: { daily: DailyView; onOpenMbt
 
         <div
           key={tab}
-          className="anim-fade-up relative mt-2.5 rounded-[22px] border border-[#F1E5C4] bg-[#FFF9E8] px-4 pb-6 pt-3.5"
+          className={`anim-fade-up relative border border-[#F1E5C4] bg-[#FFF9E8] px-4 pb-6 pt-3.5 rounded-b-[22px] ${
+            activeIndex === 0 ? "rounded-tl-none" : "rounded-tl-[18px]"
+          } ${activeIndex === tabs.length - 1 ? "rounded-tr-none" : "rounded-tr-[18px]"}`}
         >
           <div className="mb-2 flex items-center justify-between gap-2">
             <p className="text-[10px] font-bold tracking-[0.16em] text-[#B09355]">
@@ -198,9 +216,9 @@ export function FortuneCard({ daily, onOpenMbti }: { daily: DailyView; onOpenMbt
                   // 65세 이상 — 사주 90 : 성향 10, 한 줄만 가볍게
                   <p className="mt-2 text-[11.5px] leading-relaxed text-[#8C8064]">{topic.mbtiNote}</p>
                 ) : daily.ageGroup === "mature" ? (
-                  // 46~64세 — 사주 70 : 성향 30, '✨ INFP 성향' 배지 불록으로 또렷하게
+                  // 46~64세 — 사주 70 : 성향 30, '✨ INFP 맞춤 팁' 배지 불록으로 또렷하게
                   <div className="mt-2 rounded-xl bg-white/85 px-2.5 py-2 shadow-[inset_0_0_0_1px_rgba(199,168,98,0.35)]">
-                    <p className="text-[12px] font-extrabold leading-none text-[#8A6F33]">✨ {daily.mbti} 성향</p>
+                    <p className="text-[12px] font-extrabold leading-none text-[#8A6F33]">✨ {daily.mbti} 맞춤 팁</p>
                     <p className="mt-1.5 text-[12.5px] leading-[1.65] text-[#4B4433]">{topic.mbtiNote}</p>
                   </div>
                 ) : (
@@ -222,7 +240,7 @@ export function FortuneCard({ daily, onOpenMbti }: { daily: DailyView; onOpenMbt
                       key={i}
                       className="mt-2 rounded-xl bg-white/85 px-2.5 py-2 shadow-[inset_0_0_0_1px_rgba(199,168,98,0.35)]"
                     >
-                      <p className="text-[12px] font-extrabold leading-none text-[#8A6F33]">✨ {daily.mbti} 성향</p>
+                      <p className="text-[12px] font-extrabold leading-none text-[#8A6F33]">✨ {daily.mbti} 맞춤 팁</p>
                       <p className="mt-1.5 text-[13px] font-semibold leading-[1.7] text-[#3E3A2C]">{line}</p>
                     </div>
                   );

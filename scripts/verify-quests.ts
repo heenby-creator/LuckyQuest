@@ -65,6 +65,7 @@ function titleTokens(title: string): string[] {
 
 const ELEMENT_MARKERS = (el: Element) => [
   `${el} 기운`,
+  `${el}(`,
   `${el}은`,
   `${el}는`,
   `${el}이 `,

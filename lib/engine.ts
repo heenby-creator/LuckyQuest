@@ -3,6 +3,7 @@ import {
   BRANCH_MOOD,
   CAUTION_BOX,
   COMBO_QUESTS,
+  ELEMENT_HANJA,
   ELEMENT_QUESTS,
   ELEMENT_WHY,
   MBTI_DAY_HINT,
@@ -23,6 +24,7 @@ import {
   WEAK_DAY_TIP,
   charmForDate,
   comboKeyOf,
+  elName,
   type CautionAxis,
   type FortuneTopic,
   type Quest,
@@ -336,12 +338,12 @@ function cautionOf(
   else axis = "ease";
 
   const copy = rotate(CAUTION_BOX[axis], today.cycleIndex, `caution-${axis}`);
-  const fill = (text: string) => text.replace(/\{weak\}/g, weak).replace(/\{today\}/g, today.element);
+  const fill = (text: string) => text.replace(/\{weak\}/g, elName(weak)).replace(/\{today\}/g, elName(today.element));
 
-  const clashNote = `부족한 ${weak} 기운을 오늘 ${today.element} 기운이 누르고 있어요.`;
+  const clashNote = `부족한 ${elName(weak)} 기운을 오늘 ${elName(today.element)} 기운이 누르고 있어요.`;
   const basis = isSajuDeep(group)
-    ? `오늘 ${today.pillar}일 — 겉 ${today.stem}(${today.element})·바탕 ${today.branch}(${today.branchElement}). 내 ${dayMaster} 일간에는 겉이 ‘${stemRel}’으로, 바탕이 ‘${branchRel}’으로 닿고, 타고난 ${strong} 기운은 ${strongCount}개·${weak} 기운은 ${weakCount}개예요.${clash ? ` ${clashNote}` : ""}`
-    : `오늘 ${today.pillar}일 — 겉 ${today.element}, 바탕 ${today.branchElement}. 내 ${dayMaster} 일간에는 겉이 ‘${REL_LABEL[stemRel]}’으로, 바탕이 ‘${REL_LABEL[branchRel]}’으로 닿아요. ${clash ? clashNote : `타고난 ${weak} 기운은 ${weakCount}개예요.`}`;
+    ? `오늘 ${today.pillar}일 — 겉 ${today.stem}(${ELEMENT_HANJA[today.element]})·바탕 ${today.branch}(${ELEMENT_HANJA[today.branchElement]}). 내 ${elName(dayMaster)} 일간에는 겉이 ‘${stemRel}’으로, 바탕이 ‘${branchRel}’으로 닿고, 타고난 ${elName(strong)} 기운은 ${strongCount}개·${elName(weak)} 기운은 ${weakCount}개예요.${clash ? ` ${clashNote}` : ""}`
+    : `오늘 ${today.pillar}일 — 겉 ${elName(today.element)}, 바탕 ${elName(today.branchElement)}. 내 ${elName(dayMaster)} 일간에는 겉이 ‘${REL_LABEL[stemRel]}’으로, 바탕이 ‘${REL_LABEL[branchRel]}’으로 닿아요. ${clash ? clashNote : `타고난 ${elName(weak)} 기운은 ${weakCount}개예요.`}`;
 
   return { axis, caution: fill(copy.caution), avoid: fill(copy.avoid), basis };
 }
@@ -426,15 +428,15 @@ function supportLine(today: DayEnergy, target: Element): string | null {
   ];
   const same = layers.find((layer) => layer.element === target);
   if (same) {
-    return `오늘 들어온 ${same.label} ${same.char}의 ${target} 기운이 그 부족을 채워 주는 날이에요.`;
+    return `오늘 들어온 ${same.label} ${same.char}의 ${elName(target)} 기운이 그 부족을 채워 주는 날이에요.`;
   }
   const feeds = layers.find((layer) => GENERATES[layer.element] === target);
   if (feeds) {
-    return `오늘 들어온 ${feeds.label} ${feeds.char}의 ${feeds.element} 기운이 그 부족을 살려 주는 날이에요.`;
+    return `오늘 들어온 ${feeds.label} ${feeds.char}의 ${elName(feeds.element)} 기운이 그 부족을 살려 주는 날이에요.`;
   }
   const drains = layers.find((layer) => GENERATES[target] === layer.element);
   if (drains) {
-    return `오늘 ${drains.label} ${drains.char}의 ${drains.element} 쪽으로 ${target} 기운이 새어 나가니, 조금 아껴 쓰세요.`;
+    return `오늘 ${drains.label} ${drains.char}의 ${elName(drains.element)} 쪽으로 ${elName(target)} 기운이 새어 나가니, 조금 아껴 쓰세요.`;
   }
   return null;
 }
@@ -535,12 +537,12 @@ export function buildDaily(profile: Profile, now: Date = new Date()): DailyView 
       const head = (() => {
         if (pa === 0 && pb === 0) {
           if (deficiency.zeros.length > 2) {
-            return `타고난 기운에서 ${deficiency.zeros.join("·")} — 모두 0%로 비어 있는데, 그중 ${a}와 ${b}를 먼저 채워 볼까요?`;
+            return `타고난 기운에서 ${deficiency.zeros.map(elName).join("·")} — 모두 0%로 비어 있는데, 그중 ${elName(a)}와 ${elName(b)}를 먼저 채워 볼까요?`;
           }
-          return `타고난 기운에서 ${a}·${b}가 0%로 함께 비어 있어요.`;
+          return `타고난 기운에서 ${elName(a)}·${elName(b)}가 0%로 함께 비어 있어요.`;
         }
-        if (pa === 0) return `타고난 기운에서 ${a} 0% · ${b} ${pb}%로 가장 적은 축이에요.`;
-        return `타고난 기운에서 ${a} ${pa}% · ${b} ${pb}%로 가장 적은 축이에요.`;
+        if (pa === 0) return `타고난 기운에서 ${elName(a)} 0% · ${elName(b)} ${pb}%로 가장 적은 축이에요.`;
+        return `타고난 기운에서 ${elName(a)} ${pa}% · ${elName(b)} ${pb}%로 가장 적은 축이에요.`;
       })();
       const link = supportLine(today, a) ?? supportLine(today, b);
       return link
@@ -548,7 +550,7 @@ export function buildDaily(profile: Profile, now: Date = new Date()): DailyView 
         : `${head} 오늘 ${today.pillar}일의 기운은 이쪽으로 크게 기울지 않으니, 작은 행동으로 직접 채워 보세요.`;
     }
     const pct = elementPercent(chart.counts[lead], chart.total);
-    const head = `타고난 ${lead} 기운이 ${pct}%로 가장 적어요.`;
+    const head = `타고난 ${elName(lead)} 기운이 ${pct}%로 가장 적어요.`;
     const link = supportLine(today, lead);
     return link
       ? `${head} ${link}`
@@ -567,7 +569,7 @@ export function buildDaily(profile: Profile, now: Date = new Date()): DailyView 
 
   const reading = [
     weatherLine,
-    `${chart.dayMaster} 일간인 나, ${rotate(RELATION_PHRASE[relation], today.cycleIndex, `rel-${relation}`)}`,
+    `${elName(chart.dayMaster)} 일간인 나, ${rotate(RELATION_PHRASE[relation], today.cycleIndex, `rel-${relation}`)}`,
     balanceLine,
   ];
 
@@ -578,10 +580,10 @@ export function buildDaily(profile: Profile, now: Date = new Date()): DailyView 
     const stemDepth = rotate(STEM_DEPTH[stemRel], today.cycleIndex, `stem-depth-${stemRel}`);
     const branchDepth = rotate(BRANCH_DEPTH[branchRel], today.cycleIndex, `branch-depth-${branchRel}`);
     reading.push(
-      `한 겹 더 보면, 겉의 ${today.stem}(${today.element}) 기운은 ${stemDepth} 바탕의 ${today.branch}(${today.branchElement}) 기운은 ${branchDepth}`,
+      `한 겹 더 보면, 겉의 ${today.stem} ${elName(today.element)} 기운은 ${stemDepth} 바탕의 ${today.branch} ${elName(today.branchElement)} 기운은 ${branchDepth}`,
     );
     reading.push(
-      `타고난 ${chart.strongest} 기운이 ${chart.counts[chart.strongest]}개로 가장 두껍고, ${lead} 기운은 ${chart.counts[lead]}개로 가장 얇아요. ${rotate(WEAK_DAY_TIP[lead], today.cycleIndex, `weak-${lead}`)}`,
+      `타고난 ${elName(chart.strongest)} 기운이 ${chart.counts[chart.strongest]}개로 가장 두껍고, ${elName(lead)} 기운은 ${chart.counts[lead]}개로 가장 얇아요. ${rotate(WEAK_DAY_TIP[lead], today.cycleIndex, `weak-${lead}`)}`,
     );
   }
 
