@@ -11,17 +11,18 @@
     </linearGradient>
   </defs>
   <rect width="512" height="512" fill="#FFFFFF"/>
-  <g transform="translate(256 268)">
-    <polygon points="0,-160 41.6,-56.5 152.4,-50.7 66.7,22.8 92.5,131.2 0,70.5 -92.5,131.2 -66.7,22.8 -152.4,-50.7 -41.6,-56.5"
-             fill="url(#star)" stroke="#E09600" stroke-width="12" stroke-linejoin="round"/>
-    <ellipse cx="-40" cy="-6" rx="12" ry="16" fill="#6B4A22"/>
-    <ellipse cx="40" cy="-6" rx="12" ry="16" fill="#6B4A22"/>
-    <circle cx="-44" cy="-12" r="4" fill="#FFF8E1"/>
-    <circle cx="36" cy="-12" r="4" fill="#FFF8E1"/>
-    <path d="M-22 34 Q0 56 22 34" stroke="#6B4A22" stroke-width="9" stroke-linecap="round" fill="none"/>
-    <circle cx="-70" cy="24" r="16" fill="#F07A4B" opacity="0.35"/>
-    <circle cx="70" cy="24" r="16" fill="#F07A4B" opacity="0.35"/>
-  </g>
-  <path d="M404 108 L412 130 L434 138 L412 146 L404 168 L396 146 L374 138 L396 130 Z" fill="url(#spark)"/>
-  <path d="M112 132 L117 147 L132 152 L117 157 L112 172 L107 157 L92 152 L107 147 Z" fill="url(#spark)" opacity="0.85"/>
+  <!-- 왼쪽 위 작은 반짝이 1개 -->
+  <path d="M106 90L112.6 105.4L128 112L112.6 118.6L106 134L99.4 118.6L84 112L99.4 105.4Z" fill="url(#spark)"/>
+  <!-- 별 캐릭터: 중심 (260,268), 외곽 반지름 216, 꼭짓점 둥글림 -->
+  <path d="M243.79 77.24Q260 52 276.21 77.24L330.94 162.44Q333.64 166.65 338.47 167.92L436.41 193.63Q465.43 201.25 446.43 224.47L382.31 302.84Q379.15 306.71 379.44 311.71L385.24 412.8Q386.96 442.75 359.01 431.86L264.66 395.1Q260 393.28 255.34 395.1L160.99 431.86Q133.04 442.75 134.76 412.8L140.56 311.71Q140.85 306.71 137.69 302.84L73.57 224.47Q54.57 201.25 83.59 193.63L181.53 167.92Q186.36 166.65 189.06 162.44Z" fill="url(#star)" stroke="#E09600" stroke-width="12" stroke-linejoin="round"/>
+  <!-- 볼터치 -->
+  <circle cx="165" cy="296" r="21" fill="#FF9E6B" opacity="0.55"/>
+  <circle cx="355" cy="296" r="21" fill="#FF9E6B" opacity="0.55"/>
+  <!-- 눈동자 + 하이라이트 -->
+  <ellipse cx="206" cy="254" rx="17" ry="22.5" fill="#5F3D1B"/>
+  <ellipse cx="314" cy="254" rx="17" ry="22.5" fill="#5F3D1B"/>
+  <circle cx="200" cy="247" r="5.8" fill="#FFFDF7"/>
+  <circle cx="308" cy="247" r="5.8" fill="#FFFDF7"/>
+  <!-- 미소 호 -->
+  <path d="M234 306Q260 318 286 306" stroke="#5F3D1B" stroke-width="10" stroke-linecap="round" fill="none"/>
 </svg>
