@@ -26,6 +26,7 @@ export function LuckyQuestApp() {
   const [loaded, setLoaded] = useState(false);
   const [tab, setTab] = useState<NavKey>("today");
   const [editing, setEditing] = useState(false);
+  const [focusMbti, setFocusMbti] = useState(false);
   const [justUnlocked, setJustUnlocked] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const [menu, setMenu] = useState<null | "menu" | "about">(null);
@@ -96,6 +97,7 @@ export function LuckyQuestApp() {
         return next;
       });
       setEditing(false);
+      setFocusMbti(false);
       setTab("today");
       setToast("정보를 저장했어요 ☘️");
       trackEvent("onboarding_complete", {
@@ -221,7 +223,8 @@ export function LuckyQuestApp() {
             <Onboarding
               initial={state?.profile ?? null}
               onSave={onSaveProfile}
-              onCancel={editing && state ? () => setEditing(false) : undefined}
+              onCancel={editing && state ? () => { setEditing(false); setFocusMbti(false); } : undefined}
+              focusMbti={focusMbti}
             />
           </main>
         ) : (
@@ -272,7 +275,13 @@ export function LuckyQuestApp() {
             <main ref={mainRef} className="lq-scroll relative flex-1 overflow-y-auto">
               {tab === "today" && daily && day && (
                 <div className="space-y-4 px-4 pb-8 pt-3">
-                  <FortuneCard daily={daily} />
+                  <FortuneCard
+                    daily={daily}
+                    onOpenMbti={() => {
+                      setFocusMbti(true);
+                      setEditing(true);
+                    }}
+                  />
                   <QuestList
                     quests={daily.quests}
                     checks={day.checks}
@@ -300,7 +309,7 @@ export function LuckyQuestApp() {
               {tab === "calendar" && state && <CalendarView state={state} />}
               {tab === "charms" && state && <CharmsView state={state} />}
               {tab === "me" && state && (
-                <MeView state={state} onEdit={() => setEditing(true)} onReset={onReset} />
+                <MeView state={state} onEdit={() => { setFocusMbti(false); setEditing(true); }} onReset={onReset} />
               )}
             </main>
 
@@ -350,7 +359,7 @@ export function LuckyQuestApp() {
               {menu === "menu" ? (
                 <div className="space-y-1.5">
                   <p className="mb-2 px-1 text-[11px] font-bold text-ink-faint">메뉴</p>
-                  <button type="button" onClick={() => { setMenu(null); setEditing(true); }} className="flex w-full items-center justify-between rounded-2xl px-3 py-3 text-left text-[14px] font-bold text-ink hover:bg-cream-2">
+                  <button type="button" onClick={() => { setMenu(null); setFocusMbti(false); setEditing(true); }} className="flex w-full items-center justify-between rounded-2xl px-3 py-3 text-left text-[14px] font-bold text-ink hover:bg-cream-2">
                     내 정보 수정 <span className="text-ink-faint">›</span>
                   </button>
                   <button type="button" onClick={() => setMenu("about")} className="flex w-full items-center justify-between rounded-2xl px-3 py-3 text-left text-[14px] font-bold text-ink hover:bg-cream-2">

@@ -5,6 +5,8 @@ import {
   COMBO_QUESTS,
   ELEMENT_QUESTS,
   ELEMENT_WHY,
+  MBTI_DAY_HINT,
+  MBTI_DAY_TIP,
   MBTI_QUESTS,
   MBTI_STYLE,
   RELATION_PHRASE,
@@ -25,7 +27,7 @@ import {
   type FortuneTopic,
   type Quest,
 } from "./content";
-import { ageGroupOf, isMature, type AgeGroup } from "./age";
+import { ageGroupOf, isSajuDeep, isSenior, type AgeGroup } from "./age";
 import {
   CONTROLS,
   ELEMENTS,
@@ -104,10 +106,12 @@ export interface CharmView {
 
 export interface DailyView {
   dateKey: string;
-  /** 45세 이하 young / 46세 이후 mature */
+  /** 45세 이하 young / 46~64세 mature / 65세 이상 senior */
   ageGroup: AgeGroup;
   /** 사주 중심으로 시작해 MBTI가 없으면 null */
   mbti: Mbti | null;
+  /** 46세 이후 종합 풀이 마지막에 붙는 성향 한 줄 — MBTI가 없으면 null */
+  mbtiLine: string | null;
   chart: Chart;
   today: DayEnergy;
   score: number;
@@ -254,7 +258,9 @@ function buildTopicFortunes(
   seed: string,
 ): Record<FortuneTopic, TopicFortune> {
   const result = {} as Record<FortuneTopic, TopicFortune>;
-  const mature = isMature(group);
+  // 46세 이후(중장년·시니어)는 직장·지인·가족 중심의 관계 문장과 행동 풀을 쓴다.
+  const mature = isSajuDeep(group);
+  const senior = isSenior(group);
 
   for (const topic of TOPIC_KEYS) {
     const score = scores[topic];
@@ -271,8 +277,9 @@ function buildTopicFortunes(
       const actionLetter = (hash(`${seed}-${topic}-action`) % 2 === 0 ? mbti[2] : mbti[3]) as keyof (typeof TOPIC_MBTI_ACTIONS)[FortuneTopic];
       const actions = mature ? TOPIC_MBTI_ACTIONS_MATURE : TOPIC_MBTI_ACTIONS;
       const note = `${MBTI_STYLE[styleLetter]}, ${actions[topic][actionLetter]}`;
-      // 46세 이후에는 사주 풀이가 앞서고 MBTI는 보조 맥락으로만 짚는다.
-      mbtiNote = mature ? `성향 참고 — ${note}` : note;
+      // 46~64세는 사주 70 : 성향 30 — 화면에서 '✨ INFP 성향' 배지와 함께 또렷이 보여 준다.
+      // 65세 이상은 직접 고른 경우에만 사주 90 : 성향 10의 가벼운 참고 한 줄로 둔다.
+      mbtiNote = senior ? `가볍게 — ${note}` : note;
     }
 
     result[topic] = {
@@ -332,7 +339,7 @@ function cautionOf(
   const fill = (text: string) => text.replace(/\{weak\}/g, weak).replace(/\{today\}/g, today.element);
 
   const clashNote = `부족한 ${weak} 기운을 오늘 ${today.element} 기운이 누르고 있어요.`;
-  const basis = isMature(group)
+  const basis = isSajuDeep(group)
     ? `오늘 ${today.pillar}일 — 겉 ${today.stem}(${today.element})·바탕 ${today.branch}(${today.branchElement}). 내 ${dayMaster} 일간에는 겉이 ‘${stemRel}’으로, 바탕이 ‘${branchRel}’으로 닿고, 타고난 ${strong} 기운은 ${strongCount}개·${weak} 기운은 ${weakCount}개예요.${clash ? ` ${clashNote}` : ""}`
     : `오늘 ${today.pillar}일 — 겉 ${today.element}, 바탕 ${today.branchElement}. 내 ${dayMaster} 일간에는 겉이 ‘${REL_LABEL[stemRel]}’으로, 바탕이 ‘${REL_LABEL[branchRel]}’으로 닿아요. ${clash ? clashNote : `타고난 ${weak} 기운은 ${weakCount}개예요.`}`;
 
@@ -435,9 +442,11 @@ function supportLine(today: DayEnergy, target: Element): string | null {
 export function buildDaily(profile: Profile, now: Date = new Date()): DailyView {
   const key = dateKey(now);
   const ageGroup = ageGroupOf(profile.birth, now);
-  const mature = isMature(ageGroup);
+  const deep = isSajuDeep(ageGroup);
+  const senior = isSenior(ageGroup);
   const mbti = profile.mbti;
-  const mbtiSeed = mbti ?? "saju";
+  // 65세 이상은 사주 90% — 성향을 골라도 사주 점수·퀘스트는 그대로 두고 한 줄만 곁들인다.
+  const mbtiSeed = mbti && !senior ? mbti : "saju";
   const chart = chartOf(profile);
   const today = todayEnergy(now);
   const deficiency = deficiencyOf(chart, key);
@@ -450,8 +459,9 @@ export function buildDaily(profile: Profile, now: Date = new Date()): DailyView 
 
   // Quest 2 — MBTI 성향에 맞춘 행동. Quest 1과 같은 행동은 피한다.
   // MBTI 없이 사주 중심으로 시작한 경우에는 다음으로 부족한 오행을 채우는 퀘스트를 준다.
+  // 65세 이상은 성향을 골라도 두 퀘스트 모두 오행 기반으로 두고, 성향은 참고 한 줄로만 쓴다.
   let q2: Quest;
-  if (mbti) {
+  if (mbti && !senior) {
     const q2Pool = MBTI_QUESTS[mbti];
     const q2Candidates = q2Pool.filter((q) => q.action !== q1.action);
     q2 = pick(q2Candidates.length > 0 ? q2Candidates : q2Pool, `${key}-q2-${mbti}`);
@@ -562,7 +572,7 @@ export function buildDaily(profile: Profile, now: Date = new Date()): DailyView 
   ];
 
   // 46세 이후에는 일진의 겉·바탕이 내 일간에 어떻게 닿는지 한 겹 더 풀어 준다.
-  if (mature) {
+  if (deep) {
     const stemRel = relationOf(today.element, chart.dayMaster);
     const branchRel = relationOf(today.branchElement, chart.dayMaster);
     const stemDepth = rotate(STEM_DEPTH[stemRel], today.cycleIndex, `stem-depth-${stemRel}`);
@@ -573,6 +583,21 @@ export function buildDaily(profile: Profile, now: Date = new Date()): DailyView 
     reading.push(
       `타고난 ${chart.strongest} 기운이 ${chart.counts[chart.strongest]}개로 가장 두껍고, ${lead} 기운은 ${chart.counts[lead]}개로 가장 얇아요. ${rotate(WEAK_DAY_TIP[lead], today.cycleIndex, `weak-${lead}`)}`,
     );
+  }
+
+  // 46세 이후 종합 풀이의 마지막 한 줄 — 사주 70 : 성향 30의 비율을 한 문장으로 만든다.
+  // 65세 이상은 사주 90 : 성향 10에 맞춰 짧게 곁들인다.
+  let mbtiLine: string | null = null;
+  if (deep && mbti) {
+    const styleLetter = (hash(`${key}-${mbti}-line-style`) % 2 === 0 ? mbti[0] : mbti[1]) as keyof typeof MBTI_STYLE;
+    const hint = MBTI_DAY_HINT[styleLetter][today.element];
+    if (senior) {
+      mbtiLine = `가볍게 — ${mbti} 성향으로는 ${hint}`;
+    } else {
+      const tipLetter = (hash(`${key}-${mbti}-line-tip`) % 2 === 0 ? mbti[2] : mbti[3]) as keyof typeof MBTI_DAY_TIP;
+      mbtiLine = `${MBTI_STYLE[styleLetter]} ${hint} ${MBTI_DAY_TIP[tipLetter]}`;
+    }
+    reading.push(mbtiLine);
   }
 
   const charmContent = charmForDate(key, today.element);
@@ -602,6 +627,7 @@ export function buildDaily(profile: Profile, now: Date = new Date()): DailyView 
     dateKey: key,
     ageGroup,
     mbti,
+    mbtiLine,
     chart,
     today,
     score,

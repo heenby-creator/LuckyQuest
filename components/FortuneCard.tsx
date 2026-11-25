@@ -68,11 +68,12 @@ function Gauge({ value, label }: { value: number; label: string }) {
   );
 }
 
-export function FortuneCard({ daily }: { daily: DailyView }) {
+export function FortuneCard({ daily, onOpenMbti }: { daily: DailyView; onOpenMbti?: () => void }) {
   const todayMeta = ELEMENT_META[daily.today.element];
   const [tab, setTab] = useState<"all" | FortuneTopic>("all");
   const topic = tab === "all" ? null : daily.topics[tab];
   const tabs = fortuneTabs(daily.ageGroup);
+  const senior = daily.ageGroup === "senior";
 
   return (
     <section className="card card-pop overflow-hidden">
@@ -192,15 +193,44 @@ export function FortuneCard({ daily }: { daily: DailyView }) {
                 <span aria-hidden="true">⚠️</span>
                 <span>{topic.caution}</span>
               </p>
-              {topic.mbtiNote && (
-                <p className="mt-2 text-[11px] leading-relaxed text-[#8C8064]">{topic.mbtiNote}</p>
+              {topic.mbtiNote && daily.mbti && (
+                senior ? (
+                  // 65세 이상 — 사주 90 : 성향 10, 한 줄만 가볍게
+                  <p className="mt-2 text-[11.5px] leading-relaxed text-[#8C8064]">{topic.mbtiNote}</p>
+                ) : daily.ageGroup === "mature" ? (
+                  // 46~64세 — 사주 70 : 성향 30, '✨ INFP 성향' 배지 불록으로 또렷하게
+                  <div className="mt-2 rounded-xl bg-white/85 px-2.5 py-2 shadow-[inset_0_0_0_1px_rgba(199,168,98,0.35)]">
+                    <p className="text-[12px] font-extrabold leading-none text-[#8A6F33]">✨ {daily.mbti} 성향</p>
+                    <p className="mt-1.5 text-[12.5px] leading-[1.65] text-[#4B4433]">{topic.mbtiNote}</p>
+                  </div>
+                ) : (
+                  // 45세 이하 — 기존과 같은 담백한 한 줄
+                  <p className="mt-2 text-[11.5px] leading-relaxed text-[#8C8064]">{topic.mbtiNote}</p>
+                )
               )}
             </div>
           ) : (
             <div className="space-y-1.5 pr-10 text-[13px] leading-[1.7] text-[#4B4433]">
-              {daily.reading.map((line, i) => (
-                <p key={i} className={i === 0 ? "font-semibold" : ""}>{line}</p>
-              ))}
+              {daily.reading.map((line, i) => {
+                const isMbtiLine = Boolean(daily.mbtiLine) && i === daily.reading.length - 1;
+                if (isMbtiLine && daily.mbti) {
+                  // 65세 이상은 가벼운 참고 한 줄, 46~64세는 '성향 30%' 불록으로 또렷하게
+                  return senior ? (
+                    <p key={i} className="pt-1 text-[11.5px] leading-relaxed text-[#8C8064]">{line}</p>
+                  ) : (
+                    <div
+                      key={i}
+                      className="mt-2 rounded-xl bg-white/85 px-2.5 py-2 shadow-[inset_0_0_0_1px_rgba(199,168,98,0.35)]"
+                    >
+                      <p className="text-[12px] font-extrabold leading-none text-[#8A6F33]">✨ {daily.mbti} 성향</p>
+                      <p className="mt-1.5 text-[13px] font-semibold leading-[1.7] text-[#3E3A2C]">{line}</p>
+                    </div>
+                  );
+                }
+                return (
+                  <p key={i} className={i === 0 ? "font-semibold" : ""}>{line}</p>
+                );
+              })}
             </div>
           )}
 
@@ -227,6 +257,19 @@ export function FortuneCard({ daily }: { daily: DailyView }) {
           </p>
           <p className="mt-2 text-[11px] leading-[1.6] text-[#8E6E4E]">{daily.caution.basis}</p>
         </div>
+
+        {/* 65세 이상 — 사주 풀이만으로 깔끔하게, 성향은 원할 때만 작게 더한다. */}
+        {senior && !daily.mbti && onOpenMbti && (
+          <button
+            type="button"
+            onClick={onOpenMbti}
+            className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-2xl border border-dashed border-[#DCCFB0] bg-white/55 px-3 py-2.5 text-[12px] font-bold text-ink-soft transition hover:border-[#cddcc9] hover:bg-white active:scale-[0.99]"
+          >
+            <span aria-hidden className="text-[12px] leading-none">✨</span>
+            성향도 같이 볼래요
+            <span className="text-[10.5px] font-semibold text-ink-faint">· 선택</span>
+          </button>
+        )}
       </div>
     </section>
   );

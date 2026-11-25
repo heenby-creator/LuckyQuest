@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ageGroupForYear, koreanAge } from "@/lib/age";
 import { JIN, computeChart } from "@/lib/saju";
 import type { Birth, BirthTime, Mbti, Profile } from "@/lib/types";
@@ -81,10 +81,13 @@ export function Onboarding({
   initial,
   onSave,
   onCancel,
+  focusMbti,
 }: {
   initial?: Profile | null;
   onSave: (profile: Profile) => void;
   onCancel?: () => void;
+  /** '성향도 같이 볼래요'로 들어왔을 때 MBTI 선택부를 펼쳐 보여 준다. */
+  focusMbti?: boolean;
 }) {
   const [isLunar, setIsLunar] = useState(initial?.birth.isLunar ?? false);
   const [isLeapMonth, setIsLeapMonth] = useState(initial?.birth.isLeapMonth ?? false);
@@ -96,6 +99,7 @@ export function Onboarding({
   // MBTI를 모르고 사주 중심으로 시작하는 경우 — 성향 퀘스트 대신 오행 퀘스트를 하나 더 준다.
   const [skipMbti, setSkipMbti] = useState(Boolean(initial) && !initial?.mbti);
   const [quizOpen, setQuizOpen] = useState(false);
+  const [mbtiOpen, setMbtiOpen] = useState(Boolean(initial?.mbti));
   const [quizAnswers, setQuizAnswers] = useState<Record<number, string>>({});
   const [error, setError] = useState<string | null>(null);
 
@@ -103,6 +107,18 @@ export function Onboarding({
   // 생년만 받으면 연령대가 정해진다 — 46세 이후에는 사주 중심 풀이와 '대인·관계' 탭으로 바뀐다.
   const ageGroup = year ? ageGroupForYear(Number(year)) : null;
   const mature = ageGroup === "mature";
+  const senior = ageGroup === "senior";
+  // 65세 이상은 MBTI를 고르지 않으면 사주만으로 바로 시작한다.
+  const sajuOnly = skipMbti || (senior && !mbti);
+
+  useEffect(() => {
+    if (!focusMbti) return;
+    setMbtiOpen(true);
+    const timer = window.setTimeout(() => {
+      document.getElementById("mbti-section")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 90);
+    return () => window.clearTimeout(timer);
+  }, [focusMbti]);
   const daysInMonth = useMemo(() => {
     if (isLunar) return 30; // 음력은 29·30일까지 — 실제 존재 여부는 계산 단계에서 확인해요
     if (!year || !month) return 31;
@@ -114,19 +130,19 @@ export function Onboarding({
     return `${quizAnswers[0]}${quizAnswers[1]}${quizAnswers[2]}${quizAnswers[3]}` as Mbti;
   }, [quizAnswers]);
 
-  const ready = Boolean(year && month && day && (mbti || skipMbti) && timeChoice);
+  const ready = Boolean(year && month && day && (mbti || sajuOnly) && timeChoice);
 
   const missing = useMemo(() => {
     const items: string[] = [];
     if (!year || !month || !day) items.push("생년월일");
     if (!timeChoice) items.push("태어난 시간");
-    if (!mbti && !skipMbti) items.push("MBTI");
+    if (!mbti && !sajuOnly) items.push("MBTI");
     return items;
-  }, [year, month, day, timeChoice, mbti, skipMbti]);
+  }, [year, month, day, timeChoice, mbti, sajuOnly]);
 
   function submit() {
     if (!year || !month || !day || !timeChoice) return;
-    if (!mbti && !skipMbti) return;
+    if (!mbti && !sajuOnly) return;
     const birth: Birth = {
       year: Number(year),
       month: Number(month),
@@ -147,7 +163,7 @@ export function Onboarding({
     onSave({
       birth,
       time,
-      mbti: skipMbti ? null : mbti,
+      mbti: sajuOnly ? null : mbti,
       createdAt: initial?.createdAt ?? new Date().toISOString(),
     });
   }
@@ -160,9 +176,9 @@ export function Onboarding({
         <div>
           <p className="text-[15px] font-bold text-ink">안녕하세요, 오늘의 별이에요</p>
           <p className="mt-0.5 text-[12.5px] leading-relaxed text-ink-soft">
-            생년월일과 태어난 시간, MBTI를 알려주시면 <br />오늘의 운세와 퀘스트를 준비할게요.
+            생년월일과 태어난 시간을 알려주시면 <br />오늘의 운세와 퀘스트를 준비할게요.
             <br />
-            <span className="text-[11.5px] text-ink-faint">MBTI를 몰라도 사주만으로 시작할 수 있어요.</span>
+            <span className="text-[11.5px] text-ink-faint">MBTI는 알면 성향도 함께 봐 드려요. 몰라도 사주만으로 시작할 수 있어요.</span>
           </p>
         </div>
       </div>
@@ -318,118 +334,167 @@ export function Onboarding({
         )}
       </section>
 
-      {/* MBTI */}
-      <section className="card p-4">
+      {/* MBTI — 65세 이상은 선택으로 최소화하고, 사주만으로도 바로 시작할 수 있게 둔다. */}
+      <section id="mbti-section" className="card p-4">
         <div className="mb-1 flex items-center justify-between">
-          <h2 className="text-[14px] font-bold text-ink">MBTI</h2>
-          <button
-            type="button"
-            onClick={() => setQuizOpen((v) => !v)}
-            className="rounded-full bg-gold-soft px-3 py-1 text-[12px] font-bold text-[#8a6a1c]"
-          >
-            잘 모르겠어요
-          </button>
+          <h2 className="flex items-center gap-1.5 text-[14px] font-bold text-ink">
+            {senior ? "성향 (MBTI)" : "MBTI"}
+            {senior && (
+              <span className="rounded-full bg-cream-2 px-2 py-0.5 text-[10.5px] font-bold text-ink-faint">선택</span>
+            )}
+          </h2>
+          {(!senior || mbtiOpen) && (
+            <button
+              type="button"
+              onClick={() => setQuizOpen((v) => !v)}
+              className="rounded-full bg-gold-soft px-3 py-1 text-[12px] font-bold text-[#8a6a1c]"
+            >
+              잘 모르겠어요
+            </button>
+          )}
         </div>
         <p className="mb-2 text-[11.5px] leading-relaxed text-ink-faint">
-          {mature
-            ? `만 ${koreanAge(Number(year))}세 — 사주 일진·오행 풀이를 중심으로 깊게 봐 드리고, MBTI는 보조로만 짚어요.`
-            : "성향에 맞는 퀘스트를 고르는 데 써요. 몰라도 아래 ‘사주 중심’으로 시작할 수 있어요."}
+          {senior
+            ? "65세 이상은 사주 일진·오행 풀이를 중심으로 바로 시작해요. 성향은 알면 가볍게 한 줄만 더해 드려요."
+            : mature
+              ? `${koreanAge(Number(year))}세 — 사주 일진·오행 풀이 70%에 MBTI 성향 30%를 곁들여 봐 드려요.`
+              : "성향에 맞는 퀘스트를 고르는 데 써요. 몰라도 아래 ‘사주 중심’으로 시작할 수 있어요."}
         </p>
 
-        {quizOpen ? (
-          <div className="mt-2 space-y-3">
-            {QUIZ.map((q, qi) => (
-              <div key={qi}>
-                <p className="mb-1.5 text-[12.5px] font-semibold text-ink-soft">
-                  {qi + 1}. {q.question}
-                </p>
-                <div className="grid grid-cols-2 gap-2">
-                  {q.options.map((opt) => {
-                    const active = quizAnswers[qi] === opt.value;
-                    return (
-                      <button
-                        key={opt.value}
-                        type="button"
-                        onClick={() => setQuizAnswers((prev) => ({ ...prev, [qi]: opt.value }))}
-                        className={`rounded-2xl border px-2.5 py-2 text-left transition ${
-                          active ? "border-leaf bg-leaf-soft" : "border-line bg-white/60"
-                        }`}
-                      >
-                        <span className="block text-[12.5px] font-semibold leading-snug text-ink">{opt.label}</span>
-                        <span className="text-[10.5px] text-ink-faint">{opt.hint}</span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            ))}
+        {senior && !mbtiOpen ? (
+          <button
+            type="button"
+            onClick={() => setMbtiOpen(true)}
+            className="flex w-full items-center justify-center gap-1.5 rounded-2xl border border-dashed border-[#dccfb0] bg-white/50 px-3 py-2.5 text-ink-soft transition-all duration-150 hover:border-[#cddcc9] hover:bg-white active:scale-[0.98]"
+          >
+            <span aria-hidden className="text-[12px] leading-none">✨</span>
+            <span className="text-[12.5px] font-bold">성향(MBTI)도 함께 보기</span>
+            <span className="text-[10.5px] text-ink-faint">· 선택</span>
+          </button>
+        ) : (
+          <>
+            {quizOpen ? (
+              <div className="mt-2 space-y-3">
+                {QUIZ.map((q, qi) => (
+                  <div key={qi}>
+                    <p className="mb-1.5 text-[12.5px] font-semibold text-ink-soft">
+                      {qi + 1}. {q.question}
+                    </p>
+                    <div className="grid grid-cols-2 gap-2">
+                      {q.options.map((opt) => {
+                        const active = quizAnswers[qi] === opt.value;
+                        return (
+                          <button
+                            key={opt.value}
+                            type="button"
+                            onClick={() => setQuizAnswers((prev) => ({ ...prev, [qi]: opt.value }))}
+                            className={`rounded-2xl border px-2.5 py-2 text-left transition ${
+                              active ? "border-leaf bg-leaf-soft" : "border-line bg-white/60"
+                            }`}
+                          >
+                            <span className="block text-[12.5px] font-semibold leading-snug text-ink">{opt.label}</span>
+                            <span className="text-[10.5px] text-ink-faint">{opt.hint}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
 
-            {quizResult && (
-              <div className="flex items-center justify-between rounded-2xl bg-leaf-soft px-3 py-2.5">
-                <span className="text-[13px] font-bold text-leaf-strong">
-                  나의 유형은 <span className="text-[15px]">{quizResult}</span>
-                </span>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setMbti(quizResult);
-                    setSkipMbti(false);
-                    setQuizOpen(false);
-                  }}
-                  className="rounded-full bg-leaf px-3 py-1.5 text-[12px] font-bold text-white"
-                >
-                  적용하기
-                </button>
+                {quizResult && (
+                  <div className="flex items-center justify-between rounded-2xl bg-leaf-soft px-3 py-2.5">
+                    <span className="text-[13px] font-bold text-leaf-strong">
+                      나의 유형은 <span className="text-[15px]">{quizResult}</span>
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setMbti(quizResult);
+                        setSkipMbti(false);
+                        setMbtiOpen(true);
+                        setQuizOpen(false);
+                      }}
+                      className="rounded-full bg-leaf px-3 py-1.5 text-[12px] font-bold text-white"
+                    >
+                      적용하기
+                    </button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="mt-2 grid grid-cols-4 gap-1.5">
+                {MBTI_LIST.map((type) => {
+                  const active = mbti === type;
+                  return (
+                    <button
+                      key={type}
+                      type="button"
+                      onClick={() => {
+                        setMbti(type);
+                        setSkipMbti(false);
+                      }}
+                      className={`rounded-xl border py-2 text-[12.5px] font-bold tracking-wide transition ${
+                        active && !skipMbti
+                          ? "border-leaf bg-leaf text-white shadow-[0_8px_18px_-14px_rgba(18,128,92,0.9)]"
+                          : "border-line bg-white/60 text-ink-soft hover:border-[#cddcc9]"
+                      }`}
+                    >
+                      {type}
+                    </button>
+                  );
+                })}
               </div>
             )}
-          </div>
-        ) : (
-          <div className="mt-2 grid grid-cols-4 gap-1.5">
-            {MBTI_LIST.map((type) => {
-              const active = mbti === type;
-              return (
+
+            {senior ? (
+              <button
+                type="button"
+                aria-pressed={sajuOnly}
+                onClick={() => {
+                  setMbti(null);
+                  setSkipMbti(true);
+                  setQuizOpen(false);
+                  setMbtiOpen(false);
+                }}
+                className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-2xl border border-dashed border-[#dccfb0] bg-white/50 px-3 py-2.5 text-ink-soft transition-all duration-150 hover:border-[#cddcc9] hover:bg-white active:scale-[0.98]"
+              >
+                <span className="text-[12.5px] font-bold">성향 없이 사주만 볼래요</span>
+              </button>
+            ) : (
+              <>
+                {/* MBTI를 몰라도 부담 없이 시작 — 사주 중심으로 오늘의 흐름과 주의점을 풀어 준다 */}
                 <button
-                  key={type}
                   type="button"
+                  aria-pressed={skipMbti}
                   onClick={() => {
-                    setMbti(type);
-                    setSkipMbti(false);
+                    setSkipMbti((v) => !v);
+                    setMbti(null);
+                    setQuizOpen(false);
                   }}
-                  className={`rounded-xl border py-2 text-[12.5px] font-bold tracking-wide transition ${
-                    active && !skipMbti
-                      ? "border-leaf bg-leaf text-white shadow-[0_8px_18px_-14px_rgba(18,128,92,0.9)]"
-                      : "border-line bg-white/60 text-ink-soft hover:border-[#cddcc9]"
+                  className={`mt-2 flex w-full items-center justify-center gap-1.5 rounded-2xl border px-3 py-2.5 transition-all duration-150 active:scale-[0.98] ${
+                    skipMbti
+                      ? "border-leaf bg-leaf text-white shadow-[0_10px_20px_-14px_rgba(18,128,92,0.95)]"
+                      : "border-dashed border-[#dccfb0] bg-white/50 text-ink-soft hover:border-[#cddcc9] hover:bg-white"
                   }`}
                 >
-                  {type}
+                  {skipMbti && <CheckMark size={12} />}
+                  <span className="text-[12.5px] font-bold">MBTI 잘 모름 · 사주 중심으로 시작</span>
                 </button>
-              );
-            })}
-          </div>
+                {skipMbti && (
+                  <p className="anim-fade-up mt-2 flex items-start gap-1.5 rounded-2xl bg-leaf-soft px-3 py-2 text-[11.5px] leading-relaxed font-semibold text-leaf-strong">
+                    <Sparkle size={11} color="#12805C" className="mt-[3px] shrink-0" />
+                    사주 일진과 오행으로 오늘의 흐름과 조심할 것을 풀고, 두 번째 퀘스트도 성향 대신 오행으로 골라 드려요.
+                  </p>
+                )}
+              </>
+            )}
+          </>
         )}
 
-        {/* MBTI를 몰라도 부담 없이 시작 — 사주 중심으로 오늘의 흐름과 주의점을 풀어 준다 */}
-        <button
-          type="button"
-          aria-pressed={skipMbti}
-          onClick={() => {
-            setSkipMbti((v) => !v);
-            setMbti(null);
-            setQuizOpen(false);
-          }}
-          className={`mt-2 flex w-full items-center justify-center gap-1.5 rounded-2xl border px-3 py-2.5 transition-all duration-150 active:scale-[0.98] ${
-            skipMbti
-              ? "border-leaf bg-leaf text-white shadow-[0_10px_20px_-14px_rgba(18,128,92,0.95)]"
-              : "border-dashed border-[#dccfb0] bg-white/50 text-ink-soft hover:border-[#cddcc9] hover:bg-white"
-          }`}
-        >
-          {skipMbti && <CheckMark size={12} />}
-          <span className="text-[12.5px] font-bold">MBTI 잘 모름 · 사주 중심으로 시작</span>
-        </button>
-        {skipMbti && (
+        {senior && mbti && (
           <p className="anim-fade-up mt-2 flex items-start gap-1.5 rounded-2xl bg-leaf-soft px-3 py-2 text-[11.5px] leading-relaxed font-semibold text-leaf-strong">
             <Sparkle size={11} color="#12805C" className="mt-[3px] shrink-0" />
-            사주 일진과 오행으로 오늘의 흐름과 조심할 것을 풀고, 두 번째 퀘스트도 성향 대신 오행으로 골라 드려요.
+            {mbti} 성향은 오늘의 운세 마지막에 한 줄로만 곁들여 드려요. 사주 풀이가 중심이에요.
           </p>
         )}
       </section>
