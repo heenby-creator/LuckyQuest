@@ -1,0 +1,8 @@
+[{
+      "relation": ["delegate_permission/common.handle_all_urls"],
+      "target": {
+        "namespace": "android_app",
+        "package_name": "app.luckyquest.twa",
+        "sha256_cert_fingerprints": ["92:7D:19:AB:C2:0B:27:7C:18:AD:57:BA:9A:66:0E:67:42:C9:9C:35:85:96:55:88:37:78:50:75:07:CE:8E:80"]
+      }
+    }]
