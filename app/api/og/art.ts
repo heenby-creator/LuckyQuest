@@ -26,13 +26,15 @@ export const STAR_URI = toUri(`<svg xmlns="http://www.w3.org/2000/svg" width="12
 </defs>
 <circle cx="60" cy="62" r="56" fill="url(#gl)"/>
 <polygon points="${STAR_POINTS}" fill="url(#st)" stroke="url(#st)" stroke-width="13" stroke-linejoin="round"/>
-<ellipse cx="47.5" cy="61" rx="3.4" ry="4.6" fill="#6B4A22"/>
-<ellipse cx="72.5" cy="61" rx="3.4" ry="4.6" fill="#6B4A22"/>
-<circle cx="46.4" cy="59.4" r="1.1" fill="#FFF8E1"/>
-<circle cx="71.4" cy="59.4" r="1.1" fill="#FFF8E1"/>
-<path d="M54 72.5 Q60 77.5 66 72.5" stroke="#6B4A22" stroke-width="2.4" stroke-linecap="round" fill="none"/>
-<circle cx="38.5" cy="70" r="4.6" fill="#FFB49E" opacity="0.55"/>
-<circle cx="81.5" cy="70" r="4.6" fill="#FFB49E" opacity="0.55"/>
+<ellipse cx="47.5" cy="60.5" rx="6" ry="8" fill="#6B4A22"/>
+<ellipse cx="72.5" cy="60.5" rx="6" ry="8" fill="#6B4A22"/>
+<circle cx="45.4" cy="57.4" r="2.1" fill="#FFF8E1"/>
+<circle cx="70.4" cy="57.4" r="2.1" fill="#FFF8E1"/>
+<circle cx="49.9" cy="64.2" r="1" fill="#FFF8E1" opacity="0.85"/>
+<circle cx="74.9" cy="64.2" r="1" fill="#FFF8E1" opacity="0.85"/>
+<path d="M52.5 74 Q60 79.8 67.5 74" stroke="#6B4A22" stroke-width="2.4" stroke-linecap="round" fill="none"/>
+<circle cx="37.5" cy="73" r="4.4" fill="#FFB49E" opacity="0.55"/>
+<circle cx="82.5" cy="73" r="4.4" fill="#FFB49E" opacity="0.55"/>
 <path d="M100 22 L102.6 29.4 L110 32 L102.6 34.6 L100 42 L97.4 34.6 L90 32 L97.4 29.4 Z" fill="#FFDE6B"/>
 <path d="M17 44 L18.8 49 L23.8 50.8 L18.8 52.6 L17 57.6 L15.2 52.6 L10.2 50.8 L15.2 49 Z" fill="#FFDE6B"/>
 </svg>`);
