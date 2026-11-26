@@ -56,22 +56,24 @@ export function StarMascot({
         strokeLinejoin="round"
       />
 
-      {/* 얼굴 */}
+      {/* 얼굴 — 눈을 크게 키워 작은 크기에서도 표정이 살아난다 */}
       <g className="anim-blink">
-        <ellipse cx="47.5" cy="61" rx="3.4" ry="4.6" fill="#6B4A22" />
-        <ellipse cx="72.5" cy="61" rx="3.4" ry="4.6" fill="#6B4A22" />
-        <circle cx="46.4" cy="59.4" r="1.1" fill="#FFF8E1" />
-        <circle cx="71.4" cy="59.4" r="1.1" fill="#FFF8E1" />
+        <ellipse cx="47.5" cy="60.5" rx="6" ry="8" fill="#6B4A22" />
+        <ellipse cx="72.5" cy="60.5" rx="6" ry="8" fill="#6B4A22" />
+        <circle cx="45.4" cy="57.4" r="2.1" fill="#FFF8E1" />
+        <circle cx="70.4" cy="57.4" r="2.1" fill="#FFF8E1" />
+        <circle cx="49.9" cy="64.2" r="1" fill="#FFF8E1" opacity="0.85" />
+        <circle cx="74.9" cy="64.2" r="1" fill="#FFF8E1" opacity="0.85" />
       </g>
       <path
-        d={mood === "cheer" ? "M53 72 Q60 80.5 67 72" : "M54 72.5 Q60 77.5 66 72.5"}
+        d={mood === "cheer" ? "M51.5 73.5 Q60 83 68.5 73.5" : "M52.5 74 Q60 79.8 67.5 74"}
         stroke="#6B4A22"
         strokeWidth="2.4"
         strokeLinecap="round"
         fill="none"
       />
-      <circle cx="38.5" cy="70" r="4.6" fill="#FFB49E" opacity="0.55" />
-      <circle cx="81.5" cy="70" r="4.6" fill="#FFB49E" opacity="0.55" />
+      <circle cx="37.5" cy="73" r="4.4" fill="#FFB49E" opacity="0.55" />
+      <circle cx="82.5" cy="73" r="4.4" fill="#FFB49E" opacity="0.55" />
 
       {/* 반짝이 */}
       <g fill="#FFDE6B">

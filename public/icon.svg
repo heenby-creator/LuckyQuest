@@ -12,17 +12,19 @@
   </defs>
   <rect width="512" height="512" fill="#FFFFFF"/>
   <!-- 왼쪽 위 작은 반짝이 1개 -->
-  <path d="M106 90L112.6 105.4L128 112L112.6 118.6L106 134L99.4 118.6L84 112L99.4 105.4Z" fill="url(#spark)"/>
+  <path d="M122 108L128 122L142 128L128 134L122 148L116 134L102 128L116 122Z" fill="url(#spark)"/>
   <!-- 별 캐릭터: 중심 (260,268), 외곽 반지름 216, 꼭짓점 둥글림 -->
   <path d="M243.79 77.24Q260 52 276.21 77.24L330.94 162.44Q333.64 166.65 338.47 167.92L436.41 193.63Q465.43 201.25 446.43 224.47L382.31 302.84Q379.15 306.71 379.44 311.71L385.24 412.8Q386.96 442.75 359.01 431.86L264.66 395.1Q260 393.28 255.34 395.1L160.99 431.86Q133.04 442.75 134.76 412.8L140.56 311.71Q140.85 306.71 137.69 302.84L73.57 224.47Q54.57 201.25 83.59 193.63L181.53 167.92Q186.36 166.65 189.06 162.44Z" fill="url(#star)" stroke="#E09600" stroke-width="12" stroke-linejoin="round"/>
   <!-- 볼터치 -->
-  <circle cx="165" cy="296" r="21" fill="#FF9E6B" opacity="0.55"/>
-  <circle cx="355" cy="296" r="21" fill="#FF9E6B" opacity="0.55"/>
+  <circle cx="164" cy="300" r="19" fill="#FF9E6B" opacity="0.55"/>
+  <circle cx="356" cy="300" r="19" fill="#FF9E6B" opacity="0.55"/>
   <!-- 눈동자 + 하이라이트 -->
-  <ellipse cx="206" cy="254" rx="17" ry="22.5" fill="#5F3D1B"/>
-  <ellipse cx="314" cy="254" rx="17" ry="22.5" fill="#5F3D1B"/>
-  <circle cx="200" cy="247" r="5.8" fill="#FFFDF7"/>
-  <circle cx="308" cy="247" r="5.8" fill="#FFFDF7"/>
+  <ellipse cx="206" cy="252" rx="29" ry="36" fill="#5F3D1B"/>
+  <ellipse cx="314" cy="252" rx="29" ry="36" fill="#5F3D1B"/>
+  <circle cx="196" cy="236" r="9.5" fill="#FFFDF7"/>
+  <circle cx="304" cy="236" r="9.5" fill="#FFFDF7"/>
+  <circle cx="215" cy="267" r="3.4" fill="#FFFDF7" opacity="0.85"/>
+  <circle cx="323" cy="267" r="3.4" fill="#FFFDF7" opacity="0.85"/>
   <!-- 미소 호 -->
-  <path d="M234 306Q260 318 286 306" stroke="#5F3D1B" stroke-width="10" stroke-linecap="round" fill="none"/>
+  <path d="M230 312Q260 327 290 312" stroke="#5F3D1B" stroke-width="11" stroke-linecap="round" fill="none"/>
 </svg>
