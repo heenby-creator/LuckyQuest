@@ -1,8 +1,13 @@
-[{
-      "relation": ["delegate_permission/common.handle_all_urls"],
-      "target": {
-        "namespace": "android_app",
-        "package_name": "app.luckyquest.twa",
-        "sha256_cert_fingerprints": ["92:7D:19:AB:C2:0B:27:7C:18:AD:57:BA:9A:66:0E:67:42:C9:9C:35:85:96:55:88:37:78:50:75:07:CE:8E:80"]
-      }
-    }]
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "app.luckyquest.twa",
+      "sha256_cert_fingerprints": [
+        "92:7D:19:AB:C2:0B:27:7C:18:AD:57:BA:9A:66:0E:67:42:C9:9C:35:85:96:55:88:37:78:50:75:07:CE:8E:80",
+        "F0:25:66:97:7E:86:F2:D1:9C:C6:F8:20:BC:BC:1C:29:82:02:FC:6E:F7:BC:F1:B6:42:A4:18:7B:F2:93:D1:2D"
+      ]
+    }
+  }
+]
