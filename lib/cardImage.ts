@@ -4,7 +4,7 @@
  */
 import type { CharmView } from "./engine";
 import type { Element } from "./types";
-import { mix, paleness, shade } from "./color";
+import { mix, paleness, shade, sphereStops } from "./color";
 
 const W = 1080;
 const H = 1760;
@@ -65,7 +65,16 @@ function leafPath(ctx: CanvasRenderingContext2D, k: number) {
   ctx.closePath();
 }
 
-function drawClover(ctx: CanvasRenderingContext2D, cx: number, cy: number, leafLen: number) {
+const CLOVER_GREEN = { top: "#7BCFA0", mid: "#3E9B69", low: "#1C6B49", back: "#60B98C", backMid: "#2E8A5C", backLow: "#16583C", vein: "rgba(234,247,239,0.62)" };
+const CLOVER_GOLD = { top: "#F7E0A0", mid: "#D9AE41", low: "#B98E28", back: "#EFCE78", backMid: "#C99E35", backLow: "#A87E20", vein: "rgba(255,250,232,0.66)" };
+
+function drawClover(
+  ctx: CanvasRenderingContext2D,
+  cx: number,
+  cy: number,
+  leafLen: number,
+  palette: typeof CLOVER_GREEN = CLOVER_GREEN,
+) {
   const k = leafLen / 30;
 
   // 바닥 그림자
@@ -88,7 +97,7 @@ function drawClover(ctx: CanvasRenderingContext2D, cx: number, cy: number, leafL
     cx - leafLen * 0.16,
     cy + leafLen * 1.06,
   );
-  ctx.strokeStyle = "#1C6B49";
+  ctx.strokeStyle = palette.low;
   ctx.lineWidth = Math.max(4, leafLen * 0.075);
   ctx.lineCap = "round";
   ctx.stroke();
@@ -104,14 +113,14 @@ function drawClover(ctx: CanvasRenderingContext2D, cx: number, cy: number, leafL
     ctx.save();
     ctx.translate(1.2 * k, 2 * k);
     leafPath(ctx, k);
-    ctx.fillStyle = "rgba(18,63,44,0.14)";
+    ctx.fillStyle = "rgba(18,63,44,0.12)";
     ctx.fill();
     ctx.restore();
 
     const gradient = ctx.createLinearGradient(0, -33 * k, 0, 0);
-    gradient.addColorStop(0, isFront ? "#7BCFA0" : "#60B98C");
-    gradient.addColorStop(0.55, isFront ? "#3E9B69" : "#2E8A5C");
-    gradient.addColorStop(1, isFront ? "#1C6B49" : "#16583C");
+    gradient.addColorStop(0, isFront ? palette.top : palette.back);
+    gradient.addColorStop(0.55, isFront ? palette.mid : palette.backMid);
+    gradient.addColorStop(1, isFront ? palette.low : palette.backLow);
 
     leafPath(ctx, k);
     ctx.fillStyle = gradient;
@@ -124,7 +133,7 @@ function drawClover(ctx: CanvasRenderingContext2D, cx: number, cy: number, leafL
     ctx.beginPath();
     ctx.moveTo(0, -3.4 * k);
     ctx.lineTo(0, -23 * k);
-    ctx.strokeStyle = "rgba(234,247,239,0.62)";
+    ctx.strokeStyle = palette.vein;
     ctx.lineWidth = Math.max(1, 1.0 * k);
     ctx.lineCap = "round";
     ctx.stroke();
@@ -158,10 +167,10 @@ function drawClover(ctx: CanvasRenderingContext2D, cx: number, cy: number, leafL
   ctx.fill();
 }
 
-/** 입체 행운색 구 — 카드(components/LuckyColorSphere)와 같은 결의 그라데이션을 Canvas로 옮긴다. */
+/** 입체 행운색 구 — 카드(components/LuckyColorSphere)와 같은 색 단계(sphereStops)를 Canvas로 옮긴다. */
 function drawSphere(ctx: CanvasRenderingContext2D, cx: number, cy: number, radius: number, base: string) {
-  const pale = paleness(base);
-  const light = (t: number) => mix(base, "#FFFFFF", t);
+  const stops = sphereStops(base);
+  const { pale, light1, light2, light3, core, deep1, deep2, deep3, deep4, shadowTone } = stops;
   const TAU = Math.PI * 2;
 
   // 바닥 그림자 — 넓은 낙하 그림자와 접지 그림자
@@ -169,9 +178,9 @@ function drawSphere(ctx: CanvasRenderingContext2D, cx: number, cy: number, radiu
   ctx.translate(cx, cy + radius * 1.02);
   ctx.scale(1, 0.16);
   const floor = ctx.createRadialGradient(0, 0, radius * 0.1, 0, 0, radius * 0.98);
-  floor.addColorStop(0, `rgba(0,0,0,${0.16 + 0.06 * pale})`);
-  floor.addColorStop(0.55, `rgba(0,0,0,${0.06 + 0.03 * pale})`);
-  floor.addColorStop(1, "rgba(0,0,0,0)");
+  floor.addColorStop(0, `rgba(${hexTriplet(shadowTone)},${(0.2 + 0.08 * pale).toFixed(3)})`);
+  floor.addColorStop(0.55, `rgba(${hexTriplet(shadowTone)},${(0.08 + 0.04 * pale).toFixed(3)})`);
+  floor.addColorStop(1, `rgba(${hexTriplet(shadowTone)},0)`);
   ctx.beginPath();
   ctx.arc(0, 0, radius * 0.98, 0, TAU);
   ctx.fillStyle = floor;
@@ -182,8 +191,8 @@ function drawSphere(ctx: CanvasRenderingContext2D, cx: number, cy: number, radiu
   ctx.translate(cx, cy + radius * 0.99);
   ctx.scale(1, 0.12);
   const contact = ctx.createRadialGradient(0, 0, 2, 0, 0, radius * 0.6);
-  contact.addColorStop(0, `rgba(0,0,0,${0.2 + 0.08 * pale})`);
-  contact.addColorStop(1, "rgba(0,0,0,0)");
+  contact.addColorStop(0, `rgba(${hexTriplet(shade(base, 0.7))},${(0.22 + 0.1 * pale).toFixed(3)})`);
+  contact.addColorStop(1, `rgba(${hexTriplet(shade(base, 0.7))},0)`);
   ctx.beginPath();
   ctx.arc(0, 0, radius * 0.6, 0, TAU);
   ctx.fillStyle = contact;
@@ -204,23 +213,23 @@ function drawSphere(ctx: CanvasRenderingContext2D, cx: number, cy: number, radiu
   ctx.arc(cx, cy, radius, 0, TAU);
   ctx.clip();
 
-  // 본체
+  // 본체 — 위쪽 하이라이트에서 가장자리로 갈수록 짙어진다
   const body = ctx.createRadialGradient(
-    cx - radius * 0.38,
-    cy - radius * 0.5,
+    cx - radius * 0.36,
+    cy - radius * 0.48,
     radius * 0.04,
     cx,
     cy,
     radius * 1.04,
   );
-  body.addColorStop(0, light(0.62));
-  body.addColorStop(0.12, light(0.44));
-  body.addColorStop(0.26, light(0.2));
-  body.addColorStop(0.4, shade(base, 0.16 * pale));
-  body.addColorStop(0.54, shade(base, 0.08 + 0.18 * pale));
-  body.addColorStop(0.7, shade(base, 0.19 + 0.24 * pale));
-  body.addColorStop(0.86, shade(base, 0.32 + 0.3 * pale));
-  body.addColorStop(1, shade(base, 0.46 + 0.28 * pale));
+  body.addColorStop(0, light1);
+  body.addColorStop(0.12, light2);
+  body.addColorStop(0.26, light3);
+  body.addColorStop(0.4, core);
+  body.addColorStop(0.54, deep1);
+  body.addColorStop(0.7, deep2);
+  body.addColorStop(0.86, deep3);
+  body.addColorStop(1, deep4);
   ctx.fillStyle = body;
   ctx.fillRect(cx - radius, cy - radius, radius * 2, radius * 2);
 
@@ -233,9 +242,9 @@ function drawSphere(ctx: CanvasRenderingContext2D, cx: number, cy: number, radiu
     cy - radius * 0.48,
     radius * 0.95,
   );
-  gloss.addColorStop(0, `rgba(255,255,255,${(0.46 - 0.16 * pale).toFixed(3)})`);
-  gloss.addColorStop(0.35, "rgba(255,255,255,0.1)");
-  gloss.addColorStop(1, "rgba(255,255,255,0)");
+  gloss.addColorStop(0, `rgba(${hexTriplet(stops.gloss)},${(0.4 - 0.14 * pale).toFixed(3)})`);
+  gloss.addColorStop(0.35, `rgba(${hexTriplet(stops.gloss)},0.1)`);
+  gloss.addColorStop(1, `rgba(${hexTriplet(stops.gloss)},0)`);
   ctx.fillStyle = gloss;
   ctx.fillRect(cx - radius, cy - radius, radius * 2, radius * 2);
 
@@ -244,9 +253,9 @@ function drawSphere(ctx: CanvasRenderingContext2D, cx: number, cy: number, radiu
   ctx.translate(cx + radius * 0.42, cy + radius * 0.7);
   ctx.scale(1, 0.6);
   const bounce = ctx.createRadialGradient(0, 0, 0, 0, 0, radius * 0.62);
-  bounce.addColorStop(0, `rgba(255,255,255,${(0.24 + 0.2 * pale).toFixed(3)})`);
-  bounce.addColorStop(0.45, "rgba(255,255,255,0.08)");
-  bounce.addColorStop(1, "rgba(255,255,255,0)");
+  bounce.addColorStop(0, `rgba(${hexTriplet(stops.bounce)},${(0.22 + 0.18 * pale).toFixed(3)})`);
+  bounce.addColorStop(0.45, `rgba(${hexTriplet(stops.bounce)},0.08)`);
+  bounce.addColorStop(1, `rgba(${hexTriplet(stops.bounce)},0)`);
   ctx.beginPath();
   ctx.arc(0, 0, radius * 0.62, 0, TAU);
   ctx.fillStyle = bounce;
@@ -255,8 +264,8 @@ function drawSphere(ctx: CanvasRenderingContext2D, cx: number, cy: number, radiu
 
   // 안쪽 음영 — 가장자리로 갈수록 짙어진다
   const inset = ctx.createRadialGradient(cx, cy, radius * 0.55, cx, cy, radius);
-  inset.addColorStop(0, "rgba(0,0,0,0)");
-  inset.addColorStop(1, `rgba(${hexTriplet(shade(base, 0.62))},${(0.26 + 0.2 * pale).toFixed(3)})`);
+  inset.addColorStop(0, `rgba(${hexTriplet(shadowTone)},0)`);
+  inset.addColorStop(1, `rgba(${hexTriplet(shadowTone)},${(0.24 + 0.18 * pale).toFixed(3)})`);
   ctx.fillStyle = inset;
   ctx.fillRect(cx - radius, cy - radius, radius * 2, radius * 2);
 
@@ -283,7 +292,7 @@ function drawSphere(ctx: CanvasRenderingContext2D, cx: number, cy: number, radiu
   ctx.beginPath();
   ctx.arc(cx, cy, radius - 0.8, 0, TAU);
   ctx.strokeStyle = pale > 0.35
-    ? `rgba(${hexTriplet(shade(base, 0.34))},${(0.16 + 0.24 * pale).toFixed(3)})`
+    ? `rgba(${hexTriplet(stops.ringTone)},${(0.2 + 0.26 * pale).toFixed(3)})`
     : "rgba(255,255,255,0.2)";
   ctx.lineWidth = 1.6;
   ctx.stroke();
@@ -456,11 +465,13 @@ export async function composeCardImage(input: CardImageInput): Promise<Blob> {
   // 키워드 — 왼쪽에 줄기 있는 네잎클로버를 나란히
   ctx.font = `600 64px ${SERIF}`;
   const titleWidth = ctx.measureText(input.charm.title).width;
-  const cloverLeaf = 26;
-  const cloverGap = 20;
-  const titleRowWidth = cloverLeaf * 1.4 + cloverGap + titleWidth;
-  const titleLeft = (W - titleRowWidth) / 2 + cloverLeaf * 1.4 + cloverGap;
-  drawClover(ctx, titleLeft - cloverGap - cloverLeaf * 0.7, 606 - cloverLeaf * 0.4, cloverLeaf);
+  const cloverLeaf = 31;
+  const cloverGap = 24;
+  const cloverWidth = cloverLeaf * 1.15;
+  const titleRowWidth = cloverWidth + cloverGap + titleWidth;
+  const titleLeft = (W - titleRowWidth) / 2 + cloverWidth + cloverGap;
+  drawClover(ctx, titleLeft - cloverGap - cloverWidth / 2, 600, cloverLeaf, CLOVER_GOLD);
+  ctx.textAlign = "left";
   ctx.textAlign = "left";
   ctx.fillStyle = C.leafDeep;
   ctx.fillText(input.charm.title, titleLeft, 606);

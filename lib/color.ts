@@ -121,6 +121,55 @@ export function paleness(hex: string): number {
   return Math.min(1, Math.max(0, (luminance(hex) - 0.6) / 0.32));
 }
 
+/** 구슬 본체의 색 단계 — CSS(카드)와 Canvas(공유 이미지)가 같은 값을 쓴다. */
+export interface SphereStops {
+  /** 0에 가까우면 선명한 색, 1에 가까우면 아주 밝은 색 */
+  pale: number;
+  light1: string;
+  light2: string;
+  light3: string;
+  core: string;
+  deep1: string;
+  deep2: string;
+  deep3: string;
+  deep4: string;
+  /** 넓게 퍼지는 광택의 기준색 */
+  gloss: string;
+  /** 바닥에서 반사되는 빛의 기준색 */
+  bounce: string;
+  /** 안쪽 음영·바닥 그림자의 기준색 */
+  shadowTone: string;
+  /** 아주 밝은 색의 테두리 기준색 */
+  ringTone: string;
+}
+
+export function sphereStops(colorHex: string): SphereStops {
+  const base = colorHex;
+  const pale = paleness(base);
+
+  // 아주 밝은 색(진주빛·백합빛 등)은 그림자를 회색 쪽으로 빼야 탁한 갈색이 되지 않는다.
+  const tone = (amount: number) => {
+    const deep = deepen(base, amount);
+    return pale > 0.3 ? mix(deep, "#8C877E", pale * 0.5) : deep;
+  };
+
+  return {
+    pale,
+    light1: mix(base, "#FFFFFF", 0.62),
+    light2: mix(base, "#FFFFFF", 0.44),
+    light3: mix(base, "#FFFFFF", 0.2),
+    core: tone(0.14 * pale),
+    deep1: tone(0.08 + 0.18 * pale),
+    deep2: tone(0.2 + 0.24 * pale),
+    deep3: tone(0.34 + 0.3 * pale),
+    deep4: tone(0.48 + 0.3 * pale),
+    gloss: mix(base, "#FFFFFF", 0.5),
+    bounce: mix(base, "#FFFFFF", 0.45),
+    shadowTone: shade(base, 0.62),
+    ringTone: shade(base, 0.34),
+  };
+}
+
 export interface SpherePaint {
   /** sphere 요소의 배경(스펙큘러 → 광택 → 바닥 반사광 → 본체) */
   background: string;
@@ -148,36 +197,21 @@ export interface SpherePaint {
  */
 export function spherePaint(colorHex: string, size = 100): SpherePaint {
   const base = colorHex;
-  const pale = paleness(base);
   const s = size / 140; // 시안 2(140px)의 수치를 기준으로 삼는다
-
-  // 본체 — 위쪽 하이라이트에서 가장자리로 갈수록 짙어진다. 밝은 색은 더 짙게 떨어뜨린다.
-  const light1 = mix(base, "#FFFFFF", 0.62);
-  const light2 = mix(base, "#FFFFFF", 0.44);
-  const light3 = mix(base, "#FFFFFF", 0.2);
-  // 아주 밝은 색(진주빛·백합빛 등)은 그림자를 회색 쪽으로 빼야 탁한 갈색이 되지 않는다.
-  const tone = (amount: number) => {
-    const deep = deepen(base, amount);
-    return pale > 0.3 ? mix(deep, "#8C877E", pale * 0.5) : deep;
-  };
-  const core = tone(0.0 + 0.14 * pale);
-  const deep1 = tone(0.08 + 0.18 * pale);
-  const deep2 = tone(0.2 + 0.24 * pale);
-  const deep3 = tone(0.34 + 0.3 * pale);
-  const deep4 = tone(0.48 + 0.3 * pale);
+  const stops = sphereStops(base);
+  const { pale, light1, light2, light3, core, deep1, deep2, deep3, deep4, gloss, bounce, shadowTone } = stops;
 
   const background = [
     // 1. 또렷한 스펙큘러 하이라이트 (왼쪽 위)
     `radial-gradient(ellipse 10.6% 10.6% at 33% 26%, rgba(255,255,255,1) 0%, rgba(255,255,255,0.92) 26%, rgba(255,253,246,0.42) 58%, rgba(255,253,246,0) 100%)`,
     // 2. 넓게 퍼지는 광택
-    `radial-gradient(circle at 33% 26%, ${rgba(mix(base, "#FFFFFF", 0.5), 0.46)} 0%, ${rgba(mix(base, "#FFFFFF", 0.5), 0.12)} 30%, ${rgba(mix(base, "#FFFFFF", 0.5), 0)} 52%)`,
+    `radial-gradient(circle at 33% 26%, ${rgba(gloss, 0.46)} 0%, ${rgba(gloss, 0.12)} 30%, ${rgba(gloss, 0)} 52%)`,
     // 3. 바닥에서 반사되는 빛 (오른쪽 아래)
-    `radial-gradient(ellipse 48% 30% at 72% 85%, ${rgba(mix(base, "#FFFFFF", 0.45), 0.24 + 0.2 * pale)} 0%, ${rgba(mix(base, "#FFFFFF", 0.45), 0.08 + 0.08 * pale)} 45%, ${rgba(mix(base, "#FFFFFF", 0.45), 0)} 78%)`,
+    `radial-gradient(ellipse 48% 30% at 72% 85%, ${rgba(bounce, 0.24 + 0.2 * pale)} 0%, ${rgba(bounce, 0.08 + 0.08 * pale)} 45%, ${rgba(bounce, 0)} 78%)`,
     // 4. 구체 본체
     `radial-gradient(circle at 32% 26%, ${light1} 0%, ${light2} 12%, ${light3} 26%, ${core} 40%, ${deep1} 54%, ${deep2} 70%, ${deep3} 86%, ${deep4} 100%)`,
   ].join(", ");
 
-  const shadowTone = shade(base, 0.62);
   const boxShadow = [
     `inset ${-14 * s}px ${-18 * s}px ${30 * s}px ${rgba(shadowTone, 0.2 + 0.16 * pale)}`,
     `inset ${-32 * s}px ${-28 * s}px ${60 * s}px ${rgba(shadowTone, 0.1 + 0.12 * pale)}`,
@@ -189,9 +223,9 @@ export function spherePaint(colorHex: string, size = 100): SpherePaint {
     background,
     boxShadow,
     halo: `radial-gradient(circle at center, ${rgba(base, 0.18 - 0.05 * pale)} 0%, ${rgba(base, 0.08)} 42%, ${rgba(base, 0)} 68%)`,
-    floor: `radial-gradient(ellipse at center, ${rgba(shade(base, 0.62), 0.36 + 0.16 * pale)} 0%, ${rgba(shade(base, 0.62), 0)} 70%)`,
+    floor: `radial-gradient(ellipse at center, ${rgba(shadowTone, 0.36 + 0.16 * pale)} 0%, ${rgba(shadowTone, 0)} 70%)`,
     contact: `radial-gradient(ellipse at center, ${rgba(shade(base, 0.7), 0.22 + 0.12 * pale)} 0%, ${rgba(shade(base, 0.7), 0)} 70%)`,
-    ring: pale > 0.35 ? `inset 0 0 0 1px ${rgba(shade(base, 0.34), 0.24 + 0.3 * pale)}` : null,
+    ring: pale > 0.35 ? `inset 0 0 0 1px ${rgba(stops.ringTone, 0.24 + 0.3 * pale)}` : null,
     dot: `radial-gradient(circle at 34% 28%, ${mix(base, "#FFFFFF", 0.68)} 0%, ${mix(base, "#FFFFFF", 0.22)} 30%, ${base} 66%, ${deepen(base, 0.22 + 0.16 * pale)} 100%)`,
     dotShadow: `0 0 0 1px rgba(255,255,255,0.9), 0 0 0 1.6px ${rgba(shade(base, 0.45), 0.1 + 0.32 * pale)}, 0 1px 1.5px ${rgba(shade(base, 0.55), 0.3)}`,
     glow: `radial-gradient(circle at 50% 50%, ${rgba(base, 0.1 - 0.04 * pale)} 0%, ${rgba(base, 0)} 62%)`,
