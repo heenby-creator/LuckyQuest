@@ -23,7 +23,7 @@ import {
 } from "../lib/content";
 import { ageGroupForYear, type AgeGroup } from "../lib/age";
 import { buildDaily, deficiencyOf } from "../lib/engine";
-import { ELEMENTS, computeChart } from "../lib/saju";
+import { ELEMENTS, computeChart, todayEnergy } from "../lib/saju";
 import { cardForDate } from "../lib/share";
 import type { BirthTime, Element, Mbti, Profile } from "../lib/types";
 
@@ -234,7 +234,8 @@ for (const sample of samples.values()) {
     for (const now of DATES) {
       const daily = buildDaily(profile, now);
       const [q1, q2] = daily.quests;
-      const deficiency = deficiencyOf(chart, daily.dateKey);
+      // 결핍은 '오늘 합산 오행'(타고난 오행 + 오늘 일진)으로 계산한다.
+      const deficiency = deficiencyOf(chart, daily.dateKey, todayEnergy(now));
       const zeros = deficiency.zeros;
       cases += 1;
 
@@ -317,7 +318,29 @@ console.log(`     Quest 1 — ${fwDaily.quests[0].title} (${fwDaily.quests[0].el
 console.log(`     이유 — ${fwDaily.quests[0].why}`);
 console.log(`     Quest 2 — ${fwDaily.quests[1].title}`);
 console.log(`     이유 — ${fwDaily.quests[1].why}`);
-expect(fwDaily.quests[0].elements.join("+") === "화+수", "화·수 0 사주에서 화+수 복합 퀘스트가 나오지 않았어요");
+// 화·수가 모두 0인 사주 — 11-28 지적(병오일에 '화가 가득인데 화·수 0%')의 재현 사례
+expect(fwDaily.quests[0].elements.join("+") !== "화+수", "화·수 0 사주에서 11-24에도 화+수 퀘스트가 그대로 나왔어요");
+const boDay = buildDaily(fwProfile, new Date(2026, 10, 28)); // 병오일 (화/화)
+console.log(`   · 2026-11-28 병오일 (화·수 0 사주):`);
+console.log(`     리딩 — ${boDay.reading[2]}`);
+console.log(`     Quest 1 — ${boDay.quests[0].title} (${boDay.quests[0].elements.join("+")})`);
+// 병오일에는 화 기운이 +2 되어 화가 채워지므로, 화가 비었다고 말하거나 화+수 퀘스트를 주면 안 된다.
+expect(boDay.quests[0].elements.join("+") !== "화+수", "[2026-11-28] 병오일인데도 화+수 복합 퀘스트가 나왔어요");
+expect(!boDay.reading[2].includes("0%"), "[2026-11-28] 풀이에 0% 표기가 남아 있어요");
+expect(
+  boDay.reading[2].includes("채워") && boDay.reading[2].includes("수"),
+  `[2026-11-28] 오늘 들어온 화 기운이 빈자리를 채웠다는 설명이 없어요 → ${boDay.reading[2]}`,
+);
+// 화·수 0 사주의 10일 동안 퀘스트 1의 대상 오행이 하나로 고정되지 않는다.
+const fwTargets = new Set<string>();
+const fwQuestIds = new Set<string>();
+for (let day = 24; day <= 33; day += 1) {
+  const daily = buildDaily(fwProfile, new Date(2026, 10, day));
+  fwTargets.add(daily.quests[0].elements.join("+"));
+  fwQuestIds.add(daily.quests[0].id);
+}
+console.log(`   · 화·수 0 사주 10일 Quest 1 대상 오행 ${[...fwTargets].join(" / ")} · 제목 ${fwQuestIds.size}종`);
+expect(fwTargets.size >= 3, `화·수 0 사주 10일 Quest 1 대상 오행이 ${fwTargets.size}가지뿐이에요`);
 
 // 경달 님 사주 (1968-11-28, 시간 모름)
 const kdProfile: Profile = {
@@ -334,14 +357,17 @@ console.log(`     이유 — ${kdDaily.quests[0].why}`);
 console.log(`     Quest 2 — ${kdDaily.quests[1].title}`);
 console.log(`     이유 — ${kdDaily.quests[1].why}`);
 
-// 날짜가 바뀌면 퀘스트도 바뀌는지
+// 날짜가 바뀌면 퀘스트도 바뀌는지 — 이제 복합·단일이 섞이므로 Quest 1 제목 전체로 본다.
 const variety = new Set<string>();
+const varietyTargets = new Set<string>();
 for (let day = 1; day <= 60; day += 1) {
   const daily = buildDaily(fwProfile, new Date(2026, 10, day));
   variety.add(daily.quests[0].id);
+  varietyTargets.add(daily.quests[0].elements.join("+"));
 }
-console.log(`   · 60일 동안 화·수 복합 퀘스트 ${variety.size}종`);
-expect(variety.size >= 3, "복합 퀘스트가 날마다 거의 바뀌지 않아요");
+console.log(`   · 60일 동안 Quest 1 ${variety.size}종 · 대상 오행 ${varietyTargets.size}가지`);
+expect(variety.size >= 10, `Quest 1이 60일 동안 ${variety.size}종뿐이에요`);
+expect(varietyTargets.size >= 4, `Quest 1 대상 오행이 60일 동안 ${varietyTargets.size}가지뿐이에요`);
 
 /* ── 4. 오늘의 행운 카드 · 주제별 운세 검사 ───────────────── */
 
@@ -590,8 +616,13 @@ for (const profile of [youngProfile, matureProfile, matureNoMbti, seniorProfile,
         `${label}: 깊이 풀이에 천간·지지가 없어요`,
       );
       expect(
-        daily.reading[4].includes(daily.chart.strongest) && daily.reading[4].includes(daily.chart.weakest),
-        `${label}: 깊이 풀이에 강한·약한 오행이 없어요`,
+        daily.reading[4].includes(daily.chart.strongest),
+        `${label}: 깊이 풀이에 가장 두터운 오행이 없어요`,
+      );
+      // 5번째 문단은 앞의 부족 오행 설명을 반복하지 않는다 (11-28 지적 반영).
+      expect(
+        !daily.reading[4].includes("비어"),
+        `${label}: 깊이 풀이가 부족 오행 설명을 또 반복해요 → ${daily.reading[4]}`,
       );
       if (prev) expect(daily.reading[3] !== prev.reading[3], `${label}: 어제와 같은 깊이 풀이가 나왔어요`);
     }

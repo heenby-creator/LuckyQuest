@@ -12,6 +12,8 @@ import {
   MBTI_STYLE,
   RELATION_PHRASE,
   STEM_DEPTH,
+  STRONG_DAY_LINE,
+  STRONG_DAY_TIP,
   TODAY_MOOD,
   TOPIC_ADVICE,
   TOPIC_ADVICE_MATURE_LOVE,
@@ -21,7 +23,6 @@ import {
   TOPIC_FLOW_MATURE_LOVE,
   TOPIC_MBTI_ACTIONS,
   TOPIC_MBTI_ACTIONS_MATURE,
-  WEAK_DAY_TIP,
   charmForDate,
   comboKeyOf,
   elName,
@@ -35,7 +36,6 @@ import {
   ELEMENTS,
   GENERATES,
   chartOf,
-  elementPercent,
   elementStatus,
   relationOf,
   todayEnergy,
@@ -321,13 +321,16 @@ function cautionOf(
   const dayMaster = chart.dayMaster;
   const stemRel = relationOf(today.element, dayMaster);
   const branchRel = relationOf(today.branchElement, dayMaster);
+  // 부족 오행은 '오늘 합산 오행' 기준 — 오늘 일진이 채워 준 기운을 부족하다고 말하지 않는다.
   const weak = deficiency.lead;
-  const weakCount = chart.counts[weak];
+  const weakCount = deficiency.counts[weak];
   const strong = chart.strongest;
   const strongCount = chart.counts[strong];
 
-  // 부족한 오행을 오늘 기운이 극하면 가장 뾰족한 주의점이 된다.
-  const clash = weakCount <= 1 && (CONTROLS[today.element] === weak || CONTROLS[today.branchElement] === weak);
+  // 오늘 기운이 이미 채워 준 기운은 '눌린다'고 말하지 않는다.
+  const todayFills = today.element === weak || today.branchElement === weak;
+  const oppressor = [today.element, today.branchElement].find((el) => CONTROLS[el] === weak);
+  const clash = !todayFills && weakCount <= 1 && Boolean(oppressor);
 
   let axis: CautionAxis;
   if (clash) axis = "clash";
@@ -338,13 +341,25 @@ function cautionOf(
   else axis = "ease";
 
   const copy = rotate(CAUTION_BOX[axis], today.cycleIndex, `caution-${axis}`);
-  const fill = (text: string) => text.replace(/\{weak\}/g, elName(weak)).replace(/\{today\}/g, elName(today.element));
+  // clash 문장의 {today}는 부족한 기운을 실제로 누르는 쪽을 가리킨다.
+  const oppressing = clash && oppressor ? oppressor : today.element;
+  const fill = (text: string) => text.replace(/\{weak\}/g, elName(weak)).replace(/\{today\}/g, elName(oppressing));
 
-  const clashNote = `부족한 ${elName(weak)} 기운을 오늘 ${elName(today.element)} 기운이 눌러서, 그 부분이 더 힘들 수 있어요.`;
+  const clashNote = `부족한 ${elName(weak)} 기운을 오늘 ${elName(oppressing)} 기운이 눌러서, 그 부분이 더 힘들 수 있어요.`;
   const sameRelation = stemRel === branchRel;
+  const natalZeroText = deficiency.natalZeros.map(elName).join("·");
+  const natalLine =
+    deficiency.natalZeros.length > 0
+      ? `타고난 사주에서는 ${elName(strong)} 기운이 ${strongCount}개로 가장 두텁고, ${natalZeroText} 기운이 비어 있어요.`
+      : `타고난 사주에서는 ${elName(strong)} 기운이 ${strongCount}개로 가장 두텁고, ${elName(chart.weakest)} 기운이 ${chart.counts[chart.weakest]}개로 가장 적어요.`;
+  // 오늘 일진이 타고난 빈자리를 어떻게 건드렸는지 — 앞 문장과 모순되지 않게 한 줄로 잇는다.
+  const todayLine =
+    deficiency.filled.length > 0
+      ? ` 오늘 ${today.pillar}일 기운이 그중 ${deficiency.filled.map(elName).join("·")} 자리를 채워 줬고, ${deficiency.zeros.length > 0 ? `${deficiency.zeros.map(elName).join("·")} 기운은 아직 비어 있어요.` : "다섯 기운이 모두 돌아요."}`
+      : "";
   const basis = isSajuDeep(group)
-    ? `오늘은 ${today.pillar}일이에요. 겉은 ${today.stem}(${ELEMENT_HANJA[today.element]}) 기운, 속은 ${today.branch}(${ELEMENT_HANJA[today.branchElement]}) 기운이에요. 내 ${elName(dayMaster)} 기운에는 ${sameRelation ? `겉기운과 속기운이 모두 ${REL_PLAIN[stemRel]}으로 닿아요.` : `겉기운이 ${REL_PLAIN[stemRel]}, 속기운이 ${REL_PLAIN[branchRel]}으로 닿아요.`} 타고난 기운은 ${elName(strong)} 기운이 ${strongCount}개로 가장 많고, ${elName(weak)} 기운은 ${weakCount}개로 가장 적어요.${clash ? ` ${clashNote}` : ""}`
-    : `오늘은 ${today.pillar}일이에요. 겉은 ${elName(today.element)} 기운, 속은 ${elName(today.branchElement)} 기운이고, 내가 타고난 기운은 ${elName(dayMaster)} 기운이에요. ${clash ? clashNote : `타고난 ${elName(weak)} 기운은 ${weakCount}개예요.`}`;
+    ? `오늘은 ${today.pillar}일이에요. 겉은 ${today.stem}(${ELEMENT_HANJA[today.element]}) 기운, 속은 ${today.branch}(${ELEMENT_HANJA[today.branchElement]}) 기운이에요. 내 ${elName(dayMaster)} 기운에는 ${sameRelation ? `겉기운과 속기운이 모두 ${REL_PLAIN[stemRel]}으로 닿아요.` : `겉기운이 ${REL_PLAIN[stemRel]}, 속기운이 ${REL_PLAIN[branchRel]}으로 닿아요.`} ${natalLine}${todayLine}${clash ? ` ${clashNote}` : ""}`
+    : `오늘은 ${today.pillar}일이에요. 겉은 ${elName(today.element)} 기운, 속은 ${elName(today.branchElement)} 기운이고, 내가 타고난 기운은 ${elName(dayMaster)} 기운이에요. ${weakCount === 0 ? `오늘 기운까지 더해도 ${elName(weak)} 쪽이 비어 있어요.` : `오늘 기운까지 더하면 ${elName(weak)} 쪽이 가장 얇아요.`}${clash ? ` ${clashNote}` : ""}`;
 
   return { axis, caution: fill(copy.caution), avoid: fill(copy.avoid), basis };
 }
@@ -355,24 +370,38 @@ function ordered(a: Element, b: Element): [Element, Element] {
 }
 
 export interface Deficiency {
-  /** 함께 부족한 두 오행. 복합 퀘스트를 고를 때만 채워진다. */
+  /** 오늘 합산에서도 함께 비어 있는 두 오행. 복합 퀘스트를 고를 때만 채워진다. */
   pair: [Element, Element] | null;
-  /** 오늘 가장 적은 오행 (동률이면 날짜 시드로 하나). */
+  /** 오늘 가장 비어 있는 오행 (동률이면 날짜 시드로 하나). */
   lead: Element;
-  /** 개수가 0인 오행 전부. */
+  /** 오늘 합산에서 0인 오행 전부. */
   zeros: Element[];
-  /** 적은 순서로 정렬한 오행. */
+  /** 오늘 합산 기준 적은 순으로 정렬한 오행. */
   ranked: Element[];
+  /** 오늘 합산 오행 개수 — 타고난 오행에 오늘 일진 천간(+1)·지지(+1)를 더한 값. */
+  counts: Record<Element, number>;
+  /** 타고난 사주에서 0이던 오행. */
+  natalZeros: Element[];
+  /** 오늘 일진이 새로 채워 준, 타고난 사주에서 0이던 오행. */
+  filled: Element[];
 }
 
 /**
  * 오늘 채워야 할 오행을 정한다.
- * - 0인 오행이 둘 이상이면 그중 두 개를 짝지어 복합 퀘스트를 고른다.
- * - 0인 오행이 하나이고 다음으로 적은 오행도 1개 이하이면 둘을 짝짓는다.
- * - 그 외에는 가장 적은 오행 하나만 고른다. (동률이면 날짜 시드로 고른다)
+ * 타고난 오행만 보면 해가 바뀌어도 같은 오행이 늘 부족하게 잡혀 "화·수가 0%" 같은 설명과
+ * 퀘스트가 매일 반복된다. 그래서 오늘 일진의 천간(+1)·지지(+1)을 더한 '오늘 합산 오행'으로 본다.
+ * - 오늘도 두 곳 이상이 비어 있으면 그중 두 개를 짝지어 복합 퀘스트를 고른다.
+ * - 오늘 기운이 한 곳을 채워 줬다면 남은 한 곳에 집중하는 단일 퀘스트를 고른다.
+ * - 비어 있는 곳이 없으면 오늘 가장 적은 오행 하나를 고른다. (동률이면 날짜 시드로 고른다)
  */
-export function deficiencyOf(chart: Chart, seed: string): Deficiency {
-  const counts = chart.counts;
+export function deficiencyOf(chart: Chart, seed: string, today?: DayEnergy): Deficiency {
+  const counts: Record<Element, number> = { ...chart.counts };
+  if (today) {
+    counts[today.element] += 1;
+    counts[today.branchElement] += 1;
+  }
+  const natalZeros = ELEMENTS.filter((el) => chart.counts[el] === 0);
+  const filled = natalZeros.filter((el) => counts[el] > 0);
   const ranked = [...ELEMENTS].sort(
     (a, b) => counts[a] - counts[b] || ELEMENTS.indexOf(a) - ELEMENTS.indexOf(b),
   );
@@ -383,21 +412,24 @@ export function deficiencyOf(chart: Chart, seed: string): Deficiency {
     for (let i = 0; i < zeros.length; i += 1) {
       for (let j = i + 1; j < zeros.length; j += 1) pairs.push(ordered(zeros[i], zeros[j]));
     }
-    return { pair: pick(pairs, `${seed}-pair`), lead: zeros[0], zeros, ranked };
+    return { pair: pick(pairs, `${seed}-pair`), lead: zeros[0], zeros, ranked, counts, natalZeros, filled };
+  }
+
+  if (zeros.length === 1) {
+    return { pair: null, lead: zeros[0], zeros, ranked, counts, natalZeros, filled };
   }
 
   const lowest = ranked[0];
-  const secondCount = counts[ranked[1]];
-  // 비어 있는 오행이 하나뿐이어도 다음으로 적은 오행이 1개 이하면 둘을 함께 채운다.
-  if (counts[lowest] === 0 && secondCount <= 1) {
-    const tied = ELEMENTS.filter((el) => el !== lowest && counts[el] === secondCount);
-    const second = pick(tied, `${seed}-second`);
-    const pair = ordered(lowest, second);
-    return { pair, lead: lowest, zeros, ranked };
-  }
-
   const tiedLowest = ELEMENTS.filter((el) => counts[el] === counts[lowest]);
-  return { pair: null, lead: pick(tiedLowest, `${seed}-lead`), zeros, ranked };
+  return {
+    pair: null,
+    lead: pick(tiedLowest, `${seed}-lead`),
+    zeros,
+    ranked,
+    counts,
+    natalZeros,
+    filled,
+  };
 }
 
 function resolveQuest(
@@ -421,25 +453,111 @@ function resolveQuest(
   };
 }
 
-/** 오늘 들어온 천간·지지가 내 부족한 오행을 채워 주는지 짧게 짚어 준다. */
-function supportLine(today: DayEnergy, target: Element): string | null {
-  const layers = [
-    { label: "겉기운", char: today.stem, element: today.element },
-    { label: "속기운", char: today.branch, element: today.branchElement },
-  ];
-  const same = layers.find((layer) => layer.element === target);
-  if (same) {
-    return `오늘은 ${same.char}(${ELEMENT_HANJA[same.element]}) ${same.label} 자리가 그대로 ${elName(target)} 기운이라, 부족한 부분을 채워 줘요.`;
+/** 오행 이름 뒤에 붙는 조사 — 받침이 있는 목·금은 '이/과/은', 나머지는 '가/와/는'. */
+function josa(el: Element, withBatchim: string, withoutBatchim: string): string {
+  return el === "목" || el === "금" ? withBatchim : withoutBatchim;
+}
+
+/** 오늘 일진이 빈자리를 채워 준 자리를 '겉/속/겉과 속'으로 짚는 앞말. */
+function inflowSubject(today: DayEnergy, filled: Element[]): string {
+  if (filled.length === 1) {
+    const el = filled[0];
+    if (today.element === el && today.branchElement === el) {
+      return `오늘 ${today.pillar}일은 겉과 속이 모두 ${elName(el)} 기운이라`;
+    }
+    return `오늘 ${today.pillar}일에는 ${elName(el)} 기운이`;
   }
-  const feeds = layers.find((layer) => GENERATES[layer.element] === target);
-  if (feeds) {
-    return `오늘은 ${feeds.char}(${ELEMENT_HANJA[feeds.element]}) ${feeds.label}이 부족한 ${elName(target)} 기운을 키워 줘요.`;
+  return `오늘 ${today.pillar}일에는 ${filled.map(elName).join("·")} 기운이`;
+}
+
+/** 오늘 기운이 그 오행을 낳아 주는 결이면(상생) 조용히 보태 주는 한 줄. */
+function feedNote(today: DayEnergy, target: Element): string {
+  const feeds = [today.element, today.branchElement].find((el) => GENERATES[el] === target);
+  return feeds
+    ? `오늘 ${elName(feeds)} 기운이 ${elName(target)} 쪽을 북돋아 주니, 조금은 도움이 돼요. `
+    : "";
+}
+
+/**
+ * 오늘의 오행 균형 — '오늘'을 앞세우고 타고난 사주는 보강 설명으로 뒤에 붙인다.
+ * 오늘 일진이 타고난 빈자리를 채워 준 날에는 "평소에는 비어 있었지만 오늘은 채워졌다"로,
+ * 아직 비어 있는 오행은 "그래서 오늘 이것을 채우면 된다"로 이어 모순 없이 읽히게 한다.
+ */
+function balanceStory(today: DayEnergy, deficiency: Deficiency): string {
+  const { pair, lead, zeros, natalZeros, filled } = deficiency;
+  const natalZeroText = natalZeros.map(elName).join("·");
+  const zeroText = zeros.map(elName).join("·");
+  const pairText = pair ? `${elName(pair[0])}${josa(pair[0], "과", "와")} ${elName(pair[1])}` : "";
+  const pairObject = pair ? `${pairText}${josa(pair[1], "을", "를")}` : "";
+  // 같은 구조의 문장이 연이어 나오지 않도록 날마다 문형을 돌린다.
+  const rot = (pool: string[], salt: string) => rotate(pool, today.cycleIndex, salt);
+  const fillPhrase = rot(
+    ["그 빈자리를 넉넉히 채워 줬어요.", "그 빈자리를 채워 줬어요.", "그 빈자리를 조용히 메워 줬어요."],
+    "balance-fill",
+  );
+
+  // 타고난 사주에 빈 오행이 없으면 오늘 가장 얇아진 쪽만 짚는다.
+  if (natalZeros.length === 0) {
+    return `타고난 기운에는 다섯 오행이 모두 있어요. 오늘 ${today.pillar}일 기운까지 더하면 ${elName(lead)} 쪽이 가장 얇아지니, ${ELEMENT_WHY[lead]}`;
   }
-  const drains = layers.find((layer) => GENERATES[target] === layer.element);
-  if (drains) {
-    return `오늘은 ${elName(target)} 기운이 ${drains.char}(${ELEMENT_HANJA[drains.element]}) ${drains.label} 쪽으로 조금 새어 나가니, 아껴 쓰는 게 좋아요.`;
+
+  // 비어 있는 오행이 하나 — 오늘 채워졌는지에 따라 말이 달라진다.
+  if (natalZeros.length === 1) {
+    const only = natalZeros[0];
+    if (filled.includes(only)) {
+      const tail =
+        lead === only
+          ? "다만 아직 다섯 기운 중 가장 얇으니, 오늘 한 번 더 보태면 좋아요."
+          : `대신 오늘 가장 얇은 ${elName(lead)} 기운을 한 번 보태면 균형이 맞아요.`;
+      return `평소 사주에는 ${elName(only)} 기운이 비어 있었는데, ${inflowSubject(today, filled)} ${fillPhrase} ${tail}`;
+    }
+    return `평소 사주에는 ${elName(only)} 기운이 비어 있어요. 오늘 ${today.pillar}일 기운은 이 자리를 직접 채우지는 않아요. ${feedNote(today, only)}${rot(
+      [
+        `그래서 오늘은 ${elName(only)} 기운을 채우는 작은 행동이 잘 맞아요.`,
+        `오늘은 ${elName(only)} 쪽을 조금 보태 주는 일 하나면 충분해요.`,
+        `그래서 오늘 퀘스트는 ${elName(only)} 쪽을 향해 있어요.`,
+      ],
+      "balance-one-empty",
+    )}`;
   }
-  return null;
+
+  // 비어 있는 오행이 둘 이상 — 오늘도 남아 있는지에 따라 복합/단일로 갈린다.
+  if (zeros.length >= 2) {
+    if (filled.length === 0) {
+      const quiet = rot(
+        [
+          `오늘 ${today.pillar}일 기운도 이쪽으로는 들어오지 않아요.`,
+          `오늘 ${today.pillar}일에는 이 두 기운이 따로 들어오지 않아요.`,
+          `오늘 ${today.pillar}일 기운은 다른 쪽으로 흘러요.`,
+        ],
+        "balance-quiet",
+      );
+      return zeros.length > 2
+        ? `평소 사주에는 ${natalZeroText} 기운이 모두 비어 있고, ${quiet} 그중 ${pairText}부터 함께 채워 볼까요?`
+        : `평소 사주에는 ${natalZeroText} 기운이 비어 있고, ${quiet} ${rot(
+            [
+              `그래서 오늘은 ${pairObject} 함께 채워 보면 좋아요.`,
+              `그래서 오늘은 ${pairObject} 한 번에 챙겨 볼까요?`,
+              `오늘은 ${pairObject} 함께 채우는 작은 행동이 잘 맞아요.`,
+            ],
+            "balance-pair-close",
+          )}`;
+    }
+    return `평소 사주에는 ${natalZeroText} 기운이 비어 있었는데, ${inflowSubject(today, filled)} 그중 ${filled.map(elName).join("·")} 자리를 채워 줬어요. 아직 ${zeroText} 기운이 비어 있으니, 오늘은 ${pairObject} 함께 채워 볼까요?`;
+  }
+
+  if (zeros.length === 1) {
+    return `평소 사주에는 ${natalZeroText} 기운이 비어 있었는데, ${inflowSubject(today, filled)} ${fillPhrase} ${rot(
+      [
+        `대신 여전히 비어 있는 ${elName(zeros[0])} 기운을 챙기면 균형이 맞아요.`,
+        `그래도 아직 비어 있는 ${elName(zeros[0])} 기운까지 채우면 오늘 균형이 고르게 맞아요.`,
+        `빈자리가 하나 남았으니, 오늘은 ${elName(zeros[0])} 기운을 채우는 작은 행동이 잘 맞아요.`,
+      ],
+      "balance-remaining-one",
+    )}`;
+  }
+
+  return `평소 사주에는 ${natalZeroText} 기운이 비어 있었는데, ${inflowSubject(today, filled)} 그 빈자리를 모두 채워 줬어요. 그래도 ${elName(lead)} 쪽이 가장 얇으니, 오늘 한 번 더 보태면 하루가 고르게 흘러요.`;
 }
 
 export function buildDaily(profile: Profile, now: Date = new Date()): DailyView {
@@ -452,7 +570,7 @@ export function buildDaily(profile: Profile, now: Date = new Date()): DailyView 
   const mbtiSeed = mbti && !senior ? mbti : "saju";
   const chart = chartOf(profile);
   const today = todayEnergy(now);
-  const deficiency = deficiencyOf(chart, key);
+  const deficiency = deficiencyOf(chart, key, today);
   const { pair, lead } = deficiency;
 
   // Quest 1 — 부족한 오행 하나, 또는 두 오행을 함께 채우는 복합 퀘스트
@@ -472,7 +590,7 @@ export function buildDaily(profile: Profile, now: Date = new Date()): DailyView 
     const second =
       [...ELEMENTS]
         .filter((el) => !(pair ?? [lead]).includes(el))
-        .sort((a, b) => chart.counts[a] - chart.counts[b] || ELEMENTS.indexOf(a) - ELEMENTS.indexOf(b))[0] ?? lead;
+        .sort((a, b) => deficiency.counts[a] - deficiency.counts[b] || ELEMENTS.indexOf(a) - ELEMENTS.indexOf(b))[0] ?? lead;
     const pool = ELEMENT_QUESTS[second];
     const candidates = pool.filter((q) => q.action !== q1.action);
     q2 = pick(candidates.length > 0 ? candidates : pool, `${key}-q2-${second}-saju`);
@@ -530,32 +648,7 @@ export function buildDaily(profile: Profile, now: Date = new Date()): DailyView 
   }
 
   const relation = relationOf(today.element, chart.dayMaster);
-  const balanceLine = (() => {
-    if (pair) {
-      const [a, b] = pair;
-      const pa = elementPercent(chart.counts[a], chart.total);
-      const pb = elementPercent(chart.counts[b], chart.total);
-      const head = (() => {
-        if (pa === 0 && pb === 0) {
-          if (deficiency.zeros.length > 2) {
-          return `타고난 기운 중 ${deficiency.zeros.map(elName).join("·")}가 모두 0%로 비어 있는데, 그중 ${elName(a)}와 ${elName(b)}부터 채워 볼까요?`;
-        }
-        return `타고난 기운 중 ${elName(a)}·${elName(b)}가 0%로 함께 비어 있어요.`;
-      }
-      return `타고난 기운 중 ${elName(a)} ${pa}% · ${elName(b)} ${pb}%로, 다섯 기운 중 가장 낮은 편이에요.`;
-      })();
-      const link = supportLine(today, a) ?? supportLine(today, b);
-      return link
-        ? `${head} ${link}`
-        : `${head} 오늘 ${today.pillar}일의 기운은 이쪽으로 크게 기울지 않으니, 작은 행동으로 직접 채워 보세요.`;
-    }
-    const pct = elementPercent(chart.counts[lead], chart.total);
-    const head = `타고난 ${elName(lead)} 기운이 ${pct}%로 가장 적어요.`;
-    const link = supportLine(today, lead);
-    return link
-      ? `${head} ${link}`
-      : `${head} 오늘 ${today.pillar}일은 이쪽으로 기울지 않으니, ${ELEMENT_WHY[lead]}`;
-  })();
+  const balanceLine = balanceStory(today, deficiency);
 
   // 겉기운(천간)과 속기운(지지)을 함께 이야기한다 — 오행이 연이틀 같아도 간지가 달라 문장이 달라진다.
   const weatherLine = (() => {
@@ -583,11 +676,20 @@ export function buildDaily(profile: Profile, now: Date = new Date()): DailyView 
       `겉으로 도는 ${today.stem}(${ELEMENT_HANJA[today.element]}) 기운은 ${stemDepth} 속을 받쳐 주는 ${today.branch}(${ELEMENT_HANJA[today.branchElement]}) 기운은 ${branchDepth}`,
     );
     const strongCount = chart.counts[chart.strongest];
-    const weak = chart.weakest;
-    const weakCount = chart.counts[weak];
-    const weakPhrase = weakCount === 0 ? "하나도 없어요" : `${weakCount}개로 가장 적어요`;
+    // 앞 문단에서 이미 짚은 부족 오행은 다시 말하지 않고, 타고난 가장 두터운 기운이 오늘 일진과
+    // 어떻게 만나는지·오늘 바로 쓸 수 있는 팁만 남긴다. 여는 문장도 날마다 돌려 같은 문장이 반복되지 않게 한다.
+    const strongRel = relationOf(today.element, chart.strongest);
+    const strongOpener = rotate(
+      [
+        `타고난 기운에서는 ${elName(chart.strongest)} 기운이 ${strongCount}개로 가장 두터워요.`,
+        `다섯 기운 중에서는 ${elName(chart.strongest)} 기운이 ${strongCount}개로 가장 두터운 편이에요.`,
+        `타고난 사주에서 가장 두터운 쪽은 ${elName(chart.strongest)} 기운(${strongCount}개)이에요.`,
+      ],
+      today.cycleIndex,
+      `strong-open-${chart.strongest}`,
+    );
     reading.push(
-      `타고난 기운을 세어 보면 ${elName(chart.strongest)} 기운이 ${strongCount}개로 가장 많고, ${elName(weak)} 기운은 ${weakPhrase}. ${rotate(WEAK_DAY_TIP[weak], today.cycleIndex, `weak-${weak}`)}`,
+      `${strongOpener} ${rotate(STRONG_DAY_LINE[strongRel], today.cycleIndex, `strong-${strongRel}`)} ${rotate(STRONG_DAY_TIP[chart.strongest], today.cycleIndex, `strong-tip-${chart.strongest}`)}`,
     );
   }
 
