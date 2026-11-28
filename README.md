@@ -51,7 +51,7 @@ components/
   QuestList.tsx     퀘스트 카드·체크 애니메이션
   CharmCard.tsx     잠금/해제 오늘의 행운 카드·공유·인증샷 카드 저장
   Views.tsx         달력·보관함·마이
-  MorningPushCard.tsx  마이 탭의 ‘아침 7시 운세 알림’ 스위치
+  MorningPushCard.tsx  마이 탭의 ‘매일 아침 7시 운세 알림 받기’ 스위치
   useMorningPush.ts 알림 켜기·끄기(권한·서비스워커·구독)
   illustrations.tsx SVG 일러스트
 lib/
@@ -138,7 +138,7 @@ KV_REST_API_TOKEN=<Upstash REST 토큰>
 
 - `NEXT_PUBLIC_VAPID_PUBLIC_KEY`는 빌드 때 클라이언트에 들어가므로 **값을 바꾸면 재배포**해야 합니다.
 - Upstash는 Vercel 마켓플레이스에서 Redis를 붙이면 `KV_REST_API_*`가 자동으로 들어옵니다. 직접 만들었다면 `UPSTASH_REDIS_REST_URL`·`UPSTASH_REDIS_REST_TOKEN`도 같은 값으로 인식합니다(`lib/pushStore.ts`).
-- 환경변수가 하나라도 비어 있으면 빌드는 그대로 되고, 화면에는 ‘알림 발송 서버를 준비하고 있어요’만 뜨며 발송 API는 503을 돌려줍니다.
+- 환경변수가 하나라도 비어 있으면 빌드는 그대로 되고, 카드에는 기본 안내 문구가 그대로 보입니다. 스위치는 또렷하게 보이되 누르면 ‘알림 발송 서버가 아직 준비 중’이라는 안내가 토스트로 뜨고, 발송 API는 503을 돌려줍니다.
 
 ### 발송 확인
 

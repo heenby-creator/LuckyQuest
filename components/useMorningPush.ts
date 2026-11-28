@@ -173,7 +173,8 @@ export function useMorningPush(onNotice?: (message: string) => void) {
       }
 
       if (Notification.permission === "denied") {
-        setView({ status: "blocked", busy: false, notice: "브라우저 설정에서 알림을 허용으로 바꾼 뒤 다시 시도해 주세요." });
+        setView({ status: "blocked", busy: false, notice: null });
+        notify("브라우저 설정에서 알림을 허용으로 바꾼 뒤 다시 시도해 주세요.");
         return;
       }
 
@@ -181,14 +182,12 @@ export function useMorningPush(onNotice?: (message: string) => void) {
         Notification.permission === "granted" ? "granted" : await Notification.requestPermission();
       setPermission(result);
       if (result !== "granted") {
-        setView({
-          status: "blocked",
-          busy: false,
-          notice:
-            result === "denied"
-              ? "알림이 차단됐어요. 브라우저 설정 → 알림에서 이 사이트를 허용으로 바꿔 주세요."
-              : "알림을 허용해야 아침 알림을 보낼 수 있어요.",
-        });
+        setView({ status: "blocked", busy: false, notice: null });
+        notify(
+          result === "denied"
+            ? "알림이 차단됐어요. 브라우저 설정 → 알림에서 이 사이트를 허용으로 바꿔 주세요."
+            : "알림을 허용해야 아침 알림을 보낼 수 있어요.",
+        );
         return;
       }
 
@@ -228,7 +227,8 @@ export function useMorningPush(onNotice?: (message: string) => void) {
         throw new PushSetupError(message);
       }
 
-      setView({ status: "on", busy: false, notice: "매일 아침 7시에 오늘의 운세를 알려 드릴게요 ☀️" });
+      setView({ status: "on", busy: false, notice: null });
+      notify("매일 아침 7시에 오늘의 운세를 알려 드릴게요 ☀️");
       trackEvent("push_toggle", { enabled: true });
     } catch (error) {
       const message =
@@ -239,12 +239,13 @@ export function useMorningPush(onNotice?: (message: string) => void) {
         // 실패해도 켜진 것처럼 보이지 않게 'off'로 되돌린다. 단 서버 미설정은 그대로 알린다.
         status: prev.status === "unconfigured" ? "unconfigured" : "off",
         busy: false,
-        notice: message,
+        notice: null,
       }));
+      notify(message);
     } finally {
       busyRef.current = false;
     }
-  }, []);
+  }, [notify]);
 
   const disable = useCallback(async () => {
     if (busyRef.current) return;
@@ -266,14 +267,16 @@ export function useMorningPush(onNotice?: (message: string) => void) {
         await subscription.unsubscribe().catch(() => {});
       }
 
-      setView({ status: "off", busy: false, notice: "아침 알림을 껐어요. 저장된 알림 주소도 지웠어요." });
+      setView({ status: "off", busy: false, notice: null });
+      notify("아침 알림을 껐어요. 저장된 알림 주소도 지웠어요.");
       trackEvent("push_toggle", { enabled: false });
     } catch {
-      setView((prev) => ({ ...prev, busy: false, notice: "알림을 끄지 못했어요. 잠시 뒤 다시 시도해 주세요." }));
+      setView((prev) => ({ ...prev, busy: false }));
+      notify("알림을 끄지 못했어요. 잠시 뒤 다시 시도해 주세요.");
     } finally {
       busyRef.current = false;
     }
-  }, []);
+  }, [notify]);
 
   const toggle = useCallback(
     (next: boolean) => {
