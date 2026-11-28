@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { CHARM_POOL, ELEMENT_HANJA, ELEMENT_META, cardById, charmForDate, type LuckyCard } from "@/lib/content";
+import { CHARM_POOL, ELEMENT_HANJA, ELEMENT_META, MBTI_SUMMARY, cardById, charmForDate, type LuckyCard } from "@/lib/content";
 import { getDayPhotos, countPhotosByDate, type QuestPhoto } from "@/lib/photos";
 import { ageGroupOf, AGE_GROUP_LABEL } from "@/lib/age";
 import { chartOf, elementPercent, timeLabel } from "@/lib/saju";
@@ -278,26 +278,30 @@ export function CharmsView({ state }: { state: AppState }) {
   );
 }
 
-/* ── 마이 ─────────────────────────────────────────────── */
+/* ── My ───────────────────────────────────────────────── */
 
 export function MeView({
   state,
   onEdit,
+  onEditMbti,
   onReset,
   onToast,
 }: {
   state: AppState;
   onEdit: () => void;
+  /** MBTI 다시 테스트·변경 — Onboarding의 MBTI 구역을 펼친 채로 연다. */
+  onEditMbti: () => void;
   onReset: () => void;
   onToast?: (message: string) => void;
 }) {
   const chart = chartOf(state.profile);
   const meta = ELEMENT_META[chart.dayMaster];
+  const mbti = state.profile.mbti;
 
   return (
     <div className="space-y-4 px-5 pb-8 pt-2">
       <div className="px-1">
-        <h1 className="text-[21px] font-extrabold tracking-tight text-ink">마이 럭키</h1>
+        <h1 className="text-[21px] font-extrabold tracking-tight text-ink">My 럭키</h1>
         <p className="mt-0.5 text-[12px] text-ink-faint">나의 기운과 설정을 확인해요</p>
       </div>
 
@@ -356,6 +360,51 @@ export function MeView({
             })}
           </div>
         </div>
+      </div>
+
+      {/* MBTI 성향 — 한 줄 소개와 함께, 다시 테스트하거나 바꾸는 길을 바로 보여 준다. */}
+      <div className="card px-4 py-3.5">
+        <div className="flex items-center justify-between gap-2">
+          <p className="text-[11.5px] font-bold text-ink-soft">MBTI 성향</p>
+          {mbti ? (
+            <button
+              type="button"
+              onClick={onEditMbti}
+              className="flex items-center gap-1 rounded-full border border-line bg-white/80 px-2.5 py-1 text-[11px] font-bold text-ink-soft transition hover:border-[#cddcc9] hover:text-leaf active:scale-[0.98]"
+            >
+              다시 테스트 · 변경 <span aria-hidden className="text-ink-faint">›</span>
+            </button>
+          ) : (
+            <span className="rounded-full bg-cream-2 px-2 py-0.5 text-[10.5px] font-bold text-[#7A6444]">사주 중심</span>
+          )}
+        </div>
+
+        {mbti ? (
+          <>
+            <div className="mt-2 flex items-center gap-2">
+              <span className="rounded-xl bg-leaf-soft px-2.5 py-1 text-[14px] font-extrabold tracking-[0.04em] text-leaf-strong">
+                {mbti}
+              </span>
+              <span className="text-[10.5px] text-ink-faint">맞춤 퀘스트에 반영 중</span>
+            </div>
+            <p className="mt-1.5 text-[12px] leading-[1.7] text-ink-soft">{MBTI_SUMMARY[mbti]}</p>
+          </>
+        ) : (
+          <>
+            <p className="mt-2 text-[12.5px] font-bold leading-snug text-ink">아직 MBTI가 설정되지 않았어요</p>
+            <p className="mt-1 text-[11.5px] leading-[1.7] text-ink-soft">
+              4문항 간단 검사로 맞춤 퀘스트를 받아볼 수 있어요. 사주만으로도 계속 볼 수 있어요.
+            </p>
+            <button
+              type="button"
+              onClick={onEditMbti}
+              className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-2xl bg-leaf py-2.5 text-[13px] font-extrabold text-white shadow-[0_14px_24px_-18px_rgba(18,128,92,0.95)] transition active:scale-[0.99]"
+            >
+              <Sparkle size={13} color="#FFE27A" />
+              MBTI 테스트하기
+            </button>
+          </>
+        )}
       </div>
 
       <MorningPushCard onNotice={onToast} />

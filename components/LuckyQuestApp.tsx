@@ -18,7 +18,7 @@ const TABS: { key: NavKey; label: string }[] = [
   { key: "today", label: "오늘" },
   { key: "calendar", label: "달력" },
   { key: "charms", label: "보관함" },
-  { key: "me", label: "마이" },
+  { key: "me", label: "My" },
 ];
 
 export function LuckyQuestApp() {
@@ -309,7 +309,13 @@ export function LuckyQuestApp() {
               {tab === "calendar" && state && <CalendarView state={state} />}
               {tab === "charms" && state && <CharmsView state={state} />}
               {tab === "me" && state && (
-                <MeView state={state} onEdit={() => { setFocusMbti(false); setEditing(true); }} onReset={onReset} onToast={setToast} />
+                <MeView
+                  state={state}
+                  onEdit={() => { setFocusMbti(false); setEditing(true); }}
+                  onEditMbti={() => { setFocusMbti(true); setEditing(true); }}
+                  onReset={onReset}
+                  onToast={setToast}
+                />
               )}
             </main>
 

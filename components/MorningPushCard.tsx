@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useMorningPush, type MorningPushStatus } from "./useMorningPush";
 
 /**
- * '마이' 탭의 아침 알림 설정 카드.
+ * 'My' 탭의 아침 알림 설정 카드.
  * 제목 줄 오른쪽 스위치로 켜고 끄고, 아래 안내 박스가 지금 상태를 한 줄로 알려 준다.
  * 기본값은 꺼짐이고, 브라우저·기기 사정으로 켤 수 없을 때는 그 이유를 박스에 보여 준다.
  */
@@ -51,7 +51,7 @@ export function MorningPushCard({ onNotice }: { onNotice?: (message: string) => 
             ☀️
           </span>
           <p className="text-[13.5px] font-extrabold leading-snug text-ink">
-            매일 아침 7시 운세 알림 받기
+            매일 아침 7시, 운세 알림 받기
           </p>
         </div>
 
@@ -59,7 +59,7 @@ export function MorningPushCard({ onNotice }: { onNotice?: (message: string) => 
           type="button"
           role="switch"
           aria-checked={on}
-          aria-label="매일 아침 7시 운세 알림 받기"
+          aria-label="매일 아침 7시, 운세 알림 받기"
           disabled={waiting}
           onClick={handleToggle}
           className={`relative h-7 w-[50px] shrink-0 rounded-full border transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-leaf ${
@@ -86,7 +86,7 @@ export function MorningPushCard({ onNotice }: { onNotice?: (message: string) => 
       </p>
 
       <p className="mt-2 flex flex-wrap items-center gap-x-1.5 gap-y-1 px-0.5 text-[10px] leading-relaxed text-ink-faint">
-        알림을 켜면 단말기 주소(익명)만 서버에 저장되고, 끄면 바로 지워요.
+        알림을 켜면 단말기 주소(익명)만 서버에 저장되고, 끄면 바로 지워져요.
         <Link
           href="/privacy"
           className="font-semibold text-ink-faint underline decoration-line underline-offset-2 transition hover:text-ink-soft"

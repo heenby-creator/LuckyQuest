@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { ageGroupForYear, koreanAge } from "@/lib/age";
 import { JIN, computeChart } from "@/lib/saju";
+import { MBTI_SUMMARY } from "@/lib/content";
 import type { Birth, BirthTime, Mbti, Profile } from "@/lib/types";
 import { CheckMark, Clover, Sparkle, StarMascot } from "./illustrations";
 
@@ -114,11 +115,13 @@ export function Onboarding({
   useEffect(() => {
     if (!focusMbti) return;
     setMbtiOpen(true);
+    // 성향이 아직 없으면 바로 4문항 검사를 펼쳐, '테스트하러 왔다'는 손짓에 바로 응한다.
+    if (!initial?.mbti) setQuizOpen(true);
     const timer = window.setTimeout(() => {
       document.getElementById("mbti-section")?.scrollIntoView({ behavior: "smooth", block: "start" });
     }, 90);
     return () => window.clearTimeout(timer);
-  }, [focusMbti]);
+  }, [focusMbti, initial?.mbti]);
   const daysInMonth = useMemo(() => {
     if (isLunar) return 30; // 음력은 29·30일까지 — 실제 존재 여부는 계산 단계에서 확인해요
     if (!year || !month) return 31;
@@ -343,13 +346,16 @@ export function Onboarding({
               <span className="rounded-full bg-cream-2 px-2 py-0.5 text-[10.5px] font-bold text-ink-faint">선택</span>
             )}
           </h2>
-          {(!senior || mbtiOpen) && (
+          {(!senior || mbtiOpen) && !focusMbti && (
             <button
               type="button"
-              onClick={() => setQuizOpen((v) => !v)}
+              onClick={() => {
+                if (!quizOpen) setQuizAnswers({});
+                setQuizOpen(!quizOpen);
+              }}
               className="rounded-full bg-gold-soft px-3 py-1 text-[12px] font-bold text-[#8a6a1c]"
             >
-              잘 모르겠어요
+              {quizOpen ? "16유형에서 고르기" : "4문항 테스트로 고르기"}
             </button>
           )}
         </div>
@@ -360,6 +366,64 @@ export function Onboarding({
               ? `${koreanAge(Number(year))}세 — 사주 일진·오행 풀이 70%에 MBTI 성향 30%를 곁들여 봐 드려요.`
               : "성향에 맞는 퀘스트를 고르는 데 써요. 몰라도 아래 ‘사주 중심’으로 시작할 수 있어요."}
         </p>
+
+        {/* 'My' 탭의 ‘다시 테스트 · 변경’으로 들어온 자리 — 지금 성향과 두 가지 길을 먼저 보여 준다. */}
+        {focusMbti && (
+          <div className="mb-3 rounded-2xl border border-gold-line/45 bg-[#FFFDF7] px-3 py-3">
+            <div className="flex items-center justify-between gap-2">
+              <p className="text-[11.5px] font-bold text-ink-soft">지금 설정된 성향</p>
+              {mbti && !skipMbti ? (
+                <span className="rounded-lg bg-leaf-soft px-2 py-0.5 text-[12px] font-extrabold tracking-[0.04em] text-leaf-strong">
+                  {mbti}
+                </span>
+              ) : (
+                <span className="rounded-lg bg-cream-2 px-2 py-0.5 text-[10.5px] font-bold text-ink-faint">아직 미설정</span>
+              )}
+            </div>
+            {mbti && !skipMbti && (
+              <p className="mt-1.5 text-[11.5px] leading-[1.7] text-ink-soft">{MBTI_SUMMARY[mbti]}</p>
+            )}
+
+            <div className="mt-2.5 grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                aria-pressed={quizOpen}
+                onClick={() => {
+                  setQuizAnswers({});
+                  setQuizOpen(true);
+                }}
+                className={`rounded-2xl border px-2 py-2 text-center transition active:scale-[0.98] ${
+                  quizOpen
+                    ? "border-leaf bg-leaf-soft text-leaf-strong"
+                    : "border-line bg-white/70 text-ink-soft hover:border-[#cddcc9] hover:bg-white"
+                }`}
+              >
+                <span className="block text-[12.5px] font-extrabold">4문항 간단 테스트</span>
+                <span className="mt-0.5 block text-[10.5px] font-semibold text-ink-faint">
+                  {mbti && !skipMbti ? "처음부터 다시" : "바로 시작"}
+                </span>
+              </button>
+              <button
+                type="button"
+                aria-pressed={!quizOpen}
+                onClick={() => setQuizOpen(false)}
+                className={`rounded-2xl border px-2 py-2 text-center transition active:scale-[0.98] ${
+                  !quizOpen
+                    ? "border-leaf bg-leaf-soft text-leaf-strong"
+                    : "border-line bg-white/70 text-ink-soft hover:border-[#cddcc9] hover:bg-white"
+                }`}
+              >
+                <span className="block text-[12.5px] font-extrabold">16유형 직접</span>
+                <span className="mt-0.5 block text-[10.5px] font-semibold text-ink-faint">
+                  {mbti && !skipMbti ? "바꾸기" : "고르기"}
+                </span>
+              </button>
+            </div>
+            <p className="mt-2 text-[10.5px] leading-relaxed text-ink-faint">
+              고른 성향은 아래 ‘저장하고 돌아가기’를 누르면 오늘 퀘스트부터 새로 반영돼요.
+            </p>
+          </div>
+        )}
 
         {senior && !mbtiOpen ? (
           <button
@@ -375,6 +439,20 @@ export function Onboarding({
           <>
             {quizOpen ? (
               <div className="mt-2 space-y-3">
+                <div className="flex items-center justify-between px-0.5">
+                  <p className="text-[11px] font-semibold text-ink-faint">
+                    4문항 · 지금 {Object.keys(quizAnswers).length}개 골랐어요
+                  </p>
+                  {Object.keys(quizAnswers).length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => setQuizAnswers({})}
+                      className="text-[11px] font-bold text-ink-faint underline decoration-line underline-offset-2"
+                    >
+                      처음부터
+                    </button>
+                  )}
+                </div>
                 {QUIZ.map((q, qi) => (
                   <div key={qi}>
                     <p className="mb-1.5 text-[12.5px] font-semibold text-ink-soft">

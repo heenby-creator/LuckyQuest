@@ -12,7 +12,7 @@
 4. **오늘의 퀘스트 2개** — Quest 1은 **오늘의 오행 균형**에서 비어 있는 기운을 채우는 1분 행동입니다. 타고난 오행에 오늘 일진의 천간(+1)·지지(+1)을 더해 계산하므로, 오늘 기운이 한쪽 빈자리를 채워 준 날에는 남은 한 기운에 집중하고(오행 5 × 10가지), 두 곳이 함께 비어 있으면 두 기운을 함께 채우는 복합 퀘스트를 고릅니다(복합 10쌍 × 4가지). 그래서 대상 오행이 날마다 달라집니다. Quest 2는 MBTI 유형에 맞춘 하루 한 걸음(16유형 × 8가지)입니다. 날짜 시드로 매일 다른 조합이 나오고, 두 퀘스트의 행동은 겹치지 않습니다.
 5. **오늘의 행운 카드** — 두 퀘스트를 모두 체크하면 잠겨 있던 카드가 반짝이며 열립니다. 오행마다 4장씩 모두 20장의 카드 풀에서 날짜 시드로 한 장이 정해지고, 키워드(예: 흐름과 지혜)와 그 기운에 맞닿은 명언·저자, 행운의 색·숫자·아이템이 담깁니다. Web Share(또는 링크 복사) 버튼과 아이보리 종이 톤·금빛 이중 테두리의 에디토리얼 카드 디자인.
 6. **선택형 인증샷** — 완료한 퀘스트에 `📷 인증샷 남기기(선택)` 버튼이 붙습니다. 올린 사진은 브라우저 Canvas로 최대 800px·JPEG 0.82로 다시 그려(EXIF·촬영 위치 제거) **서버 전송 없이 IndexedDB에만** 저장됩니다. 퀘스트 카드에서 썸네일 확인·교체·삭제가 되고, 달력 탭에서 지난 날짜를 누르면 그날의 인증샷을 함께 봅니다. 공유는 기본이 카드 링크이고, 인증샷을 남긴 날에만 `인증샷 포함 카드 저장(PNG)` 버튼이 따로 열립니다(클라이언트 Canvas 합성).
-7. **달력 / 보관함 / 마이** — 카드를 받은 날은 달력에 클로버로, 인증샷을 남긴 날은 카메라로 남고, 모은 카드를 다시 볼 수 있습니다. 사주 기둥과 오행 분포도 확인할 수 있습니다.
+7. **달력 / 보관함 / My** — 카드를 받은 날은 달력에 클로버로, 인증샷을 남긴 날은 카메라로 남고, 모은 카드를 다시 볼 수 있습니다. 사주 기둥과 오행 분포도 확인할 수 있습니다.
 
 ## 기술 스택
 
@@ -50,8 +50,8 @@ components/
   FortuneCard.tsx   기운 게이지·오행 밸런스·리딩
   QuestList.tsx     퀘스트 카드·체크 애니메이션
   CharmCard.tsx     잠금/해제 오늘의 행운 카드·공유·인증샷 카드 저장
-  Views.tsx         달력·보관함·마이
-  MorningPushCard.tsx  마이 탭의 ‘매일 아침 7시 운세 알림 받기’ 스위치
+  Views.tsx         달력·보관함·My
+  MorningPushCard.tsx  My 탭의 ‘매일 아침 7시, 운세 알림 받기’ 스위치
   useMorningPush.ts 알림 켜기·끄기(권한·서비스워커·구독)
   illustrations.tsx SVG 일러스트
 lib/
@@ -118,7 +118,7 @@ OG 이미지 주소에는 `v=2`(`lib/share.ts`의 `OG_CARD_VERSION`)이 붙어 �
 
 | 조각 | 하는 일 |
 | --- | --- |
-| `components/MorningPushCard.tsx` + `useMorningPush.ts` | ‘마이’ 탭 스위치. 켜면 알림 권한 → `public/sw.js` 등록 → `pushManager.subscribe` → 서버 등록, 끄면 서버에서 지우고 `unsubscribe` |
+| `components/MorningPushCard.tsx` + `useMorningPush.ts` | ‘My’ 탭 스위치. 켜면 알림 권한 → `public/sw.js` 등록 → `pushManager.subscribe` → 서버 등록, 끄면 서버에서 지우고 `unsubscribe` |
 | `public/sw.js` | `push` 수신 → 알림 표시, `notificationclick` → 열린 창 포커스(없으면 열기). 오프라인 캐시는 하지 않는다 |
 | `app/api/push/subscribe` | `GET` 설정 상태·공개키 / `POST` 구독 저장 / `DELETE` 구독 삭제 |
 | `app/api/cron/morning-push` | Vercel Cron이 하루 한 번 호출. `Authorization: Bearer $CRON_SECRET` 확인 후 전체 구독에 발송, 404·410 만료 구독은 삭제 |
