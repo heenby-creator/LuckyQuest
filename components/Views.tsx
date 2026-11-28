@@ -9,6 +9,7 @@ import { chartOf, elementPercent, timeLabel } from "@/lib/saju";
 import type { AppState, Element } from "@/lib/types";
 import { WEEKDAY_LABEL, dateKey, formatKoreanDate, monthMatrix } from "@/lib/utils";
 import { Clover, ElementIcon, Sparkle, StarMascot } from "./illustrations";
+import { MorningPushCard } from "./MorningPushCard";
 
 /** 저장된 카드 id로 카드를 되찾는다. 예전 기록(`2026-11-24-수`)도 읽을 수 있게 둔다. */
 function resolveCharm(key: string, id: string | undefined): LuckyCard | null {
@@ -283,10 +284,12 @@ export function MeView({
   state,
   onEdit,
   onReset,
+  onToast,
 }: {
   state: AppState;
   onEdit: () => void;
   onReset: () => void;
+  onToast?: (message: string) => void;
 }) {
   const chart = chartOf(state.profile);
   const meta = ELEMENT_META[chart.dayMaster];
@@ -354,6 +357,8 @@ export function MeView({
           </div>
         </div>
       </div>
+
+      <MorningPushCard onNotice={onToast} />
 
       <div className="space-y-2">
         <button type="button" onClick={onEdit} className="flex w-full items-center justify-between rounded-2xl border border-line bg-white/80 px-4 py-3.5 text-[13.5px] font-bold text-ink">

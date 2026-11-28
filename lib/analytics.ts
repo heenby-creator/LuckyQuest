@@ -35,6 +35,8 @@ export interface AnalyticsEvents {
   share_link: { date: string; method: ShareMethod };
   /** 인증샷 포함 카드 이미지 저장/공유 */
   card_download: { date: string; photo_count: number; method: "shared" | "downloaded" };
+  /** '마이' 탭의 아침 7시 알림 스위치 */
+  push_toggle: { enabled: boolean };
 }
 
 export type AnalyticsEventName = keyof AnalyticsEvents;

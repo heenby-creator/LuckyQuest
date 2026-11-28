@@ -10,16 +10,18 @@ import { GA_MEASUREMENT_ID } from "@/lib/analytics";
  * - 회원가입·로그인·서버 계정이 없다(lib/storage.ts: localStorage 한 곳).
  * - 인증샷은 IndexedDB에만, 올릴 때 다시 그려 EXIF를 떨어뜨린다(lib/photos.ts).
  * - 이용 통계만 GA4로 나간다(lib/analytics.ts, app/layout.tsx).
+ * - '아침 7시 알림'을 직접 켠 이용자에 한해, 발송용 기기 푸시 주소(익명 endpoint)만
+ *   서버(Upstash Redis)에 보관하고, 끄면 즉시 지운다(lib/pushStore.ts, app/api/push/subscribe).
  * 앱 동작이 바뀌면 이 문서도 함께 고쳐야 한다.
  */
 
-const EFFECTIVE_DATE = "2026년 11월 25일";
+const EFFECTIVE_DATE = "2026년 11월 28일";
 const CONTACT_EMAIL = "heenby@gmail.com";
 
 export const metadata: Metadata = {
   title: "개인정보 처리방침",
   description:
-    "Lucky Quest는 회원가입과 로그인 없이, 입력한 생년월일·MBTI·퀘스트 기록과 인증샷을 이용자 기기 안에만 저장합니다. 어떤 정보가 어디에 남는지 사실대로 안내합니다.",
+    "Lucky Quest는 회원가입과 로그인 없이, 입력한 생년월일·MBTI·퀘스트 기록과 인증샷을 이용자 기기 안에만 저장합니다. ‘아침 7시 알림’을 직접 켠 경우에만 발송용 기기 주소(익명)를 서버에 보관하고, 끄면 바로 지웁니다.",
   alternates: { canonical: "/privacy" },
   openGraph: {
     type: "article",
@@ -100,6 +102,7 @@ export default function PrivacyPage() {
           <p className="mt-3 text-[14px] leading-[1.85] text-ink-soft">
             Lucky Quest(이하 ‘서비스’)는 회원가입도 로그인도 없이 오늘의 운세와 작은 퀘스트를 건네는 웹 앱입니다.
             이용자가 입력한 정보는 서버로 보내지 않고 이용자의 기기 안에만 담깁니다.
+            직접 켠 ‘아침 7시 알림’의 발송용 기기 주소만 예외로 서버에 보관합니다.
             이 문서는 어떤 정보가 어디에 어떻게 남는지를 사실대로 적은 것입니다.
           </p>
           <div className="mt-4 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[11.5px] text-ink-faint">
@@ -125,6 +128,7 @@ export default function PrivacyPage() {
             <Item>생년월일·태어난 시간·MBTI·퀘스트 기록은 이용자 기기 브라우저에만 저장돼요.</Item>
             <Item>인증샷(선택)도 기기 안에만 저장하고, 저장 전에 촬영 위치 정보를 지워요.</Item>
             <Item>서비스 개선을 위한 익명 이용 통계만 Google Analytics 4로 전송돼요.</Item>
+            <Item>‘아침 7시 알림’을 직접 켠 경우에만 알림 발송용 기기 주소(익명)가 서버에 보관되고, 끄면 바로 지워져요.</Item>
           </ul>
         </div>
 
@@ -168,7 +172,43 @@ export default function PrivacyPage() {
             </p>
           </Section>
 
-          <Section n="3" title="인증샷은 어떻게 다루나요">
+          <Section n="3" title="아침 7시 알림을 켰을 때 (웹 푸시)">
+            <p>
+              ‘마이’ 탭의 ‘아침 7시 운세 알림’을 직접 켠 경우에만, 알림을 보내기 위해 아래 정보를 서비스
+              서버에 보관합니다. 스위치를 켜지 않았다면 알림을 위한 어떤 정보도 보내지 않습니다.
+            </p>
+            <div className="space-y-2 rounded-2xl border border-line bg-cream/70 p-3.5">
+              <div>
+                <p className="text-[12px] font-extrabold text-ink">서버에 보관하는 것</p>
+                <p className="mt-1 text-[12.5px] leading-[1.75] text-ink-soft">
+                  브라우저가 만든 기기 푸시 주소(endpoint, 익명 주소), 알림을 암호화할 때 쓰는 공개키 값,
+                  알림을 켠 시각. 이름·연락처·생년월일·MBTI는 함께 보내지 않습니다.
+                </p>
+              </div>
+              <div className="border-t border-dashed border-line pt-2">
+                <p className="text-[12px] font-extrabold text-ink">보관 기간과 삭제</p>
+                <p className="mt-1 text-[12.5px] leading-[1.75] text-ink-soft">
+                  스위치를 끄면 서버에서 바로 삭제합니다. 기기 변경·앱 삭제로 브라우저가 구독을 버린 경우에는
+                  다음 알림 발송 때 확인해 함께 정리합니다.
+                </p>
+              </div>
+            </div>
+            <Bullets>
+              <Item>
+                알림 문구에는 ‘오늘의 운세가 도착했다’는 안내만 담고, 오행 풀이·퀘스트 내용은 담지 않습니다.
+                내용은 앱을 열어야 보입니다.
+              </Item>
+              <Item>
+                구독 목록은 Upstash(Redis 호스팅)에 보관하고, 발송은 Vercel의 예약 실행으로 합니다. 두 사업자에게는
+                푸시 주소와 발송 시각만 지나갑니다.
+              </Item>
+              <Item>
+                기기 설정에서 알림을 꺼도 발송이 멈추며, 앱을 열면 스위치가 꺼진 상태로 보입니다.
+              </Item>
+            </Bullets>
+          </Section>
+
+          <Section n="4" title="인증샷은 어떻게 다루나요">
             <Bullets>
               <Item>인증샷은 선택 사항입니다. 올리지 않아도 모든 기능을 쓸 수 있어요.</Item>
               <Item>
@@ -180,7 +220,7 @@ export default function PrivacyPage() {
             </Bullets>
           </Section>
 
-          <Section n="4" title="익명 이용 통계 (Google Analytics 4)">
+          <Section n="5" title="익명 이용 통계 (Google Analytics 4)">
             <p>
               어떤 화면과 기능이 도움이 되는지 알아보고 서비스를 다듬기 위해 Google Analytics 4(측정 ID{" "}
               <span className="font-mono text-[12.5px] text-ink">{GA_MEASUREMENT_ID}</span>)를 사용합니다.
@@ -212,7 +252,7 @@ export default function PrivacyPage() {
             </p>
           </Section>
 
-          <Section n="5" title="서비스 운영에 필요한 최소한의 접속 기록">
+          <Section n="6" title="서비스 운영에 필요한 최소한의 접속 기록">
             <p>
               서비스는 정적 페이지를 호스팅 사업자(Vercel)를 통해 전달하고, 글꼴을 jsDelivr와 Google Fonts에서
               불러옵니다. 페이지를 내려받는 과정에서 이들 사업자에 접속 IP, 브라우저 정보, 접속 시각이 남을 수
@@ -221,17 +261,20 @@ export default function PrivacyPage() {
             </p>
           </Section>
 
-          <Section n="6" title="제3자 제공·판매">
+          <Section n="7" title="제3자 제공·판매">
             <p>
               이용자의 개인정보를 제3자에게 제공하거나 판매하지 않습니다. 법령에 따라 수사기관이 적법한 절차로
-              요청하는 경우를 제외하고는 어떤 기관에도 제공하지 않습니다. 다만 4항의 이용 통계와 5항의 호스팅은
-              각 사업자의 정책에 따라 처리됩니다.
+              요청하는 경우를 제외하고는 어떤 기관에도 제공하지 않습니다. 다만 3항의 알림 발송, 5항의 이용 통계,
+              6항의 호스팅은 각 사업자의 정책에 따라 처리됩니다.
             </p>
           </Section>
 
-          <Section n="7" title="보관 기간과 삭제 방법">
+          <Section n="8" title="보관 기간과 삭제 방법">
             <Bullets>
               <Item>서비스가 보관하는 계정 정보: 없습니다(계정을 만들지 않습니다).</Item>
+              <Item>
+                아침 알림 구독 정보: 알림을 켜 둔 동안만 보관하고, 스위치를 끄면 즉시 삭제합니다.
+              </Item>
               <Item>기기 안의 기록: 이용자가 지울 때까지 기기에 남고, 서비스는 이를 보관하지 않습니다.</Item>
               <Item>
                 지우는 방법: 오른쪽 위 메뉴 또는 ‘마이’ 탭의 ‘기록 초기화’로 기록을 한 번에 지우고, ‘내 정보
@@ -242,32 +285,33 @@ export default function PrivacyPage() {
             </Bullets>
           </Section>
 
-          <Section n="8" title="이용자의 권리">
+          <Section n="9" title="이용자의 권리">
             <p>
-              이용자는 언제든 자신의 정보를 확인하고 고치거나 지울 수 있습니다. 정보가 기기 안에만 있으므로 앱
-              화면에서 바로 처리되며, 서비스 운영자에게 따로 요청할 필요가 없습니다. 처리에 궁금한 점이나
-              도움이 필요하면 아래 문의처로 알려주세요.
+              이용자는 언제든 자신의 정보를 확인하고 고치거나 지울 수 있습니다. 정보가 기기 안에만 있고 알림
+              주소는 스위치를 끄면 바로 지워지므로, 앱 화면에서 처리되며 서비스 운영자에게 따로 요청할 필요가
+              없습니다. 처리에 궁금한 점이나 도움이 필요하면 아래 문의처로 알려주세요.
             </p>
           </Section>
 
-          <Section n="9" title="아동의 개인정보">
+          <Section n="10" title="아동의 개인정보">
             <p>
               서비스는 만 14세 미만 아동을 주 대상으로 하지 않으며, 아동의 개인정보를 알면서 수집하지 않습니다.
               보호자가 이와 관련해 문의하면 확인 후 필요한 조치를 하겠습니다.
             </p>
           </Section>
 
-          <Section n="10" title="방침의 변경">
+          <Section n="11" title="방침의 변경">
             <p>
               앱 기능이 바뀌어 이 문서를 고칠 때는 변경 내용과 시행일을 이 페이지와 앱 화면에 미리 알립니다.
               이용자 권리에 중대한 변경은 시행 30일 전, 그 밖의 변경은 7일 전에 안내합니다.
             </p>
             <div className="rounded-2xl border border-line bg-cream/70 px-3.5 py-3 text-[12.5px] leading-[1.8] text-ink-soft">
+              <p><span className="font-bold text-ink">2026년 11월 28일</span> — ‘아침 7시 알림’ 도입에 따라 알림 발송용 기기 주소의 보관·삭제 조항(3항) 추가</p>
               <p><span className="font-bold text-ink">2026년 11월 25일</span> — 제정 및 시행</p>
             </div>
           </Section>
 
-          <Section n="11" title="문의처">
+          <Section n="12" title="문의처">
             <p>
               개인정보 처리에 관한 문의는 아래로 보내주세요. 확인하는 대로 답장드립니다.
             </p>

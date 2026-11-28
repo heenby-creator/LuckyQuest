@@ -309,7 +309,7 @@ export function LuckyQuestApp() {
               {tab === "calendar" && state && <CalendarView state={state} />}
               {tab === "charms" && state && <CharmsView state={state} />}
               {tab === "me" && state && (
-                <MeView state={state} onEdit={() => { setFocusMbti(false); setEditing(true); }} onReset={onReset} />
+                <MeView state={state} onEdit={() => { setFocusMbti(false); setEditing(true); }} onReset={onReset} onToast={setToast} />
               )}
             </main>
 

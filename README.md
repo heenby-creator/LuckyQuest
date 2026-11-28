@@ -20,7 +20,7 @@
 - Tailwind CSS 4
 - `manseryeok` 2.0 — 런타임 의존성 0, 클라이언트에서 계산
 - 손으로 그린 SVG 일러스트 (별 캐릭터, 네잎클로버, 오행 아이콘, 카드 문양)
-- 서버·DB·로그인 없음: 모든 상태는 브라우저 `localStorage` (`luckyquest.state.v1`)
+- 서버·DB·로그인 없음: 모든 상태는 브라우저 `localStorage` (`luckyquest.state.v1`). 단, 선택 기능인 ‘아침 7시 알림’을 켠 경우에만 푸시 구독 목록(익명 endpoint)을 Upstash Redis에 보관한다.
 
 ## 개발
 
@@ -42,6 +42,8 @@ app/
   globals.css       디자인 토큰·애니메이션
   card/[date]/      공유 링크 착지 페이지 — 그날의 카드 + 동적 OG 메타(SSR)
   api/og/route.tsx  OG 이미지 엔드포인트(/api/og, /api/og?card=YYYY-MM-DD)
+  api/push/subscribe/route.ts  아침 알림 구독 등록·해제·상태
+  api/cron/morning-push/route.ts  매일 07:00 KST 알림 발송(Vercel Cron)
 components/
   LuckyQuestApp.tsx 앱 셸(헤더·탭·시트·토스트)과 상태 관리
   Onboarding.tsx    5초 설정(생년월일·시간·MBTI·간단 검사)
@@ -49,6 +51,8 @@ components/
   QuestList.tsx     퀘스트 카드·체크 애니메이션
   CharmCard.tsx     잠금/해제 오늘의 행운 카드·공유·인증샷 카드 저장
   Views.tsx         달력·보관함·마이
+  MorningPushCard.tsx  마이 탭의 ‘아침 7시 운세 알림’ 스위치
+  useMorningPush.ts 알림 켜기·끄기(권한·서비스워커·구독)
   illustrations.tsx SVG 일러스트
 lib/
   saju.ts           manseryeok 래퍼(사주 기둥·오행·일진)
@@ -58,9 +62,11 @@ lib/
   photos.ts         인증샷 리사이즈·IndexedDB 저장(서버 전송 없음)
   cardImage.ts      인증샷 포함 카드 PNG 합성(클라이언트 Canvas)
   storage.ts        localStorage 상태
+  pushStore.ts      푸시 구독 저장소(Upstash REST, SDK 없이 fetch)
   utils.ts          날짜·해시 유틸
 public/
   og-default.png    대표 OG 이미지(1200×630)
+  sw.js             서비스 워커(푸시 수신·알림 클릭만, 캐시 없음)
   fonts/            OG 이미지용 Noto Serif KR 서브셋(scripts/og-fonts.sh로 생성)
 ```
 
@@ -107,6 +113,41 @@ curl -sS -o public/og-default.png "http://localhost:3000/api/og"
 
 OG 이미지 주소에는 `v=2`(`lib/share.ts`의 `OG_CARD_VERSION`)이 붙어 있습니다. 카드 이미지 디자인을 바꾸면
 이 숫자를 올려 크롤러·CDN이 새 이미지를 받게 합니다.
+
+## 아침 7시 알림 (웹 푸시)
+
+| 조각 | 하는 일 |
+| --- | --- |
+| `components/MorningPushCard.tsx` + `useMorningPush.ts` | ‘마이’ 탭 스위치. 켜면 알림 권한 → `public/sw.js` 등록 → `pushManager.subscribe` → 서버 등록, 끄면 서버에서 지우고 `unsubscribe` |
+| `public/sw.js` | `push` 수신 → 알림 표시, `notificationclick` → 열린 창 포커스(없으면 열기). 오프라인 캐시는 하지 않는다 |
+| `app/api/push/subscribe` | `GET` 설정 상태·공개키 / `POST` 구독 저장 / `DELETE` 구독 삭제 |
+| `app/api/cron/morning-push` | Vercel Cron이 하루 한 번 호출. `Authorization: Bearer $CRON_SECRET` 확인 후 전체 구독에 발송, 404·410 만료 구독은 삭제 |
+| `lib/pushStore.ts` | Upstash Redis REST(HSET/HDEL/HGETALL)를 `fetch`로 직접 호출 |
+| `vercel.json` | `{"path":"/api/cron/morning-push","schedule":"0 22 * * *"}` (UTC 22:00 = KST 07:00) |
+
+### 필요한 환경변수 (Vercel → Settings → Environment Variables)
+
+```
+NEXT_PUBLIC_VAPID_PUBLIC_KEY=<공개키>
+VAPID_PRIVATE_KEY=<비밀키>
+VAPID_SUBJECT=mailto:heenby@gmail.com
+CRON_SECRET=<임의의 긴 문자열>
+KV_REST_API_URL=<Upstash REST URL>
+KV_REST_API_TOKEN=<Upstash REST 토큰>
+```
+
+- `NEXT_PUBLIC_VAPID_PUBLIC_KEY`는 빌드 때 클라이언트에 들어가므로 **값을 바꾸면 재배포**해야 합니다.
+- Upstash는 Vercel 마켓플레이스에서 Redis를 붙이면 `KV_REST_API_*`가 자동으로 들어옵니다. 직접 만들었다면 `UPSTASH_REDIS_REST_URL`·`UPSTASH_REDIS_REST_TOKEN`도 같은 값으로 인식합니다(`lib/pushStore.ts`).
+- 환경변수가 하나라도 비어 있으면 빌드는 그대로 되고, 화면에는 ‘알림 발송 서버를 준비하고 있어요’만 뜨며 발송 API는 503을 돌려줍니다.
+
+### 발송 확인
+
+```bash
+curl -H "Authorization: Bearer $CRON_SECRET" https://www.luckyquest.app/api/cron/morning-push
+# → {"ok":true,"total":..,"sent":..,"removed":..,"failed":..}
+```
+
+개발 중에는 `npx web-push generate-vapid-keys --json`으로 키를 새로 만들어 `.env.local`에 넣고 씁니다(키를 저장소에 올리지 않습니다).
 
 ## 검증
 
