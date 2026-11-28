@@ -12,7 +12,7 @@ const CLOVER_LEAF_PATH = "M0 0 C 8 -6 13.5 -15.5 9.5 -23.5 C 5.5 -30.5 -5.5 -30.
 /** 서버에서 그리는 작은 네잎클로버 — 키워드 옆에 붙인다. */
 function CloverMark({
   size = 24,
-  tone = "gold",
+  tone = "emerald",
   className = "",
 }: {
   size?: number;
@@ -137,7 +137,7 @@ export default async function SharedCardPage({ params }: PageProps) {
             </div>
 
             <h2 className="mt-1.5 flex items-center justify-center gap-2.5 font-serif text-[24px] font-medium leading-snug tracking-[-0.015em] text-[#2F4A3B]">
-              <CloverMark size={27} tone="gold" className="shrink-0 translate-y-[3px]" />
+              <CloverMark size={27} className="shrink-0 translate-y-[3px]" />
               <span>{card.title}</span>
             </h2>
             <div className="mt-2.5 flex items-center justify-center gap-2 text-gold-line">

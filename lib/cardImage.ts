@@ -66,7 +66,6 @@ function leafPath(ctx: CanvasRenderingContext2D, k: number) {
 }
 
 const CLOVER_GREEN = { top: "#7BCFA0", mid: "#3E9B69", low: "#1C6B49", back: "#60B98C", backMid: "#2E8A5C", backLow: "#16583C", vein: "rgba(234,247,239,0.62)" };
-const CLOVER_GOLD = { top: "#F7E0A0", mid: "#D9AE41", low: "#B98E28", back: "#EFCE78", backMid: "#C99E35", backLow: "#A87E20", vein: "rgba(255,250,232,0.66)" };
 
 function drawClover(
   ctx: CanvasRenderingContext2D,
@@ -470,7 +469,7 @@ export async function composeCardImage(input: CardImageInput): Promise<Blob> {
   const cloverWidth = cloverLeaf * 1.15;
   const titleRowWidth = cloverWidth + cloverGap + titleWidth;
   const titleLeft = (W - titleRowWidth) / 2 + cloverWidth + cloverGap;
-  drawClover(ctx, titleLeft - cloverGap - cloverWidth / 2, 600, cloverLeaf, CLOVER_GOLD);
+  drawClover(ctx, titleLeft - cloverGap - cloverWidth / 2, 600, cloverLeaf, CLOVER_GREEN);
   ctx.textAlign = "left";
   ctx.textAlign = "left";
   ctx.fillStyle = C.leafDeep;

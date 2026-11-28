@@ -130,7 +130,7 @@ export function CharmCard({
 
         {/* 카드 내용 */}
         <h3 className="mt-1.5 flex items-center justify-center gap-2 font-serif text-[21.5px] font-medium leading-snug tracking-[-0.015em] text-[#2F4A3B]">
-          <Clover size={25} tone="gold" className="shrink-0 translate-y-[3px]" />
+          <Clover size={25} className="shrink-0 translate-y-[3px]" />
           <span>{daily.charm.title}</span>
         </h3>
         <div className="mt-2 flex items-center justify-center gap-2 text-gold-line">
