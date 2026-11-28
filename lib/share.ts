@@ -22,6 +22,8 @@ export interface ShareCard {
   quote: string;
   author: string;
   colorName: string;
+  /** 행운의 색 hex — 공유 페이지의 입체 구슬이 쓴다 */
+  colorHex: string;
   number: string;
   /** 행운의 아이템 */
   item: string;
@@ -63,6 +65,7 @@ export function cardForDate(key: string): ShareCard {
     quote: content.quote,
     author: content.author,
     colorName: content.colorName,
+    colorHex: content.colorHex,
     number: content.number,
     item: content.item,
     cardId: content.id,

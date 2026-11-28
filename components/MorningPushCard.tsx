@@ -10,7 +10,7 @@ import { useMorningPush, type MorningPushStatus } from "./useMorningPush";
  */
 
 /** 아직 꺼져 있을 때 안내 박스에 두는 기본 문구 */
-const GUIDE_TEXT = "오른쪽 버튼을 활성화하면, 매일 아침 운세와 작은 퀘스트 2개를 알려드려요";
+const GUIDE_TEXT = "오른쪽 버튼을 활성화하면, 매일 아침 운세와 퀘스트 2개를 알려드려요";
 
 const STATUS_TEXT: Record<MorningPushStatus, string> = {
   checking: "알림 상태를 확인하고 있어요…",
@@ -76,7 +76,7 @@ export function MorningPushCard({ onNotice }: { onNotice?: (message: string) => 
       </div>
 
       <p
-        className={`mt-3 rounded-2xl border px-3 py-2.5 text-[11.5px] leading-relaxed ${
+        className={`mt-3 break-keep rounded-2xl border px-3 py-2.5 text-[11.5px] leading-relaxed ${
           on
             ? "border-leaf/25 bg-leaf-soft/80 text-[#2C5B47]"
             : "border-line bg-cream-2/70 text-ink-soft"
@@ -85,7 +85,7 @@ export function MorningPushCard({ onNotice }: { onNotice?: (message: string) => 
         {STATUS_TEXT[view.status]}
       </p>
 
-      <p className="mt-2 flex flex-wrap items-center gap-x-1.5 gap-y-1 px-0.5 text-[10px] leading-relaxed text-ink-faint">
+      <p className="mt-2 flex flex-wrap items-center gap-x-1.5 gap-y-1 break-keep px-0.5 text-[10px] leading-relaxed text-ink-faint">
         알림을 켜면 단말기 주소(익명)만 서버에 저장되고, 끄면 바로 지워져요.
         <Link
           href="/privacy"

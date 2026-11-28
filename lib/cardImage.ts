@@ -4,6 +4,7 @@
  */
 import type { CharmView } from "./engine";
 import type { Element } from "./types";
+import { mix, paleness, shade } from "./color";
 
 const W = 1080;
 const H = 1760;
@@ -157,56 +158,142 @@ function drawClover(ctx: CanvasRenderingContext2D, cx: number, cy: number, leafL
   ctx.fill();
 }
 
-function drawEmblem(ctx: CanvasRenderingContext2D, cx: number, cy: number, radius: number) {
-  const disc = ctx.createRadialGradient(cx - 30, cy - 60, 10, cx, cy, radius);
-  disc.addColorStop(0, "#FFFFFB");
-  disc.addColorStop(0.62, "#FBF6E8");
-  disc.addColorStop(1, "#F3ECD8");
+/** 입체 행운색 구 — 카드(components/LuckyColorSphere)와 같은 결의 그라데이션을 Canvas로 옮긴다. */
+function drawSphere(ctx: CanvasRenderingContext2D, cx: number, cy: number, radius: number, base: string) {
+  const pale = paleness(base);
+  const light = (t: number) => mix(base, "#FFFFFF", t);
+  const TAU = Math.PI * 2;
 
-  ctx.beginPath();
-  ctx.arc(cx, cy, radius, 0, Math.PI * 2);
-  ctx.fillStyle = disc;
-  ctx.fill();
-
-  ctx.beginPath();
-  ctx.arc(cx, cy, radius - 6, 0, Math.PI * 2);
-  ctx.strokeStyle = "rgba(255,255,255,0.7)";
-  ctx.lineWidth = 2;
-  ctx.stroke();
-
-  ctx.beginPath();
-  ctx.arc(cx, cy, radius - 3, 0, Math.PI * 2);
-  ctx.strokeStyle = "rgba(199,168,98,0.6)";
-  ctx.lineWidth = 1.8;
-  ctx.stroke();
-
+  // 바닥 그림자 — 넓은 낙하 그림자와 접지 그림자
   ctx.save();
-  ctx.setLineDash([3, 12]);
+  ctx.translate(cx, cy + radius * 1.02);
+  ctx.scale(1, 0.16);
+  const floor = ctx.createRadialGradient(0, 0, radius * 0.1, 0, 0, radius * 0.98);
+  floor.addColorStop(0, `rgba(0,0,0,${0.16 + 0.06 * pale})`);
+  floor.addColorStop(0.55, `rgba(0,0,0,${0.06 + 0.03 * pale})`);
+  floor.addColorStop(1, "rgba(0,0,0,0)");
   ctx.beginPath();
-  ctx.arc(cx, cy, radius - 26, 0, Math.PI * 2);
-  ctx.strokeStyle = "rgba(199,168,98,0.32)";
-  ctx.lineWidth = 1.6;
-  ctx.stroke();
+  ctx.arc(0, 0, radius * 0.98, 0, TAU);
+  ctx.fillStyle = floor;
+  ctx.fill();
   ctx.restore();
 
-  // 위쪽 작은 별
-  const s = radius * 0.1;
-  const sx = cx;
-  const sy = cy - radius + radius * 0.28;
+  ctx.save();
+  ctx.translate(cx, cy + radius * 0.99);
+  ctx.scale(1, 0.12);
+  const contact = ctx.createRadialGradient(0, 0, 2, 0, 0, radius * 0.6);
+  contact.addColorStop(0, `rgba(0,0,0,${0.2 + 0.08 * pale})`);
+  contact.addColorStop(1, "rgba(0,0,0,0)");
   ctx.beginPath();
-  ctx.moveTo(sx, sy - s);
-  ctx.lineTo(sx + s * 0.28, sy - s * 0.28);
-  ctx.lineTo(sx + s, sy);
-  ctx.lineTo(sx + s * 0.28, sy + s * 0.28);
-  ctx.lineTo(sx, sy + s);
-  ctx.lineTo(sx - s * 0.28, sy + s * 0.28);
-  ctx.lineTo(sx - s, sy);
-  ctx.lineTo(sx - s * 0.28, sy - s * 0.28);
-  ctx.closePath();
-  ctx.fillStyle = C.gold;
+  ctx.arc(0, 0, radius * 0.6, 0, TAU);
+  ctx.fillStyle = contact;
+  ctx.fill();
+  ctx.restore();
+
+  // 구 뒤 옅은 빛
+  const halo = ctx.createRadialGradient(cx, cy, radius * 0.6, cx, cy, radius * 1.5);
+  halo.addColorStop(0, `rgba(${hexTriplet(base)},${(0.16 - 0.05 * pale).toFixed(3)})`);
+  halo.addColorStop(1, `rgba(${hexTriplet(base)},0)`);
+  ctx.beginPath();
+  ctx.arc(cx, cy, radius * 1.5, 0, TAU);
+  ctx.fillStyle = halo;
   ctx.fill();
 
-  drawClover(ctx, cx, cy + radius * 0.16, radius * 0.52);
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(cx, cy, radius, 0, TAU);
+  ctx.clip();
+
+  // 본체
+  const body = ctx.createRadialGradient(
+    cx - radius * 0.38,
+    cy - radius * 0.5,
+    radius * 0.04,
+    cx,
+    cy,
+    radius * 1.04,
+  );
+  body.addColorStop(0, light(0.62));
+  body.addColorStop(0.12, light(0.44));
+  body.addColorStop(0.26, light(0.2));
+  body.addColorStop(0.4, shade(base, 0.16 * pale));
+  body.addColorStop(0.54, shade(base, 0.08 + 0.18 * pale));
+  body.addColorStop(0.7, shade(base, 0.19 + 0.24 * pale));
+  body.addColorStop(0.86, shade(base, 0.32 + 0.3 * pale));
+  body.addColorStop(1, shade(base, 0.46 + 0.28 * pale));
+  ctx.fillStyle = body;
+  ctx.fillRect(cx - radius, cy - radius, radius * 2, radius * 2);
+
+  // 넓게 퍼지는 광택
+  const gloss = ctx.createRadialGradient(
+    cx - radius * 0.36,
+    cy - radius * 0.48,
+    0,
+    cx - radius * 0.36,
+    cy - radius * 0.48,
+    radius * 0.95,
+  );
+  gloss.addColorStop(0, `rgba(255,255,255,${(0.46 - 0.16 * pale).toFixed(3)})`);
+  gloss.addColorStop(0.35, "rgba(255,255,255,0.1)");
+  gloss.addColorStop(1, "rgba(255,255,255,0)");
+  ctx.fillStyle = gloss;
+  ctx.fillRect(cx - radius, cy - radius, radius * 2, radius * 2);
+
+  // 바닥 반사광 (오른쪽 아래)
+  ctx.save();
+  ctx.translate(cx + radius * 0.42, cy + radius * 0.7);
+  ctx.scale(1, 0.6);
+  const bounce = ctx.createRadialGradient(0, 0, 0, 0, 0, radius * 0.62);
+  bounce.addColorStop(0, `rgba(255,255,255,${(0.24 + 0.2 * pale).toFixed(3)})`);
+  bounce.addColorStop(0.45, "rgba(255,255,255,0.08)");
+  bounce.addColorStop(1, "rgba(255,255,255,0)");
+  ctx.beginPath();
+  ctx.arc(0, 0, radius * 0.62, 0, TAU);
+  ctx.fillStyle = bounce;
+  ctx.fill();
+  ctx.restore();
+
+  // 안쪽 음영 — 가장자리로 갈수록 짙어진다
+  const inset = ctx.createRadialGradient(cx, cy, radius * 0.55, cx, cy, radius);
+  inset.addColorStop(0, "rgba(0,0,0,0)");
+  inset.addColorStop(1, `rgba(${hexTriplet(shade(base, 0.62))},${(0.26 + 0.2 * pale).toFixed(3)})`);
+  ctx.fillStyle = inset;
+  ctx.fillRect(cx - radius, cy - radius, radius * 2, radius * 2);
+
+  // 또렷한 스펙큘러 하이라이트
+  const specular = ctx.createRadialGradient(
+    cx - radius * 0.34,
+    cy - radius * 0.48,
+    0,
+    cx - radius * 0.34,
+    cy - radius * 0.48,
+    radius * 0.15,
+  );
+  specular.addColorStop(0, "rgba(255,255,255,1)");
+  specular.addColorStop(0.26, "rgba(255,255,255,0.9)");
+  specular.addColorStop(0.58, "rgba(255,253,246,0.4)");
+  specular.addColorStop(1, "rgba(255,253,246,0)");
+  ctx.beginPath();
+  ctx.arc(cx - radius * 0.34, cy - radius * 0.48, radius * 0.15, 0, TAU);
+  ctx.fillStyle = specular;
+  ctx.fill();
+  ctx.restore();
+
+  // 아주 밝은 색은 테두리를 얇게 그어 카드 배경과 구분한다.
+  ctx.beginPath();
+  ctx.arc(cx, cy, radius - 0.8, 0, TAU);
+  ctx.strokeStyle = pale > 0.35
+    ? `rgba(${hexTriplet(shade(base, 0.34))},${(0.16 + 0.24 * pale).toFixed(3)})`
+    : "rgba(255,255,255,0.2)";
+  ctx.lineWidth = 1.6;
+  ctx.stroke();
+}
+
+/** '#RRGGBB' -> 'r,g,b' */
+function hexTriplet(hex: string): string {
+  const clean = hex.replace("#", "");
+  const num = Number.parseInt(clean.length === 3 ? clean.replace(/./g, (c) => c + c) : clean, 16);
+  return `${(num >> 16) & 255},${(num >> 8) & 255},${num & 255}`;
 }
 
 function wrapLines(ctx: CanvasRenderingContext2D, text: string, maxWidth: number): string[] {
@@ -363,13 +450,21 @@ export async function composeCardImage(input: CardImageInput): Promise<Blob> {
 
   ctx.textAlign = "center";
 
-  // 문양
-  drawEmblem(ctx, W / 2, 372, 136);
+  // 오늘의 행운의 색 — 입체 구
+  drawSphere(ctx, W / 2, 372, 122, input.charm.colorHex);
 
-  // 키워드
+  // 키워드 — 왼쪽에 줄기 있는 네잎클로버를 나란히
   ctx.font = `600 64px ${SERIF}`;
+  const titleWidth = ctx.measureText(input.charm.title).width;
+  const cloverLeaf = 26;
+  const cloverGap = 20;
+  const titleRowWidth = cloverLeaf * 1.4 + cloverGap + titleWidth;
+  const titleLeft = (W - titleRowWidth) / 2 + cloverLeaf * 1.4 + cloverGap;
+  drawClover(ctx, titleLeft - cloverGap - cloverLeaf * 0.7, 606 - cloverLeaf * 0.4, cloverLeaf);
+  ctx.textAlign = "left";
   ctx.fillStyle = C.leafDeep;
-  ctx.fillText(input.charm.title, W / 2, 606);
+  ctx.fillText(input.charm.title, titleLeft, 606);
+  ctx.textAlign = "center";
 
   // 구분선
   ctx.strokeStyle = "rgba(212,184,118,0.8)";
@@ -407,9 +502,9 @@ export async function composeCardImage(input: CardImageInput): Promise<Blob> {
 
   // 행운의 색 · 숫자 · 아이템
   const cells = [
-    { label: "행운의 색", value: input.charm.colorName },
-    { label: "행운의 숫자", value: input.charm.number },
-    { label: "행운의 아이템", value: input.charm.item },
+    { label: "행운의 색", value: input.charm.colorName, dot: input.charm.colorHex },
+    { label: "행운의 숫자", value: input.charm.number, dot: undefined },
+    { label: "행운의 아이템", value: input.charm.item, dot: undefined },
   ];
   const tableTop = 990;
   const tableWidth = 864;
@@ -442,7 +537,46 @@ export async function composeCardImage(input: CardImageInput): Promise<Blob> {
     setLetterSpacing(ctx, "0px");
     ctx.font = `600 36px ${SERIF}`;
     ctx.fillStyle = "#3E3A2C";
-    ctx.fillText(cell.value, centerX, tableTop + 94);
+    if (cell.dot) {
+      // 색 점 없이 글자만 가운데 두고, 점은 글자 앞에 붙인다.
+      const valueWidth = ctx.measureText(cell.value).width;
+      const dotSize = 18;
+      const gap = 12;
+      const rowWidth = dotSize + gap + valueWidth;
+      const rowLeft = centerX - rowWidth / 2;
+      const dotX = rowLeft + dotSize / 2;
+      const dotY = tableTop + 94 - 12;
+      const dotGradient = ctx.createRadialGradient(
+        dotX - dotSize * 0.16,
+        dotY - dotSize * 0.22,
+        1,
+        dotX,
+        dotY,
+        dotSize / 2,
+      );
+      dotGradient.addColorStop(0, mix(cell.dot, "#FFFFFF", 0.68));
+      dotGradient.addColorStop(0.62, cell.dot);
+      dotGradient.addColorStop(1, shade(cell.dot, 0.26));
+      ctx.beginPath();
+      ctx.arc(dotX, dotY, dotSize / 2, 0, Math.PI * 2);
+      ctx.fillStyle = dotGradient;
+      ctx.fill();
+      ctx.lineWidth = 2.4;
+      ctx.strokeStyle = "rgba(255,255,255,0.92)";
+      ctx.stroke();
+      // 아주 밝은 색은 바깥에 옅은 회색 테를 둘러 카드 배경과 구분한다.
+      ctx.lineWidth = 1.6;
+      ctx.strokeStyle = `rgba(${hexTriplet(shade(cell.dot, 0.45))},${(0.1 + 0.3 * paleness(cell.dot)).toFixed(3)})`;
+      ctx.beginPath();
+      ctx.arc(dotX, dotY, dotSize / 2 + 1.4, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.fillStyle = "#3E3A2C";
+      ctx.textAlign = "left";
+      ctx.fillText(cell.value, rowLeft + dotSize + gap, tableTop + 94);
+      ctx.textAlign = "center";
+    } else {
+      ctx.fillText(cell.value, centerX, tableTop + 94);
+    }
   });
 
   // 인증샷 — 한 장이면 4:3, 두 장이면 나란히

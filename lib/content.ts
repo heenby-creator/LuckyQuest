@@ -1179,8 +1179,6 @@ export interface LuckyCard {
   /** 오늘의 기운과 맞닿은 명언 */
   quote: string;
   author: string;
-  /** 행운의 색 */
-  colorName: string;
   /** 행운의 숫자 */
   number: string;
   /** 행운의 아이템 — 오늘 곁에 두면 좋은 일상 소품 */
@@ -1199,7 +1197,6 @@ export const CHARM_POOL: Record<Element, LuckyCard[]> = {
       title: "새싹과 용기",
       quote: "천 리 길도 발밑에서 시작되는 법입니다.",
       author: "노자",
-      colorName: "연둣빛",
       number: "3",
       item: "새 화분 흙",
     },
@@ -1209,7 +1206,6 @@ export const CHARM_POOL: Record<Element, LuckyCard[]> = {
       title: "뿌리와 자람",
       quote: "뿌리 깊은 나무는 바람에 흔들리지 않습니다.",
       author: "용비어천가",
-      colorName: "세이지빛",
       number: "8",
       item: "손수건",
     },
@@ -1219,7 +1215,6 @@ export const CHARM_POOL: Record<Element, LuckyCard[]> = {
       title: "새잎의 계절",
       quote: "나무를 심기에 가장 좋은 때는 스무 해 전이었고, 그다음은 지금입니다.",
       author: "중국 속담",
-      colorName: "올리브빛",
       number: "2",
       item: "작은 화분",
     },
@@ -1229,7 +1224,6 @@ export const CHARM_POOL: Record<Element, LuckyCard[]> = {
       title: "배움의 가지",
       quote: "배우고 때때로 익히면 또한 기쁘지 아니한가.",
       author: "논어",
-      colorName: "연녹색",
       number: "6",
       item: "샤프펜슬",
     },
@@ -1241,7 +1235,6 @@ export const CHARM_POOL: Record<Element, LuckyCard[]> = {
       title: "온기와 기쁨",
       quote: "내 어버이를 어버이로 여기는 마음을 남의 어버이에게도 미치게 하라고 했습니다.",
       author: "맹자",
-      colorName: "살구빛",
       number: "7",
       item: "따뜻한 머그",
     },
@@ -1251,7 +1244,6 @@ export const CHARM_POOL: Record<Element, LuckyCard[]> = {
       title: "웃음의 불씨",
       quote: "웃음이 없는 하루는 허비한 하루입니다.",
       author: "찰리 채플린",
-      colorName: "복숭아빛",
       number: "9",
       item: "주머니 속 사탕",
     },
@@ -1261,7 +1253,6 @@ export const CHARM_POOL: Record<Element, LuckyCard[]> = {
       title: "말의 온기",
       quote: "사람에게 말을 선물하는 것은 금과 옥을 주는 것보다 무겁습니다.",
       author: "순자",
-      colorName: "귤빛",
       number: "1",
       item: "손거울",
     },
@@ -1271,7 +1262,6 @@ export const CHARM_POOL: Record<Element, LuckyCard[]> = {
       title: "기쁨의 몫",
       quote: "기쁨은 나눌수록 커집니다.",
       author: "서양 속담",
-      colorName: "노을빛",
       number: "4",
       item: "따뜻한 차 한 봉지",
     },
@@ -1283,7 +1273,6 @@ export const CHARM_POOL: Record<Element, LuckyCard[]> = {
       title: "중심과 평온",
       quote: "만족할 줄 아는 사람이 곧 넉넉한 사람입니다.",
       author: "노자",
-      colorName: "모래빛",
       number: "5",
       item: "작은 쿠션",
     },
@@ -1293,7 +1282,6 @@ export const CHARM_POOL: Record<Element, LuckyCard[]> = {
       title: "쉼의 자리",
       quote: "서두르면 이루지 못하고, 작은 이익에 매달리면 큰일을 이루지 못합니다.",
       author: "논어",
-      colorName: "베이지빛",
       number: "10",
       item: "도자기 컵",
     },
@@ -1303,7 +1291,6 @@ export const CHARM_POOL: Record<Element, LuckyCard[]> = {
       title: "땅의 기운",
       quote: "티끌 모아 태산.",
       author: "한국 속담",
-      colorName: "황토빛",
       number: "6",
       item: "원목 트레이",
     },
@@ -1313,7 +1300,6 @@ export const CHARM_POOL: Record<Element, LuckyCard[]> = {
       title: "오늘의 씨앗",
       quote: "뿌린 대로 거둡니다.",
       author: "한국 속담",
-      colorName: "밀짚빛",
       number: "9",
       item: "책갈피",
     },
@@ -1325,7 +1311,6 @@ export const CHARM_POOL: Record<Element, LuckyCard[]> = {
       title: "빛남과 결실",
       quote: "끝을 처음처럼 신중히 하면 실패하는 일이 없습니다.",
       author: "노자",
-      colorName: "은빛",
       number: "8",
       item: "유리 물컵",
     },
@@ -1335,7 +1320,6 @@ export const CHARM_POOL: Record<Element, LuckyCard[]> = {
       title: "정돈과 여백",
       quote: "어려운 일은 그것이 쉬울 때 처리하고, 큰일은 그것이 작을 때 처리합니다.",
       author: "노자",
-      colorName: "진주빛",
       number: "4",
       item: "작은 수첩",
     },
@@ -1345,7 +1329,6 @@ export const CHARM_POOL: Record<Element, LuckyCard[]> = {
       title: "값의 무게",
       quote: "정직은 최선의 정책입니다.",
       author: "벤저민 프랭클린",
-      colorName: "금빛",
       number: "3",
       item: "동전 지갑",
     },
@@ -1355,7 +1338,6 @@ export const CHARM_POOL: Record<Element, LuckyCard[]> = {
       title: "반짝이는 마무리",
       quote: "끝이 좋으면 다 좋습니다.",
       author: "한국 속담",
-      colorName: "상아빛",
       number: "7",
       item: "볼펜 한 자루",
     },
@@ -1367,7 +1349,6 @@ export const CHARM_POOL: Record<Element, LuckyCard[]> = {
       title: "흐름과 지혜",
       quote: "물은 다투지 않고 낮은 곳으로 흐르며 만물을 이롭게 합니다.",
       author: "노자",
-      colorName: "물빛",
       number: "1",
       item: "물병",
     },
@@ -1377,7 +1358,6 @@ export const CHARM_POOL: Record<Element, LuckyCard[]> = {
       title: "맑은 마음",
       quote: "고요한 물이 깊이 흐릅니다.",
       author: "영국 속담",
-      colorName: "하늘빛",
       number: "6",
       item: "텀블러",
     },
@@ -1387,7 +1367,6 @@ export const CHARM_POOL: Record<Element, LuckyCard[]> = {
       title: "들어주는 귀",
       quote: "세 사람이 길을 가면 그중에 반드시 나의 스승이 있습니다.",
       author: "논어",
-      colorName: "안개빛",
       number: "2",
       item: "메모지",
     },
@@ -1397,16 +1376,131 @@ export const CHARM_POOL: Record<Element, LuckyCard[]> = {
       title: "잔잔한 하루",
       quote: "흐르는 물은 썩지 않습니다.",
       author: "중국 속담",
-      colorName: "달빛",
       number: "5",
       item: "향초",
     },
   ],
 };
 
-/** 그날의 행운 카드 — 날짜 시드로 오행 풀에서 하나를 고른다. 앱과 공유 페이지가 같은 카드를 본다. */
-export function charmForDate(key: string, element: Element): LuckyCard {
-  return pick(CHARM_POOL[element], `${key}-charm-${element}`);
+/* ── 행운의 색 — 오행마다 12가지, 모두 60가지 ───────────────── */
+
+export interface LuckyColor {
+  /** 색 이름 (예: 귤빛) */
+  name: string;
+  /** 입체 구슬·색 점의 기본색 */
+  hex: string;
+}
+
+/**
+ * 오행별 행운의 색 팔레트 — 60가지.
+ * 카드(키워드·명언·아이템)는 20장 그대로 두고, 구슬의 색만 날마다 60가지 사이에서 바뀐다.
+ */
+export const ELEMENT_COLORS: Record<Element, LuckyColor[]> = {
+  목: [
+    { name: "연둣빛", hex: "#9ECF8A" },
+    { name: "세이지빛", hex: "#A3B18A" },
+    { name: "올리브빛", hex: "#8E9A54" },
+    { name: "연녹색", hex: "#B9DBA3" },
+    { name: "민트빛", hex: "#98D8C4" },
+    { name: "비취빛", hex: "#7FC6A8" },
+    { name: "에메랄드빛", hex: "#3FA97C" },
+    { name: "이끼빛", hex: "#7C8F5A" },
+    { name: "청자빛", hex: "#86B9AE" },
+    { name: "말차빛", hex: "#A8BE6B" },
+    { name: "솔빛", hex: "#4F7A5C" },
+    { name: "청록빛", hex: "#4E9E93" },
+  ],
+  화: [
+    { name: "살구빛", hex: "#F2B28C" },
+    { name: "복숭아빛", hex: "#F5A98E" },
+    { name: "귤빛", hex: "#F4A261" },
+    { name: "노을빛", hex: "#E9806A" },
+    { name: "산호빛", hex: "#F08A78" },
+    { name: "자몽빛", hex: "#E8785E" },
+    { name: "석류빛", hex: "#D9556B" },
+    { name: "장미빛", hex: "#E07A93" },
+    { name: "다홍빛", hex: "#E2553F" },
+    { name: "호박빛", hex: "#E3A045" },
+    { name: "붉은빛", hex: "#CE4A3C" },
+    { name: "주황빛", hex: "#EE8043" },
+  ],
+  토: [
+    { name: "모래빛", hex: "#DCC59C" },
+    { name: "베이지빛", hex: "#E2D2B4" },
+    { name: "황토빛", hex: "#C08752" },
+    { name: "밀짚빛", hex: "#D9BE7C" },
+    { name: "캐러멜빛", hex: "#B8783F" },
+    { name: "코코아빛", hex: "#8E6248" },
+    { name: "테라코타빛", hex: "#C2704E" },
+    { name: "겨자빛", hex: "#C9A755" },
+    { name: "꿀빛", hex: "#DCA94B" },
+    { name: "호두빛", hex: "#A87E55" },
+    { name: "크림빛", hex: "#EFE3C4" },
+    { name: "황금빛", hex: "#D4AF4A" },
+  ],
+  금: [
+    { name: "은빛", hex: "#C3C9D0" },
+    { name: "진주빛", hex: "#EBE4DA" },
+    { name: "금빛", hex: "#D3AE59" },
+    { name: "상아빛", hex: "#F0E6CC" },
+    { name: "백금빛", hex: "#D9DEE3" },
+    { name: "샴페인빛", hex: "#E6D2A8" },
+    { name: "라벤더빛", hex: "#C3B2D9" },
+    { name: "연보라빛", hex: "#D3C6E8" },
+    { name: "백옥빛", hex: "#E8F0E4" },
+    { name: "주석빛", hex: "#A9B0B6" },
+    { name: "문스톤빛", hex: "#DCE2E8" },
+    { name: "백합빛", hex: "#F3EFE2" },
+  ],
+  수: [
+    { name: "물빛", hex: "#7FB2D9" },
+    { name: "하늘빛", hex: "#8CC5E8" },
+    { name: "안개빛", hex: "#C4CED4" },
+    { name: "달빛", hex: "#D6DCEA" },
+    { name: "남빛", hex: "#3E6FA8" },
+    { name: "코발트빛", hex: "#3B5FB0" },
+    { name: "청량빛", hex: "#74CEDC" },
+    { name: "바다빛", hex: "#2E7FA6" },
+    { name: "빙하빛", hex: "#AEDCE8" },
+    { name: "잉크빛", hex: "#2C3A5A" },
+    { name: "쪽빛", hex: "#33557F" },
+    { name: "새벽빛", hex: "#A9B8DA" },
+  ],
+};
+
+const ELEMENT_ORDER: Element[] = ["목", "화", "토", "금", "수"];
+const DAY_MS = 86_400_000;
+
+/** dateKey를 1970-01-01부터의 날짜 번호로 옮긴다 — 시간대·시각과 무관하다. */
+function dayNumber(key: string): number {
+  const [year, month, day] = key.split("-").map(Number);
+  if (!Number.isFinite(year) || !Number.isFinite(month) || !Number.isFinite(day)) return 0;
+  return Math.round(Date.UTC(year, month - 1, day) / DAY_MS);
+}
+
+/**
+ * 그날의 행운의 색 — 카드와 따로 12색을 하루에 하나씩 돌린다.
+ * 12와 서로소인 7칸씩 넘기므로 이틀 연속 같은 색이 나오지 않고, 12일이면 12색이 모두 한 번씩 나온다.
+ */
+export function colorForDate(key: string, element: Element): LuckyColor {
+  const palette = ELEMENT_COLORS[element];
+  const offset = ELEMENT_ORDER.indexOf(element) * 5;
+  const index = (((dayNumber(key) * 7 + offset) % palette.length) + palette.length) % palette.length;
+  return palette[index];
+}
+
+/** 그날의 행운 카드 — 카드(20장) + 행운의 색(60색). 앱과 공유 페이지가 같은 카드를 본다. */
+export interface LuckyCardOfDay extends LuckyCard {
+  /** 그날의 행운의 색 이름 (예: 귤빛) */
+  colorName: string;
+  /** 그 색의 hex — 입체 구슬과 색 점이 쓴다 */
+  colorHex: string;
+}
+
+export function charmForDate(key: string, element: Element): LuckyCardOfDay {
+  const card = pick(CHARM_POOL[element], `${key}-charm-${element}`);
+  const color = colorForDate(key, element);
+  return { ...card, colorName: color.name, colorHex: color.hex };
 }
 
 /** 저장된 카드 id로 카드를 되찾는다. (예전 기록은 오행 이름만 남아 있을 수 있다) */

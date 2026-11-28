@@ -101,7 +101,10 @@ export interface CharmView {
   title: string;
   quote: string;
   author: string;
+  /** 그날의 행운의 색 (오행별 12색 중 하루 하나) */
   colorName: string;
+  /** 그 색의 hex — 입체 구슬·색 점이 쓴다 */
+  colorHex: string;
   number: string;
   item: string;
 }
@@ -758,6 +761,7 @@ export function buildDaily(profile: Profile, now: Date = new Date()): DailyView 
       quote: charmContent.quote,
       author: charmContent.author,
       colorName: charmContent.colorName,
+      colorHex: charmContent.colorHex,
       number: charmContent.number,
       item: charmContent.item,
     },

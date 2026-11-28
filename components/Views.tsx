@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { CHARM_POOL, ELEMENT_HANJA, ELEMENT_META, MBTI_SUMMARY, cardById, charmForDate, type LuckyCard } from "@/lib/content";
+import { CHARM_POOL, ELEMENT_HANJA, ELEMENT_META, MBTI_SUMMARY, cardById, charmForDate, colorForDate, type LuckyCard } from "@/lib/content";
 import { getDayPhotos, countPhotosByDate, type QuestPhoto } from "@/lib/photos";
 import { ageGroupOf, AGE_GROUP_LABEL } from "@/lib/age";
 import { chartOf, elementPercent, timeLabel } from "@/lib/saju";
@@ -10,6 +10,7 @@ import type { AppState, Element } from "@/lib/types";
 import { WEEKDAY_LABEL, dateKey, formatKoreanDate, monthMatrix } from "@/lib/utils";
 import { Clover, ElementIcon, Sparkle, StarMascot } from "./illustrations";
 import { MorningPushCard } from "./MorningPushCard";
+import { LuckyColorDot } from "./LuckyColorSphere";
 
 /** 저장된 카드 id로 카드를 되찾는다. 예전 기록(`2026-11-24-수`)도 읽을 수 있게 둔다. */
 function resolveCharm(key: string, id: string | undefined): LuckyCard | null {
@@ -71,6 +72,7 @@ export function CalendarView({ state }: { state: AppState }) {
   }, [selected]);
 
   const selectedCard = resolveCharm(selected, state.charms[selected]);
+  const selectedColor = selectedCard ? colorForDate(selected, selectedCard.element) : null;
 
   return (
     <div className="space-y-4 px-5 pb-8 pt-2">
@@ -162,7 +164,10 @@ export function CalendarView({ state }: { state: AppState }) {
 
         {selectedCard ? (
           <div className="mt-2">
-            <p className="font-serif text-[15px] font-medium leading-snug text-[#2F4A3B]">{selectedCard.title}</p>
+            <p className="flex items-center gap-1.5 font-serif text-[15px] font-medium leading-snug text-[#2F4A3B]">
+              {selectedColor && <LuckyColorDot colorHex={selectedColor.hex} size={10} />}
+              <span>{selectedCard.title}</span>
+            </p>
             <p className="mt-1 text-[11.5px] leading-[1.7] text-ink-soft">
               &ldquo;{selectedCard.quote}&rdquo; — {selectedCard.author}
             </p>
@@ -247,6 +252,7 @@ export function CharmsView({ state }: { state: AppState }) {
             const charm = resolveCharm(key, charmId);
             if (!charm) return null;
             const meta = ELEMENT_META[charm.element];
+            const color = colorForDate(key, charm.element);
             return (
               <article key={key} className="lq-card px-4 py-3.5">
                 <span aria-hidden className="lq-card-inner" />
@@ -259,8 +265,12 @@ export function CharmsView({ state }: { state: AppState }) {
                   </div>
                   <div className="min-w-0 flex-1">
                     <p className="font-serif text-[14px] leading-tight text-ink">{charm.title}</p>
-                    <p className="mt-1 text-[10px] tracking-[0.03em] text-ink-soft">
-                      {formatKoreanDate(key)} · {meta.name} 기운
+                    <p className="mt-1 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[10px] tracking-[0.03em] text-ink-soft">
+                      <span>{formatKoreanDate(key)} · {meta.name} 기운</span>
+                      <span className="inline-flex items-center gap-1">
+                        <LuckyColorDot colorHex={color.hex} size={7} />
+                        {color.name}
+                      </span>
                     </p>
                     <p className="mt-1 line-clamp-2 text-[10.5px] leading-relaxed text-[#8C8064]">
                       &ldquo;{charm.quote}&rdquo;

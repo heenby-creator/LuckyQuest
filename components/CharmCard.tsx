@@ -8,6 +8,7 @@ import type { QuestPhoto } from "@/lib/photos";
 import { trackEvent } from "@/lib/analytics";
 import { formatKoreanDate } from "@/lib/utils";
 import { CardEmblem, Clover, LockIcon, ShareIcon, Sparkle } from "./illustrations";
+import { LuckyColorDot, LuckyColorSphere } from "./LuckyColorSphere";
 
 export function CharmCard({
   daily,
@@ -122,14 +123,15 @@ export function CharmCard({
           </span>
         </div>
 
-        {/* 문양 */}
+        {/* 오늘의 행운의 색 — 입체 구 하나만 (원형 문양은 두지 않는다) */}
         <div className="mt-2.5 flex justify-center">
-          <CardEmblem size={124} />
+          <LuckyColorSphere colorHex={daily.charm.colorHex} size={100} />
         </div>
 
         {/* 카드 내용 */}
-        <h3 className="mt-1 text-center font-serif text-[21.5px] font-medium leading-snug tracking-[-0.015em] text-[#2F4A3B]">
-          {daily.charm.title}
+        <h3 className="mt-1.5 flex items-center justify-center gap-2 font-serif text-[21.5px] font-medium leading-snug tracking-[-0.015em] text-[#2F4A3B]">
+          <Clover size={25} tone="gold" className="shrink-0 translate-y-[3px]" />
+          <span>{daily.charm.title}</span>
         </h3>
         <div className="mt-2 flex items-center justify-center gap-2 text-gold-line">
           <span className="h-px w-10 bg-current opacity-70" />
@@ -150,13 +152,16 @@ export function CharmCard({
         {/* 행운의 결 */}
         <dl className="mt-4 grid grid-cols-3 divide-x divide-[#E6DCC1] border-y border-[#E6DCC1] py-2.5">
           {[
-            { label: "행운의 색", value: daily.charm.colorName },
+            { label: "행운의 색", value: daily.charm.colorName, dot: daily.charm.colorHex },
             { label: "행운의 숫자", value: daily.charm.number },
             { label: "행운의 아이템", value: daily.charm.item },
           ].map((item) => (
             <div key={item.label} className="px-1 text-center">
               <dt className="text-[9px] font-semibold tracking-[0.12em] text-[#94804F]">{item.label}</dt>
-              <dd className="mt-1 font-serif text-[13px] font-medium leading-tight text-[#3E3A2C]">{item.value}</dd>
+              <dd className="mt-1 flex items-center justify-center gap-1.5 font-serif text-[13px] font-medium leading-tight text-[#3E3A2C]">
+                {item.dot && <LuckyColorDot colorHex={item.dot} size={9} />}
+                <span>{item.value}</span>
+              </dd>
             </div>
           ))}
         </dl>

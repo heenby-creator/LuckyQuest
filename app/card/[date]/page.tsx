@@ -2,76 +2,41 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ELEMENT_META } from "@/lib/content";
+import { LuckyColorDot, LuckyColorSphere } from "@/components/LuckyColorSphere";
 import { cardForDate, isShareableDate, ogImageUrl, parseCardDate, shareUrl } from "@/lib/share";
 
 type PageProps = { params: Promise<{ date: string }> };
 
-const LEAF_PATH = "M0 0 C 8.6 -7 14.6 -17 10.1 -26.2 C 5.4 -33.8 -5.4 -33.8 -10.1 -26.2 C -14.6 -17 -8.6 -7 0 0 Z";
-const VEIN_PATH = "M0 -10 L4.2 -13.2 M0 -10 L-4.2 -13.2 M0 -15.2 L4.4 -18.4 M0 -15.2 L-4.4 -18.4 M0 -19.8 L3.5 -22 M0 -19.8 L-3.5 -22";
+const CLOVER_LEAF_PATH = "M0 0 C 8 -6 13.5 -15.5 9.5 -23.5 C 5.5 -30.5 -5.5 -30.5 -9.5 -23.5 C -13.5 -15.5 -8 -6 0 0 Z";
 
-/** 서버에서 그린 문양 — 공유 페이지는 자바스크립트 없이도 그대로 보이게 한다. */
-function Emblem({ size = 128 }: { size?: number }) {
+/** 서버에서 그리는 작은 네잎클로버 — 키워드 옆에 붙인다. */
+function CloverMark({
+  size = 24,
+  tone = "gold",
+  className = "",
+}: {
+  size?: number;
+  tone?: "gold" | "emerald";
+  className?: string;
+}) {
+  const palette = tone === "gold" ? ["#F3D27C", "#D9AE41", "#B98E28"] : ["#7ED09C", "#2E9A63", "#1B7A4B"];
+  const gradientId = `share-clover-leaf-${tone}`;
   return (
-    <svg width={size} height={size} viewBox="0 0 168 168" fill="none" aria-hidden="true">
+    <svg width={size} height={size} viewBox="-30 -30 60 74" fill="none" className={className} aria-hidden="true">
       <defs>
-        <radialGradient id="share-disc" cx="0.46" cy="0.36" r="0.7">
-          <stop stopColor="#FFFFFB" />
-          <stop offset="0.62" stopColor="#FBF6E8" />
-          <stop offset="1" stopColor="#F3ECD8" />
-        </radialGradient>
-        <linearGradient id="share-leaf-front" x1="0" y1="-33" x2="0" y2="2" gradientUnits="userSpaceOnUse">
-          <stop stopColor="#77CB9C" />
-          <stop offset="0.55" stopColor="#3E9B69" />
-          <stop offset="1" stopColor="#1C6B49" />
+        <linearGradient id={gradientId} x1="0" y1="-30" x2="0" y2="10" gradientUnits="userSpaceOnUse">
+          <stop stopColor={palette[0]} />
+          <stop offset="0.6" stopColor={palette[1]} />
+          <stop offset="1" stopColor={palette[2]} />
         </linearGradient>
-        <linearGradient id="share-leaf-back" x1="0" y1="-33" x2="0" y2="2" gradientUnits="userSpaceOnUse">
-          <stop stopColor="#5AB588" />
-          <stop offset="0.55" stopColor="#2E8A5C" />
-          <stop offset="1" stopColor="#16583C" />
-        </linearGradient>
-        <linearGradient id="share-stem" x1="0" y1="0" x2="0" y2="42" gradientUnits="userSpaceOnUse">
-          <stop stopColor="#3E9B69" />
-          <stop offset="1" stopColor="#1C6B49" />
-        </linearGradient>
-        <radialGradient id="share-glow" cx="0.5" cy="0.5" r="0.5">
-          <stop stopColor="#FFFFFF" stopOpacity="0.75" />
-          <stop offset="1" stopColor="#FFFFFF" stopOpacity="0" />
-        </radialGradient>
       </defs>
-      <circle cx="84" cy="84" r="83" fill="url(#share-disc)" />
-      <circle cx="84" cy="84" r="81.5" stroke="#FFFFFF" strokeWidth="1.4" opacity="0.7" />
-      <circle cx="84" cy="84" r="80.5" stroke="#C7A862" strokeWidth="0.9" opacity="0.6" />
-      <circle cx="84" cy="84" r="72" stroke="#C7A862" strokeWidth="0.6" opacity="0.34" strokeDasharray="1 4.2" />
-      <path d="M84 19 L86.4 26.4 L93.8 28.8 L86.4 31.2 L84 38.6 L81.6 31.2 L74.2 28.8 L81.6 26.4 Z" fill="#C7A862" opacity="0.95" />
-      <path d="M70 28.8 H64" stroke="#C7A862" strokeWidth="0.7" opacity="0.45" strokeLinecap="round" />
-      <path d="M98 28.8 H104" stroke="#C7A862" strokeWidth="0.7" opacity="0.45" strokeLinecap="round" />
-      <g transform="translate(84 104)">
-        <ellipse cx="0" cy="-2" rx="52" ry="46" fill="url(#share-glow)" />
-        <ellipse cx="0" cy="29" rx="26" ry="5" fill="#123F2C" opacity="0.05" />
-        {[270, 90, 0, 180].map((deg) => (
-          <g key={deg} transform={`rotate(${deg})`}>
-            <path d={LEAF_PATH} transform="translate(1.1 2.1)" fill="#123F2C" opacity="0.14" />
-            <path
-              d={LEAF_PATH}
-              fill={deg % 180 === 0 ? "url(#share-leaf-front)" : "url(#share-leaf-back)"}
-              stroke="#FCF8EC"
-              strokeWidth="1.15"
-              strokeLinejoin="round"
-            />
-            <path d="M0 -3.6 L0 -23.2" stroke="#EAF7EF" strokeWidth="1.15" strokeLinecap="round" opacity="0.6" />
-            <path d={VEIN_PATH} stroke="#E7F5EC" strokeWidth="0.72" strokeLinecap="round" opacity="0.45" />
-            <ellipse cx="-3.7" cy="-17" rx="3" ry="7.8" transform="rotate(-14 -3.7 -17)" fill="#FFFFFF" opacity="0.26" />
-            <ellipse cx="3.9" cy="-11.2" rx="1.9" ry="4.6" fill="#0E3F2C" opacity="0.11" />
-            <circle cx="0" cy="-24.6" r="1.15" fill="#FFFFFF" opacity="0.4" />
-          </g>
-        ))}
-        <path d="M1.2 6 C 5.6 19 2.4 29.4 -3.2 40" stroke="url(#share-stem)" strokeWidth="2.7" strokeLinecap="round" fill="none" />
-        <path d="M-1.6 28 C -5.8 26 -8 22.6 -8.6 18.8 C -4.6 18.4 -2 21 -1.6 28 Z" fill="#1C6B49" opacity="0.8" />
-        <circle cx="0" cy="0" r="2.8" fill="#FDF9EE" />
-        <circle cx="0" cy="0" r="1.3" fill="#3E9B69" opacity="0.55" />
-      </g>
-      <path d="M62 146 Q84 154 106 146" stroke="#C7A862" strokeWidth="0.8" opacity="0.55" fill="none" />
-      <circle cx="84" cy="150.5" r="1.1" fill="#C7A862" opacity="0.6" />
+      {[0, 90, 180, 270].map((deg) => (
+        <g key={deg} transform={`rotate(${deg})`}>
+          <path d={CLOVER_LEAF_PATH} fill={`url(#${gradientId})`} />
+          <path d="M0 -2 L0 -21" stroke={palette[0]} strokeWidth="1.4" strokeLinecap="round" opacity="0.7" />
+        </g>
+      ))}
+      <path d="M1 6 C 3 20 1 30 -2 40" stroke={palette[2]} strokeWidth="3" strokeLinecap="round" fill="none" />
     </svg>
   );
 }
@@ -167,12 +132,13 @@ export default async function SharedCardPage({ params }: PageProps) {
               </span>
             </div>
 
-            <div className="mt-3 flex justify-center">
-              <Emblem size={132} />
+            <div className="mt-2.5 flex justify-center">
+              <LuckyColorSphere colorHex={card.colorHex} size={108} />
             </div>
 
-            <h2 className="mt-2 text-center font-serif text-[24px] font-medium leading-snug tracking-[-0.015em] text-[#2F4A3B]">
-              {card.title}
+            <h2 className="mt-1.5 flex items-center justify-center gap-2.5 font-serif text-[24px] font-medium leading-snug tracking-[-0.015em] text-[#2F4A3B]">
+              <CloverMark size={27} tone="gold" className="shrink-0 translate-y-[3px]" />
+              <span>{card.title}</span>
             </h2>
             <div className="mt-2.5 flex items-center justify-center gap-2 text-gold-line">
               <span className="h-px w-10 bg-current opacity-70" />
@@ -186,13 +152,16 @@ export default async function SharedCardPage({ params }: PageProps) {
 
             <dl className="mt-5 grid grid-cols-3 divide-x divide-[#E6DCC1] border-y border-[#E6DCC1] py-3">
               {[
-                { label: "행운의 색", value: card.colorName },
-                { label: "행운의 숫자", value: card.number },
-                { label: "행운의 아이템", value: card.item },
+                { label: "행운의 색", value: card.colorName, dot: card.colorHex },
+                { label: "행운의 숫자", value: card.number, dot: undefined },
+                { label: "행운의 아이템", value: card.item, dot: undefined },
               ].map((item) => (
                 <div key={item.label} className="px-1 text-center">
                   <dt className="text-[9px] font-semibold tracking-[0.12em] text-[#94804F]">{item.label}</dt>
-                  <dd className="mt-1 font-serif text-[13.5px] font-medium leading-tight text-[#3E3A2C]">{item.value}</dd>
+                  <dd className="mt-1 flex items-center justify-center gap-1.5 font-serif text-[13.5px] font-medium leading-tight text-[#3E3A2C]">
+                    {item.dot && <LuckyColorDot colorHex={item.dot} size={9} />}
+                    <span>{item.value}</span>
+                  </dd>
                 </div>
               ))}
             </dl>

@@ -15,6 +15,8 @@ import {
   RELATION_PHRASE,
   TODAY_MOOD,
   charmForDate,
+  colorForDate,
+  ELEMENT_COLORS,
   comboKeyOf,
   fortuneTabs,
   topicLabel,
@@ -396,7 +398,6 @@ for (const card of allCards) {
   expect(card.quote.trim().length >= 8 && card.quote.trim().length <= 60, `${where}: 명언 길이가 어색해요 (${card.quote})`);
   expect(!card.quote.includes('"') && !card.quote.includes("“"), `${where}: 명언에 따옴표가 들어 있어요 (${card.quote})`);
   expect(card.author.trim().length >= 1, `${where}: 명언 저자가 비어 있어요`);
-  expect(card.colorName.trim().length >= 2, `${where}: 행운의 색이 비어 있어요`);
   expect(card.item.trim().length >= 2, `${where}: 행운의 아이템이 비어 있어요`);
   const number = Number(card.number);
   expect(Number.isInteger(number) && number >= 1 && number <= 10, `${where}: 행운의 숫자가 1~10이 아니에요 (${card.number})`);
@@ -412,6 +413,50 @@ for (const el of ELEMENTS) {
   expect(seen.size >= 3, `오행 ${el} 카드가 날마다 거의 바뀌지 않아요 (${seen.size}종)`);
 }
 
+// 행운의 색 팔레트 — 오행별 12색, 모두 60색
+const HEX_RE = /^#[0-9A-Fa-f]{6}$/;
+const colorNames = new Set<string>();
+let colorTotal = 0;
+for (const el of ELEMENTS) {
+  const palette = ELEMENT_COLORS[el];
+  expect(Array.isArray(palette) && palette.length === 12, `오행 ${el} 행운의 색이 12가지가 아니에요 (${palette ? palette.length : "없음"})`);
+  for (const color of palette || []) {
+    expect(typeof color.name === "string" && compact(color.name).length >= 2, `오행 ${el} 색 이름이 어색해요 (${color.name})`);
+    expect(HEX_RE.test(color.hex), `오행 ${el} ${color.name}: hex가 이상해요 (${color.hex})`);
+    expect(!colorNames.has(color.name), `행운의 색 이름이 중복돼요: ${color.name}`);
+    colorNames.add(color.name);
+    colorTotal += 1;
+  }
+}
+expect(colorTotal === 60, `행운의 색이 60가지가 아니에요 (${colorTotal})`);
+
+// 날마다 색이 돌아가고, 이틀 연속 같은 색은 나오지 않는다.
+const colorKey = (offset: number) => {
+  const date = new Date(2026, 10, 1 + offset);
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+};
+for (const el of ELEMENTS) {
+  const seen = new Set<string>();
+  let previous: string | null = null;
+  let sameAsYesterday = 0;
+  for (let offset = 0; offset < 12; offset += 1) {
+    const card = charmForDate(colorKey(offset), el);
+    seen.add(card.colorName);
+    if (previous === card.colorName) sameAsYesterday += 1;
+    previous = card.colorName;
+    expect(card.colorHex === colorForDate(colorKey(offset), el).hex, `[${colorKey(offset)} ${el}] 카드의 색 hex가 팔레트와 달라요`);
+  }
+  expect(seen.size === 12, `오행 ${el} 행운의 색이 12일 동안 ${seen.size}가지만 나와요`);
+  expect(sameAsYesterday === 0, `오행 ${el} 이틀 연속 같은 행운의 색이 나와요`);
+}
+
+// 같은 날 오행이 다르면 색도 다르다.
+for (let offset = 0; offset < 12; offset += 1) {
+  const key = colorKey(offset);
+  const names = new Set(ELEMENTS.map((el) => colorForDate(key, el).name));
+  expect(names.size === ELEMENTS.length, `[${key}] 오행끼리 행운의 색이 겹쳐요`);
+}
+
 // 앱과 공유 페이지(/card/[날짜], OG)가 같은 카드를 봐야 한다.
 const SHARE_DAYS = [1, 7, 16, 24, 30];
 for (const day of SHARE_DAYS) {
@@ -421,6 +466,8 @@ for (const day of SHARE_DAYS) {
   expect(shared.cardId === daily.charm.id, `[${key}] 공유 카드(${shared.cardId})와 앱 카드(${daily.charm.id})가 달라요`);
   expect(shared.quote === daily.charm.quote, `[${key}] 공유 카드의 명언이 앱과 달라요`);
   expect(shared.item === daily.charm.item, `[${key}] 공유 카드의 아이템이 앱과 달라요`);
+  expect(shared.colorName === daily.charm.colorName, `[${key}] 공유 카드의 행운의 색이 앱과 달라요`);
+  expect(shared.colorHex === daily.charm.colorHex, `[${key}] 공유 카드의 행운의 색 hex가 앱과 달라요`);
 }
 
 // 주제별 지수 · 상태 배지 · 두 줄 설명
@@ -440,7 +487,7 @@ for (const now of DATES) {
   }
 }
 
-console.log(`   카드 ${allCards.length}장(오행별 ${ELEMENTS.map((el) => CHARM_POOL[el].length).join("/")}) · 검사 ${checks}건 · 문제 ${failures.length}건`);
+console.log(`   카드 ${allCards.length}장(오행별 ${ELEMENTS.map((el) => CHARM_POOL[el].length).join("/")}) · 행운의 색 ${colorTotal}가지(오행별 12) · 검사 ${checks}건 · 문제 ${failures.length}건`);
 
 /* ── ⑤ 연속 7일 변별력 검사 ────────────────────────────── */
 
